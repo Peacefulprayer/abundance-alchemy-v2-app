@@ -1,0 +1,17 @@
+{
+  "name": "Abundance Alchemy",
+  "short_name": "Abundance",
+  "description": "A mystical, AI-guided daily affirmation and meditation journey featuring the Abundance Alchemist.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#f59e0b",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
+
