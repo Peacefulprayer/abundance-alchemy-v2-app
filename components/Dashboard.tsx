@@ -6,6 +6,7 @@ import {
   Soundscape,
   GratitudeLog,
   CycleType,
+  FocusArea,  // ADD THIS
 } from '../types';
 import {
   Sun,
@@ -25,6 +26,12 @@ import {
 import { AlchemistAvatar } from './AlchemistAvatar';
 import { apiService } from '../services/apiService';
 import { playBell } from '../services/audioService';
+
+// Helper to extract string from FocusArea union type
+const getFocusAreaLabel = (focusArea: FocusArea | undefined): string => {
+  if (!focusArea) return '';
+  return typeof focusArea === 'string' ? focusArea : focusArea.label;
+};
 
 interface DashboardProps {
   user: UserProfile;
@@ -129,7 +136,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       id: `journal_${Date.now()}`,
       date: new Date().toISOString(),
       sessionType: PracticeType.MORNING_IAM,
-      focusArea: user.focusAreas[0] || 'General',
+      focusArea: getFocusAreaLabel(user.focusAreas[0]) || 'General',
       text: journalEntry,
     };
     const updatedUser = {
@@ -255,13 +262,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           >
             <div className="flex justify-between items-start mb-2">
               <h2 className={`text-xl font-bold ${textColor}`}>
-                {user.focusAreas[0] || 'your focus'}
+                {getFocusAreaLabel(user.focusAreas[0]) || 'your focus'}
               </h2>
               {/* If you had an icon for focus, it could go here */}
             </div>
             
             <p className={`text-xs leading-relaxed ${subTextColor}`}>
-              {getFocusDescription(user.focusAreas[0] || 'focus')}
+              {getFocusDescription(getFocusAreaLabel(user.focusAreas[0]) || 'focus')}
             </p>
 
             <div className="mt-4 pt-4 border-t border-slate-700/10">
@@ -279,7 +286,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <div className="flex items-center space-x-2">
                   <BookOpen size={16} />
                   <span className="text-xs font-bold">
-                    How is your {user.focusAreas[0] || 'focus'} journey going?
+                    How is your {getFocusAreaLabel(user.focusAreas[0]) || 'focus'} journey going?
                   </span>
                 </div>
                 <ChevronDown

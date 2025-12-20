@@ -1,5 +1,5 @@
 // buttonSoundService.ts - UPDATED WITH CORRECT PATHS
-import { audioManager } from './audioService';
+import { audioManager } from '../services/audioManager';
 
 // Button sound URLs - CORRECTED PATHS
 const BUTTON_SOUNDS = {

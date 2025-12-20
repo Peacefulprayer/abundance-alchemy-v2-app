@@ -8,8 +8,10 @@ import {
   UserAccount, 
   AppSettings, 
   Soundscape, 
-  GratitudeLog 
+  GratitudeLog,
+  CycleType  // ADDED
 } from './types';
+
 
 // Components
 import { Onboarding } from './components/Onboarding';
@@ -25,6 +27,7 @@ import { SplashScreen } from './components/SplashScreen';
 import { MeditationSetup } from './components/MeditationSetup';
 import { PreSplash } from './components/PreSplash';
 
+
 // Services
 import { 
   playBell, 
@@ -36,8 +39,10 @@ import {
 } from './services/audioService';
 import { apiService } from './services/apiService';
 
+
 // Icons
 import { Home, BarChart2, BookOpen, Sparkles, Settings as SettingsNavIcon } from 'lucide-react';
+
 
 const DEFAULT_SOUNDSCAPES: Soundscape[] = [
   { id: 'OM', label: 'Deep Om', category: 'OM' },
@@ -45,6 +50,7 @@ const DEFAULT_SOUNDSCAPES: Soundscape[] = [
   { id: 'FOREST', label: 'Forest', category: 'FOREST' },
   { id: 'CELESTIAL', label: 'Celestial', category: 'CELESTIAL' },
 ];
+
 
 export const App: React.FC = () => {
   // State: Interaction (Audio Gate)
@@ -55,6 +61,7 @@ export const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [activeSession, setActiveSession] = useState<PracticeSessionConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
 
   // State: Settings
   const [settings, setSettings] = useState<AppSettings>({
@@ -75,16 +82,20 @@ export const App: React.FC = () => {
     }
   });
 
+
   const [userAudioFile, setUserAudioFile] = useState<File | null>(null);
   const [tempRegName, setTempRegName] = useState('');
   const [availableSoundscapes, setAvailableSoundscapes] = useState<Soundscape[]>(DEFAULT_SOUNDSCAPES);
 
+
   // --- Effects ---
+
 
   // 1. Sync Audio Settings
   useEffect(() => {
     setAudioSettings(settings.soundEffectsOn, settings.musicOn);
   }, [settings]);
+
 
   // 2. Load Remote Soundscapes
   useEffect(() => {
@@ -95,6 +106,7 @@ export const App: React.FC = () => {
     });
   }, []);
 
+
   // 3. Global Bell Sound on Click
   useEffect(() => {
     const handleClick = () => {
@@ -104,12 +116,14 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('click', handleClick);
   }, [settings.soundEffectsOn]);
 
+
   // 4. Load Persisted Data
   useEffect(() => {
     const loadAppData = async () => {
       try {
         const savedUser = localStorage.getItem('abundance_user');
         const savedSettings = localStorage.getItem('abundance_settings');
+
 
         if (savedSettings) {
           const parsed = JSON.parse(savedSettings);
@@ -119,6 +133,7 @@ export const App: React.FC = () => {
             reminders: { ...prev.reminders, ...(parsed.reminders || {}) }
           }));
         }
+
 
         if (savedUser) {
           const u = JSON.parse(savedUser);
@@ -140,6 +155,7 @@ export const App: React.FC = () => {
     loadAppData();
   }, []);
 
+
   // 5. PreSplash Transition Logic
   const handlePreSplashContinue = () => {
     setHasInteracted(true);
@@ -148,6 +164,7 @@ export const App: React.FC = () => {
     // Go to Splash to run the timer
     setMode(AppMode.SPLASH);
   };
+
 
   // 6. Splash Timer (Only runs after interaction)
   useEffect(() => {
@@ -163,7 +180,9 @@ export const App: React.FC = () => {
     }
   }, [isLoading, hasInteracted, mode, user]);
 
+
   // --- Handlers: Auth ---
+
 
   const handleRegister = (account: UserAccount) => {
     setTempRegName(account.name);
@@ -172,7 +191,7 @@ export const App: React.FC = () => {
       name: account.name,
       email: account.email,
       focusAreas: [],
-      cyclePreference: 'DAILY' as any,
+      cyclePreference: CycleType.DAILY,  // FIXED: Use enum
       streak: 0,
       lastPracticeDate: null,
       affirmationsCompleted: 0,
@@ -183,6 +202,7 @@ export const App: React.FC = () => {
     setUser(newProfile);
     setMode(AppMode.ONBOARDING);
   };
+
 
   const handleLogin = (account: UserAccount) => {
     const savedUser = localStorage.getItem('abundance_user');
@@ -198,6 +218,7 @@ export const App: React.FC = () => {
     }
   };
 
+
   const handleSignOut = () => {
     localStorage.removeItem('abundance_user');
     localStorage.removeItem('abundance_auth');
@@ -206,22 +227,34 @@ export const App: React.FC = () => {
     setMode(AppMode.AUTH);
   };
 
+
   // --- Handlers: Practice & Sessions ---
+
 
   const startPractice = (type: PracticeType, duration: number) => {
     stopAmbience(); // Quiet the lobby music
-    setActiveSession({ type, duration, theme: user?.focusAreas[0] });
+    setActiveSession({ type, duration });  // FIXED: Removed 'theme' property
     setMode(AppMode.PRACTICE);
   };
 
+
   const handleMeditationBegin = (config: PracticeSessionConfig) => {
     stopAmbience();
-    if (config.soundscape?.url) {
-      startSessionAudio(config.soundscape.url, settings.ambienceVolume);
+    
+    // FIXED: Handle both string and Soundscape object, only 1 parameter
+    if (config.soundscape) {
+      const url = typeof config.soundscape === 'string' 
+        ? config.soundscape 
+        : config.soundscape.url;
+      if (url) {
+        startSessionAudio(url);
+      }
     }
+    
     setActiveSession(config);
     setMode(AppMode.PRACTICE);
   };
+
 
   const handleSessionComplete = (newLog?: GratitudeLog) => {
     if (user) {
@@ -237,13 +270,16 @@ export const App: React.FC = () => {
       apiService.syncProgress(updatedUser);
     }
 
+
     // Stop session audio, Resume lobby ambience
     stopSessionAudio();
     startAmbience(settings.soundscapeId, settings.ambienceVolume);
 
+
     setMode(AppMode.DASHBOARD);
     setActiveSession(null);
   };
+
 
   const handleSessionExit = () => {
     stopSessionAudio();
@@ -252,7 +288,9 @@ export const App: React.FC = () => {
     setActiveSession(null);
   };
 
+
   // --- Handlers: Data ---
+
 
   const addAffirmation = async (text: string, type: PracticeType) => {
     if (!user) return;
@@ -275,6 +313,7 @@ export const App: React.FC = () => {
     }
   };
 
+
   const removeAffirmation = async (id: string) => {
     if (!user) return;
     const success = await apiService.removeUserAffirmation(id);
@@ -284,6 +323,7 @@ export const App: React.FC = () => {
       localStorage.setItem('abundance_user', JSON.stringify(updatedUser));
     }
   };
+
 
   const updateSettings = (newSettings: AppSettings) => {
     setSettings(newSettings);
@@ -295,6 +335,7 @@ export const App: React.FC = () => {
     }
   };
 
+
   const handleOnboardingComplete = (profile: UserProfile) => {
     const initialProfile = { ...profile, customAffirmations: [], gratitudeLogs: [] };
     setUser(initialProfile);
@@ -302,7 +343,9 @@ export const App: React.FC = () => {
     setMode(AppMode.TUTORIAL);
   };
 
+
   // --- Render ---
+
 
   if (isLoading) {
     return (
@@ -312,26 +355,33 @@ export const App: React.FC = () => {
     );
   }
 
+
   // 1. PreSplash (Gatekeeper)
   if (!hasInteracted) {
     return <PreSplash onContinue={handlePreSplashContinue} theme={settings.theme} />;
   }
 
+
   const currentSoundscapeObj = availableSoundscapes.find(s => s.id === settings.soundscapeId) || DEFAULT_SOUNDSCAPES[0];
+
 
   const renderContent = () => {
     switch (mode) {
       case AppMode.SPLASH:
         return <SplashScreen />;
 
+
       case AppMode.AUTH:
         return <Auth onRegister={handleRegister} onLogin={handleLogin} onBack={() => setMode(AppMode.SPLASH)} theme={settings.theme} />;
+
 
       case AppMode.ONBOARDING:
         return <Onboarding onComplete={handleOnboardingComplete} initialName={tempRegName} />;
 
+
       case AppMode.TUTORIAL:
         return <TutorialOverlay onComplete={() => setMode(AppMode.DASHBOARD)} onChangeFocus={() => setMode(AppMode.ONBOARDING)} theme={settings.theme} />;
+
 
       case AppMode.SETTINGS:
         return (
@@ -349,6 +399,7 @@ export const App: React.FC = () => {
           />
         );
 
+
       case AppMode.DASHBOARD:
         return user ? (
           <Dashboard
@@ -363,6 +414,7 @@ export const App: React.FC = () => {
           />
         ) : null;
 
+
       case AppMode.MEDITATION_SETUP:
         return (
           <MeditationSetup
@@ -372,6 +424,7 @@ export const App: React.FC = () => {
             availableSoundscapes={availableSoundscapes}
           />
         );
+
 
       case AppMode.PRACTICE:
         return activeSession && user ? (
@@ -386,8 +439,10 @@ export const App: React.FC = () => {
           />
         ) : null;
 
+
       case AppMode.PROFILE:
         return user ? <Stats user={user} /> : null;
+
 
       case AppMode.LIBRARY:
         return user ? (
@@ -402,10 +457,12 @@ export const App: React.FC = () => {
           />
         ) : null;
 
+
       default:
         return null;
     }
   };
+
 
   // Nav Logic
   const hideNav = [
@@ -417,6 +474,7 @@ export const App: React.FC = () => {
     AppMode.MEDITATION_SETUP
   ].includes(mode);
 
+
   const getNavClass = (targetMode: AppMode) => {
     const isActive = mode === targetMode;
     if (settings.theme === 'light') {
@@ -424,6 +482,7 @@ export const App: React.FC = () => {
     }
     return isActive ? 'text-amber-400' : 'text-slate-500 hover:text-slate-300';
   };
+
 
   return (
     <div className={`h-[100dvh] w-screen flex flex-col overflow-hidden font-sans ${settings.theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>
@@ -433,6 +492,7 @@ export const App: React.FC = () => {
             {renderContent()}
           </div>
 
+
           {!hideNav && (
             <nav className={`h-20 backdrop-blur-md border-t absolute bottom-0 w-full z-50 ${settings.theme === 'light' ? 'bg-white/80 border-slate-200' : 'bg-slate-900/60 border-slate-700/50'}`}>
               <div className="flex justify-around items-center h-full max-w-md mx-auto px-4 pb-4">
@@ -441,10 +501,12 @@ export const App: React.FC = () => {
                   <span className="text-[10px] font-bold tracking-widest">HOME</span>
                 </button>
 
+
                 <button onClick={() => setMode(AppMode.LIBRARY)} className={`flex flex-col items-center space-y-1 transition-colors ${getNavClass(AppMode.LIBRARY)}`}>
                   <BookOpen size={24} />
                   <span className="text-[10px] font-bold tracking-widest">MAKTABA</span>
                 </button>
+
 
                 <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-600 to-amber-500 p-[1px] shadow-lg shadow-purple-900/50 -mt-8 mx-2 transform hover:scale-105 transition-transform">
                   <button onClick={() => startPractice(PracticeType.MORNING_IAM, 1)} className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-slate-800 transition-colors">
@@ -452,10 +514,12 @@ export const App: React.FC = () => {
                   </button>
                 </div>
 
+
                 <button onClick={() => setMode(AppMode.PROFILE)} className={`flex flex-col items-center space-y-1 transition-colors ${getNavClass(AppMode.PROFILE)}`}>
                   <BarChart2 size={24} />
                   <span className="text-[10px] font-bold tracking-widest">JOURNEY</span>
                 </button>
+
 
                 <button onClick={() => setMode(AppMode.SETTINGS)} className={`flex flex-col items-center space-y-1 transition-colors ${getNavClass(AppMode.SETTINGS)}`}>
                   <SettingsNavIcon size={24} />

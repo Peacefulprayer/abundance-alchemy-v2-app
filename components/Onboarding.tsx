@@ -9,7 +9,7 @@ interface OnboardingProps {
   initialName?: string;
 }
 
-type FocusArea = {
+type FocusChoice = {
   id: string;
   label: string;        // English
   swahili: string;      // Swahili term
@@ -18,7 +18,7 @@ type FocusArea = {
   swAffirmation: string; // bonus affirmation (Swahili)
 };
 
-const FOCUS_AREAS: FocusArea[] = [
+const FOCUS_AREAS: FocusChoice[] = [
   {
     id: 'peace',
     label: 'Peace',
@@ -91,7 +91,6 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
   const [selectedFocus, setSelectedFocus] = useState<string>('');
   const [cycleType, setCycleType] = useState<CycleType>(CycleType.DAILY);
 
-  // Keep name populated if provided later
   useEffect(() => {
     if (initialName && !name) setName(initialName);
   }, [initialName]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -116,11 +115,14 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
   const complete = () => {
     buttonSoundService.play();
 
+    // IMPORTANT: match types.ts exactly:
+    // - focusAreas: string[]
+    // - cyclePreference: CycleType
+    // - NO preferredName field in UserProfile (in your current types.ts)
     const profile: UserProfile = {
-      name: name.trim(),
-      preferredName: (preferredName || name).trim(),
-      focusAreas: [selectedFocusLabel],
-      cycleType,
+      name: (preferredName || name).trim(),          // keeps your “preferred name” behavior without changing types
+      focusAreas: [selectedFocusLabel || 'General'], // string[]
+      cyclePreference: cycleType,
       streak: 0,
       level: 1,
       affirmationsCompleted: 0,
@@ -140,9 +142,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
           <Sparkles className="text-amber-400" size={18} />
           <h1 className="text-xl font-serif font-bold">Welcome</h1>
         </div>
-        <div className="text-xs text-slate-400">
-          Step {step} / 5
-        </div>
+        <div className="text-xs text-slate-400">Step {step} / 5</div>
       </div>
 
       {/* Step 1: Name */}
@@ -212,9 +212,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
         <div className="space-y-4">
           <div className="bg-slate-900/60 border border-slate-700 rounded-2xl p-5 shadow-lg">
             <h2 className="text-lg font-bold mb-1">Choose your focus</h2>
-            <p className="text-xs text-slate-400 mb-4">
-              Pick the area you want to strengthen first.
-            </p>
+            <p className="text-xs text-slate-400 mb-4">Pick the area you want to strengthen first.</p>
 
             <div className="grid grid-cols-1 gap-2">
               {FOCUS_AREAS.map((focus) => {
@@ -283,9 +281,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
             </h2>
 
             <div className="mt-3 rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
-              <p className="text-sm text-slate-200 leading-relaxed">
-                {selectedFocusObj?.explanation}
-              </p>
+              <p className="text-sm text-slate-200 leading-relaxed">{selectedFocusObj?.explanation}</p>
+
               {selectedFocusObj?.swAffirmation && (
                 <div className="mt-3 pt-3 border-t border-slate-700/60">
                   <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
@@ -322,9 +319,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
         <div className="space-y-4">
           <div className="bg-slate-900/60 border border-slate-700 rounded-2xl p-5 shadow-lg">
             <h2 className="text-lg font-bold mb-2">How often do you want to practice?</h2>
-            <p className="text-xs text-slate-400 mb-4">
-              You can change this later.
-            </p>
+            <p className="text-xs text-slate-400 mb-4">You can change this later.</p>
 
             <div className="space-y-2">
               {[

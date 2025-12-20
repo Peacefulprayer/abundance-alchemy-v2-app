@@ -1,144 +1,151 @@
-// services/audioService.ts
-// A Hybrid Service to bridge new Audio Logic with existing components
+// src/services/audioService.ts
+import type { Soundscape } from '../types';
 
-let soundEffectsEnabled = true;
+let ambienceAudio: HTMLAudioElement | null = null;
+let practiceAudio: HTMLAudioElement | null = null;
+
+let effectsEnabled = true;
 let musicEnabled = true;
 
-// 1. Core State
-let ambienceAudio: HTMLAudioElement | null = null;
-let sessionAudio: HTMLAudioElement | null = null;
+// master volume 0..1
+let masterVolume = 0.5;
 
-// 2. Settings Management
-export const setAudioSettings = (soundEffects: boolean, music: boolean) => {
-  soundEffectsEnabled = soundEffects;
-  musicEnabled = music;
+// helpers
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
-  if (!musicEnabled) {
-    if (ambienceAudio) ambienceAudio.pause();
-    if (sessionAudio) sessionAudio.pause();
-  } else {
-    // Resume ambience if it was supposed to be playing
-    if (ambienceAudio && !sessionAudio) {
-      ambienceAudio.play().catch(e => console.warn('Resume blocked', e));
-    }
-  }
-};
+function resolveUrl(input?: string | Soundscape): string | null {
+  if (!input) return null;
+  if (typeof input === 'string') return input;
 
-// 3. Sound Effects (Bell)
-export const playBell = () => {
-  if (!soundEffectsEnabled) return;
-  try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+  // If you store actual URLs on soundscapes, prefer those
+  if (input.url) return input.url;
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+  // Fallback: treat id as a relative asset path if you use that convention
+  // Example: id === "RAIN" -> "/abundance-alchemy/assets/audio/ambience/RAIN.mp3"
+  // If you don't want this, just return null here.
+  return null;
+}
 
-    oscillator.frequency.value = 800; // Hz
-    oscillator.type = 'sine';
+export function setAudioSettings(effectsOn: boolean, musicOn: boolean) {
+  effectsEnabled = effectsOn;
+  musicEnabled = musicOn;
 
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+  if (ambienceAudio) ambienceAudio.muted = !musicEnabled;
+  if (practiceAudio) practiceAudio.muted = !musicEnabled;
+}
 
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
-  } catch (e) {
-    console.warn('AudioContext error', e);
-  }
-};
+export function setMasterVolume(v: number) {
+  masterVolume = clamp01(v);
+  if (ambienceAudio) ambienceAudio.volume = masterVolume;
+  if (practiceAudio) practiceAudio.volume = masterVolume;
+}
 
-export const playCompletionSound = () => {
-  if (!soundEffectsEnabled) return;
-  // Simple sequence
-  setTimeout(() => playBell(), 0);
-  setTimeout(() => playBell(), 300);
-};
+// Some code calls this name
+export function setVolume(v: number) {
+  setMasterVolume(v);
+}
 
-// 4. Ambience Logic (The New Way)
-const resolveGlobalTrackUrl = (soundscapeId: string): string => {
-  // Map IDs to URLs here
-  if (soundscapeId === 'RAIN') return 'https://www.abundantthought.com/abundance-alchemy/assets/audio/ambient/rain.mp3';
-  if (soundscapeId === 'FOREST') return 'https://www.abundantthought.com/abundance-alchemy/assets/audio/ambient/forest.mp3';
-  
-  // Default fallback
-  return 'https://www.abundantthought.com/abundance-alchemy/assets/audio/ambient/calm.mp3';
-};
+// Legacy components often pass 0–100
+export function updateVolume(volPercent: number) {
+  setMasterVolume(clamp01(volPercent / 100));
+}
 
-export const startAmbience = (soundscapeId: string, volume: number) => {
+// ---------- Ambience ----------
+export function startAmbience(input?: string | Soundscape, volumePercent?: number) {
   if (!musicEnabled) return;
 
-  try {
-    const newUrl = resolveGlobalTrackUrl(soundscapeId);
+  const url = resolveUrl(input);
+  if (!url) return;
 
-    // If already playing correct track, just ensure volume
-    if (ambienceAudio && ambienceAudio.src === newUrl && !ambienceAudio.paused) {
-      ambienceAudio.volume = Math.max(0, Math.min(1, volume / 100));
-      return;
-    }
+  const v = volumePercent === undefined ? masterVolume : clamp01(volumePercent / 100);
 
-    // Stop existing
-    stopAmbience();
-
-    // Start new
-    ambienceAudio = new Audio(newUrl);
-    ambienceAudio.loop = true;
-    ambienceAudio.volume = Math.max(0, Math.min(1, volume / 100));
-    ambienceAudio.play().catch(err => console.warn('Ambience blocked', err));
-  } catch (e) {
-    console.error('Ambience error', e);
+  // If same ambience already playing, do nothing
+  if (ambienceAudio && ambienceAudio.src.includes(url) && !ambienceAudio.paused) {
+    ambienceAudio.volume = v;
+    return;
   }
-};
 
-export const stopAmbience = () => {
+  stopAmbience();
+
+  ambienceAudio = new Audio(url);
+  ambienceAudio.loop = true;
+  ambienceAudio.volume = v;
+  ambienceAudio.muted = !musicEnabled;
+
+  ambienceAudio.play().catch(() => {});
+}
+
+export function stopAmbience() {
   if (ambienceAudio) {
     ambienceAudio.pause();
     ambienceAudio = null;
   }
-};
+}
 
-export const updateAmbienceVolume = (volume: number) => {
-  if (ambienceAudio) ambienceAudio.volume = Math.max(0, Math.min(1, volume / 100));
-  if (sessionAudio) sessionAudio.volume = Math.max(0, Math.min(1, volume / 100));
-};
-
-// Alias for compatibility
-export const updateVolume = updateAmbienceVolume;
-
-// 5. Session Audio (Meditation)
-export const startSessionAudio = (url: string, volume: number) => {
+// ---------- Practice Audio ----------
+export function startPracticeAudio(input?: string | Soundscape) {
   if (!musicEnabled) return;
-  try {
-    if (sessionAudio) {
-      sessionAudio.pause();
-      sessionAudio = null;
-    }
-    sessionAudio = new Audio(url);
-    sessionAudio.loop = true;
-    sessionAudio.volume = Math.max(0, Math.min(1, volume / 100));
-    sessionAudio.play().catch(err => console.warn('Session blocked', err));
-  } catch (e) {
-    console.error('Session audio error', e);
+
+  const url = resolveUrl(input);
+  if (!url) return;
+
+  stopPracticeAudio(false);
+  // You can decide whether practice pauses ambience; keeping your prior behavior:
+  stopAmbience();
+
+  practiceAudio = new Audio(url);
+  practiceAudio.loop = true;
+  practiceAudio.volume = masterVolume;
+  practiceAudio.muted = !musicEnabled;
+
+  practiceAudio.play().catch(() => {});
+}
+
+export function stopPracticeAudio(resumeAmbience = false, ambienceToResume?: string | Soundscape) {
+  if (practiceAudio) {
+    practiceAudio.pause();
+    practiceAudio = null;
   }
-};
 
-export const stopSessionAudio = () => {
-  if (sessionAudio) {
-    sessionAudio.pause();
-    sessionAudio = null;
+  if (resumeAmbience) {
+    startAmbience(ambienceToResume);
   }
-};
+}
 
-export const previewSoundscape = (soundscape: any) => {
-  console.log('Previewing', soundscape);
-  playBell(); // Simple feedback
-};
+// ---------- UI helpers ----------
+export function previewSoundscape(input?: string | Soundscape) {
+  const url = resolveUrl(input);
+  if (!url) return;
 
-// --- THE BRIDGE ---
-// This exports a fake audioManager so old components don't crash on import.
-export const audioManager = {
-  playBell: playBell,
-  setVolume: updateVolume,
-  stopAll: () => { stopAmbience(); stopSessionAudio(); },
-  playAmbience: (url: string) => console.log('Legacy playAmbience called', url),
-};
+  const preview = new Audio(url);
+  preview.volume = masterVolume;
+  preview.play().catch(() => {});
+}
+
+export function playCompletionSound() {
+  if (!effectsEnabled) return;
+
+  // Use whichever path your project actually has:
+  const bell = new Audio('/abundance-alchemy/assets/audio/bell.mp3');
+  bell.volume = masterVolume;
+  bell.play().catch(() => {});
+}
+
+// Some code expects playBell()
+export function playBell() {
+  playCompletionSound();
+}
+
+// ---------- Compatibility aliases ----------
+export function stopAll() {
+  stopPracticeAudio(false);
+  stopAmbience();
+}
+
+// Some App.tsx versions referenced these names:
+export function startSessionAudio(input?: string | Soundscape) {
+  startPracticeAudio(input);
+}
+export function stopSessionAudio(resumeAmbience = false, ambienceToResume?: string | Soundscape) {
+  stopPracticeAudio(resumeAmbience, ambienceToResume);
+}

@@ -5,6 +5,12 @@ import { playCompletionSound, updateVolume, stopAmbience, startAmbience } from '
 import { getMeditationWisdom } from '../services/geminiService';
 import { apiService } from '../services/apiService';
 
+// ADDED: Helper to extract string from FocusArea union type
+const getFocusAreaLabel = (focusArea: FocusArea | undefined): string => {
+  if (!focusArea) return '';
+  return typeof focusArea === 'string' ? focusArea : focusArea.label;
+};
+
 interface PracticeSessionProps {
   config: PracticeSessionConfig;
   customAffirmations: Affirmation[];
@@ -47,9 +53,9 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const isMorning = config.type === PracticeType.MORNING_IAM;
 
   useEffect(() => {
-    // Initialize Audio
+    // Initialize Audio - FIXED: Removed settings reference
     if (soundscape) {
-      startAmbience(soundscape);
+      startAmbience(soundscape, 50);
       updateVolume(volume);
       audioInitialized.current = true;
     }
@@ -81,11 +87,9 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const loadSessionContent = async () => {
     setIsLoadingContent(true);
 
-    // FIX: Extract label from FocusArea object or use fallback string
+    // FIXED: Use helper function to extract label
     const focusAreaRaw = config.focusAreas?.[0] || 'General';
-    const focusLabel = typeof focusAreaRaw === 'string' 
-      ? focusAreaRaw 
-      : (focusAreaRaw as FocusArea)?.label || 'General';
+    const focusLabel = getFocusAreaLabel(focusAreaRaw as FocusArea) || 'General';
 
     if (isMeditation) {
       const wisdom = await getMeditationWisdom(focusLabel);
@@ -132,14 +136,14 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   const handleComplete = () => {
     if (gratitudeText.trim()) {
-      // FIX: Ensure focusArea is a FocusArea object or string
+      // FIXED: Use helper function to extract string from FocusArea
       const focusAreaValue = config.focusAreas?.[0] || 'General';
       
       const log: GratitudeLog = {
         id: `log-${Date.now()}`,
         date: new Date().toISOString(),
         sessionType: config.type,
-        focusArea: focusAreaValue,
+        focusArea: getFocusAreaLabel(focusAreaValue as FocusArea) || 'General',
         text: gratitudeText,
       };
       onComplete(log);
@@ -178,7 +182,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const restartMusic = () => {
     stopAmbience();
     setTimeout(() => {
-      startAmbience(soundscape);
+      // FIXED: Removed settings reference
+      startAmbience(soundscape, 50);
       updateVolume(volume);
     }, 100);
   };

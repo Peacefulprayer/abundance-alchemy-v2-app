@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Music, Loader, PlayCircle } from 'lucide-react';
 import { PracticeType, Soundscape, PracticeSessionConfig } from '../types';
 import { apiService } from '../services/apiService';
-import { audioManager } from '../services/audioService';
+import { audioManager } from '../services/audioManager';
 import { buttonSoundService } from '../services/buttonSoundService';
 
 interface MeditationSetupProps {
