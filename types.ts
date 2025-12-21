@@ -1,8 +1,6 @@
 // src/types.ts
-
 export type ThemeMode = 'light' | 'dark';
 
-// Focus can be either a simple string (legacy) OR an object (new Swahili-ready)
 export type FocusArea =
   | string
   | {
@@ -14,8 +12,11 @@ export type FocusArea =
       icon?: string;
     };
 
+// src/types.ts
+
 export enum AppMode {
   SPLASH = 'SPLASH',
+  WELCOME = 'WELCOME', // NEW
   AUTH = 'AUTH',
   ONBOARDING = 'ONBOARDING',
   TUTORIAL = 'TUTORIAL',
@@ -25,57 +26,53 @@ export enum AppMode {
   LIBRARY = 'LIBRARY',
   STATS = 'STATS',
   MEDITATION_SETUP = 'MEDITATION_SETUP',
-  PROFILE = 'PROFILE'
+  PROFILE = 'PROFILE',
 }
 
 export enum PracticeType {
   MORNING_IAM = 'MORNING_IAM',
   EVENING_ILOVE = 'EVENING_ILOVE',
   GRATITUDE = 'GRATITUDE',
-  MEDITATION = 'MEDITATION'
+  MEDITATION = 'MEDITATION',
 }
 
 export enum CycleType {
   DAILY = 'DAILY',
   WEEKLY = 'WEEKLY',
-  MONTHLY = 'MONTHLY'  // ADDED
+  MONTHLY = 'MONTHLY',
 }
 
-export type ReminderMode = 'INTERVAL' | 'SPECIFIC' | 'SPECIFIC_TIMES';  // ADDED SPECIFIC_TIMES
+export type ReminderMode = 'INTERVAL' | 'SPECIFIC_TIMES';
 
 export interface RemindersSettings {
   enabled: boolean;
   mode: ReminderMode;
   intervalMinutes: number;
-  specificTimes: string[]; // ["08:00","20:00"]
+  specificTimes: string[]; // e.g. ['08:00','20:00']
 }
 
 export interface AppSettings {
   theme: ThemeMode;
   soundEffectsOn: boolean;
   musicOn: boolean;
-
   // Soundscape IDs for different practice types
-  soundscapeId: string;  // CHANGED: Made required (removed ?)
-  iAmSoundscapeId: string;  // ADDED
-  iLoveSoundscapeId: string;  // ADDED
-  meditationSoundscapeId: string;  // ADDED
-  
+  soundscapeId: string;
+  iAmSoundscapeId: string;
+  iLoveSoundscapeId: string;
+  meditationSoundscapeId: string;
   ambienceVolume: number; // 0–100
   voiceId: string;
-
   reminders: RemindersSettings;
 }
 
 export interface UserAccount {
-  email: string;
-  // keep optional because some flows store just email/token
+  email?: string; // keep optional because some flows store just email/token
   password?: string;
   name?: string;
 }
 
 export interface Soundscape {
-  id: string | number; // normalize in components as String(id)
+  id: string; // normalize in components as String(id)
   label: string;
   category?: string;
   url?: string; // if you have real URLs
@@ -99,25 +96,17 @@ export interface GratitudeLog {
 }
 
 export interface UserProfile {
-  name: string;
-
-  // keep optional; your onboarding currently sets it
+  name: string; // keep optional? your onboarding currently sets it
   preferredName?: string;
-
+  email?: string;
   focusAreas: FocusArea[];
-
-  cyclePreference: CycleType;  // CHANGED: from cycleType to cyclePreference
-
+  cyclePreference: CycleType; // CHANGED from cycleType to cyclePreference
   streak: number;
   level: number;
   affirmationsCompleted: number;
   lastPracticeDate: string | null;
-
   customAffirmations: Affirmation[];
   gratitudeLogs: GratitudeLog[];
-
-  // optional fields some code tries to read
-  email?: string;
 }
 
 export interface PracticeSessionConfig {
@@ -127,7 +116,7 @@ export interface PracticeSessionConfig {
   soundscape?: Soundscape | string; // allow legacy string id or object
 }
 
-// ADDED: LibraryProps interface for Library component
+// LibraryProps interface for Library component
 export interface LibraryProps {
   affirmations?: Affirmation[];
   customAffirmations?: Affirmation[];

@@ -10,7 +10,9 @@ let musicEnabled = true;
 // master volume 0..1
 let masterVolume = 0.5;
 
-// helpers
+// --- Web Audio state for synthetic pulse ---
+let audioContext: AudioContext | null = null;
+
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 function resolveUrl(input?: string | Soundscape): string | null {
@@ -90,7 +92,7 @@ export function startPracticeAudio(input?: string | Soundscape) {
   if (!url) return;
 
   stopPracticeAudio(false);
-  // You can decide whether practice pauses ambience; keeping your prior behavior:
+  // Practice pauses ambience; keeping your prior behavior:
   stopAmbience();
 
   practiceAudio = new Audio(url);
@@ -122,6 +124,7 @@ export function previewSoundscape(input?: string | Soundscape) {
   preview.play().catch(() => {});
 }
 
+// Completion bell (Om-style) using audio file
 export function playCompletionSound() {
   if (!effectsEnabled) return;
 
@@ -134,6 +137,55 @@ export function playCompletionSound() {
 // Some code expects playBell()
 export function playBell() {
   playCompletionSound();
+}
+
+// ---------- Synthetic deep pulse (Web Audio) ----------
+export function playClickPulse() {
+  // Respect sound effects setting
+  if (!effectsEnabled) return;
+
+  try {
+    // Lazily create shared AudioContext
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+
+    const ctx = audioContext;
+
+    // On some browsers, context must be resumed after a user gesture
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    // Deep, mystical thud ~ C3 (130.81 Hz)
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(130.81, ctx.currentTime);
+
+    // Start with modest gain scaled by masterVolume, then exponential decay
+    const now = ctx.currentTime;
+    const initialGain = 0.6 * masterVolume;
+
+    gain.gain.setValueAtTime(initialGain, now);
+    // Fast decay over ~0.1s
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, initialGain * 0.01), now + 0.1);
+
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + 0.12);
+
+    // Cleanup
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      gain.disconnect();
+    };
+  } catch {
+    // Fail silently; do not break UI if Web Audio is unavailable
+  }
 }
 
 // ---------- Compatibility aliases ----------
