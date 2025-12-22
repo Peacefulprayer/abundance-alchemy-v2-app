@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+// src/App.tsx
+import React, { useState, useEffect } from 'react';
+
 import {
   AppMode,
   UserProfile,
@@ -9,7 +11,7 @@ import {
   AppSettings,
   Soundscape,
   GratitudeLog,
-  CycleType // ADDED
+  CycleType
 } from './types';
 
 // Components
@@ -25,7 +27,6 @@ import { TutorialOverlay } from './components/TutorialOverlay';
 import { SplashScreen } from './components/SplashScreen';
 import { MeditationSetup } from './components/MeditationSetup';
 import { PreSplash } from './components/PreSplash';
-// other imports...
 import { WelcomeScreen } from './components/WelcomeScreen';
 
 // Services
@@ -79,14 +80,17 @@ export const App: React.FC = () => {
 
   const [userAudioFile, setUserAudioFile] = useState<File | null>(null);
   const [tempRegName, setTempRegName] = useState('');
-  const [availableSoundscapes, setAvailableSoundscapes] = useState<Soundscape[]>(DEFAULT_SOUNDSCAPES);
+  const [availableSoundscapes, setAvailableSoundscapes] =
+    useState<Soundscape[]>(DEFAULT_SOUNDSCAPES);
 
   // --- Effects ---
 
   // 1. Sync Audio Settings
-  useEffect(() => {
-    setAudioSettings(settings.soundEffectsOn, settings.musicOn);
-  }, [settings]);
+
+useEffect(() => {
+  setAudioSettings(settings.soundEffectsOn, settings.musicOn);
+}, [settings.soundEffectsOn, settings.musicOn]);
+
 
   // 2. Load Remote Soundscapes
   useEffect(() => {
@@ -100,10 +104,7 @@ export const App: React.FC = () => {
       });
   }, []);
 
-  // ✅ 3. IMPORTANT: Removed global click-to-bell behavior.
-  // This was causing sound on every click/tap and breaks the sacred “intentional sound” UX.
-
-  // 4. Load Persisted Data
+  // 3. Load Persisted Data
   useEffect(() => {
     const loadAppData = async () => {
       try {
@@ -120,13 +121,15 @@ export const App: React.FC = () => {
         }
 
         if (savedUser) {
-          const u = JSON.parse(savedUser);
+          const u: UserProfile = JSON.parse(savedUser);
           if (!u.gratitudeLogs) u.gratitudeLogs = [];
           setUser(u);
 
           if (u.email) {
             apiService.getUserAffirmations(u.email).then((affs) => {
-              if (affs.length > 0) setUser((prev) => (prev ? { ...prev, customAffirmations: affs } : null));
+              if (affs.length > 0) {
+                setUser((prev) => (prev ? { ...prev, customAffirmations: affs } : null));
+              }
             });
           }
         }
@@ -136,30 +139,27 @@ export const App: React.FC = () => {
         setIsLoading(false);
       }
     };
+
     loadAppData();
   }, []);
 
-  // 5. PreSplash Transition Logic
+  // 4. PreSplash Transition Logic
   const handlePreSplashContinue = () => {
     setHasInteracted(true);
-    // Start Ambience immediately
     startAmbience(settings.soundscapeId, settings.ambienceVolume);
-    // Go to Splash to run the timer
     setMode(AppMode.SPLASH);
   };
 
-
-
   // --- Handlers: Auth ---
-
   const handleRegister = (account: UserAccount) => {
-    setTempRegName(account.name);
-    // Create temp profile
+    const name = account.name || '';
+    setTempRegName(name);
+
     const newProfile: UserProfile = {
-      name: account.name,
+      name,
       email: account.email,
       focusAreas: [],
-      cyclePreference: CycleType.DAILY, // FIXED: Use enum
+      cyclePreference: CycleType.DAILY,
       streak: 0,
       lastPracticeDate: null,
       affirmationsCompleted: 0,
@@ -167,20 +167,20 @@ export const App: React.FC = () => {
       customAffirmations: [],
       gratitudeLogs: []
     };
+
     setUser(newProfile);
+    localStorage.setItem('abundance_user', JSON.stringify(newProfile));
     setMode(AppMode.ONBOARDING);
   };
 
   const handleLogin = (account: UserAccount) => {
     const savedUser = localStorage.getItem('abundance_user');
     if (savedUser) {
-      const u = JSON.parse(savedUser);
+      const u: UserProfile = JSON.parse(savedUser);
       setUser(u);
       setMode(AppMode.DASHBOARD);
-      // Ensure ambience is playing
       startAmbience(settings.soundscapeId, settings.ambienceVolume);
     } else {
-      // Fallback
       handleRegister(account);
     }
   };
@@ -194,17 +194,16 @@ export const App: React.FC = () => {
   };
 
   // --- Handlers: Practice & Sessions ---
-
   const startPractice = (type: PracticeType, duration: number) => {
-    stopAmbience(); // Quiet the lobby music
-    setActiveSession({ type, duration }); // FIXED: Removed 'theme' property
+    stopAmbience();
+    const config: PracticeSessionConfig = { type, duration };
+    setActiveSession(config);
     setMode(AppMode.PRACTICE);
   };
 
   const handleMeditationBegin = (config: PracticeSessionConfig) => {
     stopAmbience();
 
-    // FIXED: Handle both string and Soundscape object, only 1 parameter
     if (config.soundscape) {
       const url = typeof config.soundscape === 'string' ? config.soundscape : config.soundscape.url;
       if (url) {
@@ -218,22 +217,21 @@ export const App: React.FC = () => {
 
   const handleSessionComplete = (newLog?: GratitudeLog) => {
     if (user) {
-      const updatedUser = {
+      const updatedUser: UserProfile = {
         ...user,
         affirmationsCompleted: user.affirmationsCompleted + 1,
         streak: user.streak + 1,
         lastPracticeDate: new Date().toISOString(),
         gratitudeLogs: newLog ? [...user.gratitudeLogs, newLog] : user.gratitudeLogs
       };
+
       setUser(updatedUser);
       localStorage.setItem('abundance_user', JSON.stringify(updatedUser));
       apiService.syncProgress(updatedUser);
     }
 
-    // Stop session audio, Resume lobby ambience
     stopSessionAudio();
     startAmbience(settings.soundscapeId, settings.ambienceVolume);
-
     setMode(AppMode.DASHBOARD);
     setActiveSession(null);
   };
@@ -246,13 +244,13 @@ export const App: React.FC = () => {
   };
 
   // --- Handlers: Data ---
-
   const addAffirmation = async (text: string, type: PracticeType) => {
     if (!user) return;
+
     const auth = JSON.parse(localStorage.getItem('abundance_auth') || '{}');
     const email = auth.email || 'guest';
-    const newId = await apiService.addUserAffirmation(email, text, type);
 
+    const newId = await apiService.addUserAffirmation(email, text, type);
     if (newId) {
       const newAff: Affirmation = {
         id: newId,
@@ -262,7 +260,12 @@ export const App: React.FC = () => {
         type,
         dateAdded: new Date().toISOString()
       };
-      const updatedUser = { ...user, customAffirmations: [...user.customAffirmations, newAff] };
+
+      const updatedUser: UserProfile = {
+        ...user,
+        customAffirmations: [...user.customAffirmations, newAff]
+      };
+
       setUser(updatedUser);
       localStorage.setItem('abundance_user', JSON.stringify(updatedUser));
     }
@@ -270,9 +273,14 @@ export const App: React.FC = () => {
 
   const removeAffirmation = async (id: string) => {
     if (!user) return;
+
     const success = await apiService.removeUserAffirmation(id);
     if (success) {
-      const updatedUser = { ...user, customAffirmations: user.customAffirmations.filter((a) => a.id !== id) };
+      const updatedUser: UserProfile = {
+        ...user,
+        customAffirmations: user.customAffirmations.filter((a) => a.id !== id)
+      };
+
       setUser(updatedUser);
       localStorage.setItem('abundance_user', JSON.stringify(updatedUser));
     }
@@ -282,14 +290,20 @@ export const App: React.FC = () => {
     setSettings(newSettings);
     localStorage.setItem('abundance_settings', JSON.stringify(newSettings));
 
-    // Live update audio if needed
-    if (newSettings.soundscapeId !== settings.soundscapeId || newSettings.ambienceVolume !== settings.ambienceVolume) {
+    if (
+      newSettings.soundscapeId !== settings.soundscapeId ||
+      newSettings.ambienceVolume !== settings.ambienceVolume
+    ) {
       startAmbience(newSettings.soundscapeId, newSettings.ambienceVolume);
     }
   };
 
+  const handleSettingsAudioUpload = (file: File, _category: string) => {
+    setUserAudioFile(file);
+  };
+
   const handleOnboardingComplete = (profile: UserProfile) => {
-    const initialProfile = { ...profile, customAffirmations: [], gratitudeLogs: [] };
+    const initialProfile: UserProfile = { ...profile, customAffirmations: [], gratitudeLogs: [] };
     setUser(initialProfile);
     localStorage.setItem('abundance_user', JSON.stringify(initialProfile));
     setMode(AppMode.TUTORIAL);
@@ -299,58 +313,59 @@ export const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="w-full h-[100dvh] flex items-center justify-center bg-black">
-        <div className="w-12 h-12 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-200">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400/40 via-cyan-400/30 to-indigo-500/40 animate-pulse shadow-[0_0_40px_rgba(16,185,129,0.45)] mx-auto" />
+          <p className="text-sm text-slate-400 tracking-wide uppercase">
+            Preparing your sacred space...
+          </p>
+        </div>
       </div>
     );
   }
 
-  // 1. PreSplash (Gatekeeper)
   if (!hasInteracted) {
     return <PreSplash onContinue={handlePreSplashContinue} theme={settings.theme} />;
   }
 
   const currentSoundscapeObj =
-    availableSoundscapes.find((s) => s.id === settings.soundscapeId) || DEFAULT_SOUNDSCAPES[0];
+    availableSoundscapes.find((s) => String(s.id) === String(settings.soundscapeId)) ||
+    DEFAULT_SOUNDSCAPES[0];
 
   const renderContent = () => {
-  switch (mode) {
-    case AppMode.SPLASH:
-      return (
-        <SplashScreen
-          onComplete={() => {
-            // OLD:
-            // setMode(AppMode.AUTH);
-
-            // NEW: go to Welcome instead of AUTH
-            setMode(AppMode.WELCOME);
-          }}
-        />
-      );
-
-    case AppMode.WELCOME:
-      return (
-        <WelcomeScreen
-          user={user}
-          onComplete={(nextMode) => setMode(nextMode)}
-        />
-      );
-
-    // ...all your existing other cases remain unchanged
-
-case AppMode.AUTH:
-  return (
-    <Auth
-      onRegister={handleRegister}
-      onLogin={handleLogin}
-      onBack={() => setMode(AppMode.SPLASH)}
-      theme={settings.theme}
-    />
-  );
-
+    switch (mode) {
+      case AppMode.SPLASH:
+        return (
+          <SplashScreen
+            onComplete={() => {
+              setMode(AppMode.WELCOME);
+            }}
+          />
+        );
+      case AppMode.WELCOME:
+        return (
+          <WelcomeScreen
+            user={user}
+            onComplete={(nextMode) => {
+              setMode(nextMode);
+            }}
+          />
+        );
+      case AppMode.AUTH:
+        return (
+          <Auth
+            onLogin={handleLogin}
+            onRegister={handleRegister}
+            theme={settings.theme}
+          />
+        );
       case AppMode.ONBOARDING:
-        return <Onboarding onComplete={handleOnboardingComplete} initialName={tempRegName} />;
-
+        return (
+          <Onboarding
+            onComplete={handleOnboardingComplete}
+            initialName={tempRegName || user?.name}
+          />
+        );
       case AppMode.TUTORIAL:
         return (
           <TutorialOverlay
@@ -359,7 +374,6 @@ case AppMode.AUTH:
             theme={settings.theme}
           />
         );
-
       case AppMode.SETTINGS:
         return (
           <Settings
@@ -369,13 +383,12 @@ case AppMode.AUTH:
             onBack={() => setMode(AppMode.DASHBOARD)}
             onSignOut={handleSignOut}
             onReplayTutorial={() => setMode(AppMode.TUTORIAL)}
-            onAudioUpload={setUserAudioFile}
+            onAudioUpload={handleSettingsAudioUpload}
             theme={settings.theme}
             userAudioFile={userAudioFile}
             availableSoundscapes={availableSoundscapes}
           />
         );
-
       case AppMode.DASHBOARD:
         return user ? (
           <Dashboard
@@ -385,11 +398,10 @@ case AppMode.AUTH:
             onOpenSettings={() => setMode(AppMode.SETTINGS)}
             onSignOut={handleSignOut}
             theme={settings.theme}
-            userAudioFile={userAudioFile}
+            userAudioFile={userAudioFile || undefined}
             activeSoundscape={currentSoundscapeObj}
           />
         ) : null;
-
       case AppMode.MEDITATION_SETUP:
         return (
           <MeditationSetup
@@ -399,23 +411,20 @@ case AppMode.AUTH:
             availableSoundscapes={availableSoundscapes}
           />
         );
-
       case AppMode.PRACTICE:
         return activeSession && user ? (
           <PracticeSession
-            config={{ ...activeSession, focusAreas: user.focusAreas }}
+            config={activeSession}
             customAffirmations={user.customAffirmations}
             onComplete={handleSessionComplete}
             onExit={handleSessionExit}
-            userAudioFile={userAudioFile}
+            userAudioFile={userAudioFile || undefined}
             theme={settings.theme}
             soundscape={currentSoundscapeObj}
           />
         ) : null;
-
       case AppMode.PROFILE:
         return user ? <Stats user={user} /> : null;
-
       case AppMode.LIBRARY:
         return user ? (
           <Library
@@ -426,96 +435,106 @@ case AppMode.AUTH:
             onAudioUpload={setUserAudioFile}
             userAudioFile={userAudioFile}
             theme={settings.theme}
+            soundscapes={availableSoundscapes}
+            activeSoundscapeId={String(settings.soundscapeId)}
           />
         ) : null;
-
       default:
         return null;
     }
   };
 
-  // Nav Logic
   const hideNav = [
     AppMode.SPLASH,
     AppMode.ONBOARDING,
     AppMode.AUTH,
     AppMode.PRACTICE,
     AppMode.TUTORIAL,
-    AppMode.MEDITATION_SETUP
+    AppMode.MEDITATION_SETUP,
+    AppMode.WELCOME
   ].includes(mode);
 
   const getNavClass = (targetMode: AppMode) => {
     const isActive = mode === targetMode;
+
     if (settings.theme === 'light') {
       return isActive ? 'text-amber-600' : 'text-slate-400 hover:text-slate-600';
     }
+
     return isActive ? 'text-amber-400' : 'text-slate-500 hover:text-slate-300';
   };
 
   return (
-    <div
-      className={`h-[100dvh] w-screen flex flex-col overflow-hidden font-sans ${
-        settings.theme === 'light' ? 'text-slate-900' : 'text-slate-100'
-      }`}
+    <Layout
+      theme={settings.theme}
+      mode={mode}
+      practiceType={activeSession?.type}
     >
-      <Layout mode={mode} practiceType={activeSession?.type} theme={settings.theme}>
-        <main className="h-full flex flex-col relative overflow-hidden">
-          <div className="flex-1 relative z-10 h-full overflow-hidden">{renderContent()}</div>
+      <div className="flex-1">{renderContent()}</div>
 
-          {!hideNav && (
-            <nav
-              className={`h-20 backdrop-blur-md border-t absolute bottom-0 w-full z-50 ${
-                settings.theme === 'light'
-                  ? 'bg-white/80 border-slate-200'
-                  : 'bg-slate-900/60 border-slate-700/50'
-              }`}
-            >
-              <div className="flex justify-around items-center h-full max-w-md mx-auto px-4 pb-4">
+      {!hideNav && (
+        <nav className="fixed bottom-0 left-0 right-0 z-30">
+          <div className="mx-auto max-w-md pb-4 px-4">
+            <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/60 rounded-3xl shadow-[0_18px_60px_rgba(15,23,42,0.9)]">
+              <div className="grid grid-cols-5 gap-1 py-2 px-3 text-[10px] font-semibold tracking-[0.16em] uppercase">
+                {/* Home */}
                 <button
                   onClick={() => setMode(AppMode.DASHBOARD)}
-                  className={`flex flex-col items-center space-y-1 transition-colors ${getNavClass(AppMode.DASHBOARD)}`}
+                  className={`flex flex-col items-center space-y-1 transition-colors ${getNavClass(
+                    AppMode.DASHBOARD
+                  )}`}
                 >
-                  <Home size={24} />
-                  <span className="text-[10px] font-bold tracking-widest">HOME</span>
+                  <Home className="w-4 h-4" />
+                  <span>HOME</span>
                 </button>
 
+                {/* Library */}
                 <button
                   onClick={() => setMode(AppMode.LIBRARY)}
-                  className={`flex flex-col items-center space-y-1 transition-colors ${getNavClass(AppMode.LIBRARY)}`}
+                  className={`flex flex-col items-center space-y-1 transition-colors ${getNavClass(
+                    AppMode.LIBRARY
+                  )}`}
                 >
-                  <BookOpen size={24} />
-                  <span className="text-[10px] font-bold tracking-widest">MAKTABA</span>
+                  <BookOpen className="w-4 h-4" />
+                  <span>MAKTABA</span>
                 </button>
 
-                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-600 to-amber-500 p-[1px] shadow-lg shadow-purple-900/50 -mt-8 mx-2 transform hover:scale-105 transition-transform">
-                  <button
-                    onClick={() => startPractice(PracticeType.MORNING_IAM, 1)}
-                    className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-slate-800 transition-colors"
-                  >
-                    <Sparkles size={20} />
-                  </button>
-                </div>
+                {/* Center Sacred Button */}
+                <button
+                  onClick={() => startPractice(PracticeType.MORNING_IAM, 1)}
+                  className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-white hover:bg-slate-800 transition-colors"
+                >
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 via-cyan-400 to-indigo-500 shadow-[0_0_40px_rgba(34,197,94,0.7)] flex items-center justify-center">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                </button>
 
+                {/* Stats / Journey */}
                 <button
                   onClick={() => setMode(AppMode.PROFILE)}
-                  className={`flex flex-col items-center space-y-1 transition-colors ${getNavClass(AppMode.PROFILE)}`}
+                  className={`flex flex-col items-center space-y-1 transition-colors ${getNavClass(
+                    AppMode.PROFILE
+                  )}`}
                 >
-                  <BarChart2 size={24} />
-                  <span className="text-[10px] font-bold tracking-widest">JOURNEY</span>
+                  <BarChart2 className="w-4 h-4" />
+                  <span>JOURNEY</span>
                 </button>
 
+                {/* Settings */}
                 <button
                   onClick={() => setMode(AppMode.SETTINGS)}
-                  className={`flex flex-col items-center space-y-1 transition-colors ${getNavClass(AppMode.SETTINGS)}`}
+                  className={`flex flex-col items-center space-y-1 transition-colors ${getNavClass(
+                    AppMode.SETTINGS
+                  )}`}
                 >
-                  <SettingsNavIcon size={24} />
-                  <span className="text-[10px] font-bold tracking-widest">SETTINGS</span>
+                  <SettingsNavIcon className="w-4 h-4" />
+                  <span>SETTINGS</span>
                 </button>
               </div>
-            </nav>
-          )}
-        </main>
-      </Layout>
-    </div>
+            </div>
+          </div>
+        </nav>
+      )}
+    </Layout>
   );
 };

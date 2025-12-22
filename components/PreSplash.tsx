@@ -1,7 +1,9 @@
-// components/PreSplash.tsx
+// src/components/PreSplash.tsx
+
 import React from 'react';
 import { Sparkles } from 'lucide-react';
-import { playClickPulse } from '../services/audioService';
+import { buttonSoundService } from '../services/buttonSoundService';
+import { AlchemistAvatar } from './AlchemistAvatar';
 
 interface PreSplashProps {
   onContinue: () => void;
@@ -12,116 +14,92 @@ export const PreSplash: React.FC<PreSplashProps> = ({
   onContinue,
   theme = 'dark',
 }) => {
-  const titleColor = theme === 'light' ? 'text-amber-500' : 'text-orange-400';
-  const subTextColor = theme === 'light' ? 'text-yellow-600' : 'text-yellow-300';
+  const titleColor =
+    theme === 'light' ? 'text-amber-500' : 'text-orange-400';
+  const subTextColor =
+    theme === 'light' ? 'text-yellow-600' : 'text-yellow-300';
 
   const handleContinue = () => {
-    playClickPulse();
+    buttonSoundService.playClick();
     onContinue();
   };
 
   return (
-    <div className="h-full w-full flex flex-col items-center justify-center p-8 relative overflow-hidden animate-in fade-in duration-1000">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-slate-100 px-6">
       {/* Background gradient layer to delineate container */}
-      <div className="absolute inset-0 bg-gradient-to-b from-amber-900/40 via-slate-950/90 to-black" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-950 to-black" />
 
       {/* Soft ambience glows */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-8 left-10 w-40 h-40 bg-amber-500/15 rounded-full blur-3xl" />
-        <div
-          className="absolute bottom-10 right-8 w-48 h-48 bg-purple-600/18 rounded-full blur-3xl"
-          style={{ animationDelay: '1s' }}
-        />
-      </div>
+      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl" />
+      <div className="absolute bottom-0 right-0 w-72 h-72 rounded-full bg-indigo-500/10 blur-3xl" />
 
-      <div className="relative z-10 flex flex-col items-center text-center max-w-sm">
-        {/* Breathing circle (soft glowing animation) */}
-        <div className="mt-6 mb-10 relative">
-          {/* Outer glow that gently pulses behind the disc, tuned for smoother fade */}
-          <div className="absolute inset-0 rounded-full bg-purple-500/18 blur-[30px] animate-pulse" />
+      <div className="relative z-10 max-w-md w-full pb-10">
+        {/* Logo with 80% opacity so it emerges from the dark */}
+        <div className="flex flex-col items-center mb-10">
+          <div className="mb-4 opacity-80">
+            <img
+              src="/logo.png"
+              alt="Abundance Alchemy"
+              className="h-10 w-auto drop-shadow-lg"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
 
-          {/* Inner ring with slow breathing effect and slightly smaller circle for better edge fade on large screens */}
-          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-purple-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-[0_0_26px_rgba(168,85,247,0.7)] animate-[pulse_3s_ease-in-out_infinite]">
-            <div
-              className="relative rounded-full border border-purple-200/30 bg-slate-900/95"
-              style={{ width: '5.8rem', height: '5.8rem' }}
-            >
-              {/* Subtle mystical specks (small and few) */}
-              <span className="absolute w-[2px] h-[2px] rounded-full bg-amber-300/80 top-3 left-6" />
-              <span className="absolute w-[2px] h-[2px] rounded-full bg-purple-300/80 bottom-4 right-5" />
-              <span className="absolute w-[2px] h-[2px] rounded-full bg-indigo-300/80 top-1/2 left-1/3" />
+          {/* Black-moon style orb: smaller, dark center with halo */}
+          <div className="scale-90 relative">
+            {/* Soft outer halo behind orb */}
+            <div className="absolute inset-0 rounded-full bg-amber-400/15 blur-3xl" />
+            {/* Orb itself */}
+            <div className="relative">
+              <AlchemistAvatar
+                size="sm"
+                mood="active"
+                speaking={false}
+                progress={0}
+              />
+              {/* Darken core to feel like a black moon */}
+              <div className="absolute inset-[20%] rounded-full bg-black/70" />
             </div>
           </div>
         </div>
 
-        {/* Logo with 80% opacity so it emerges from the dark */}
-        <div
-          className="relative group cursor-pointer mb-8"
-          onClick={handleContinue}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-purple-600 rounded-full blur opacity-25 group-hover:opacity-50 transition-opacity duration-500" />
-          <img
-            src="https://abundantthought.com/abundance-alchemy/logo.png"
-            alt="Abundant Thought"
-            className="h-20 w-auto relative z-10 drop-shadow-2xl transform transition-transform duration-700 group-hover:scale-105 opacity-80"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = 'none';
-            }}
-          />
-        </div>
-
-        {/* Copy with updated styling and audio guidance emphasis */}
-        <div className="space-y-2 mb-9">
+        {/* Copy with audio guidance emphasis */}
+        <div className="space-y-4 text-center">
           <h1
-            className={`text-2xl font-serif font-bold ${titleColor} tracking-tight mb-3`}
+            className={`text-xl font-serif font-bold ${titleColor}`}
           >
             Abundance Alchemy
           </h1>
 
-          <p className="text-sm text-slate-300 leading-relaxed max-w-xs mx-auto">
-            With Great Love, Welcome.
-          </p>
-          <p className="text-sm text-slate-300 leading-relaxed max-w-xs mx-auto">
-            We Are Honored, Standing Here With You
-          </p>
-          <p className="text-sm text-slate-300 leading-relaxed max-w-xs mx-auto">
-            As You Learn To Embrace The Power
-          </p>
-          <p className="text-sm text-slate-300 leading-relaxed max-w-xs mx-auto">
-            Of Your I Am Consciousness.
-          </p>
+          <div className="text-sm text-slate-300 leading-relaxed max-w-xs mx-auto">
+            <p>With Great Love, Welcome.</p>
+            <p>We Are Honored, Standing Here With You</p>
+            <p>As You Learn To Embrace The Power</p>
+            <p>Of Your I Am Consciousness.</p>
+          </div>
 
-          <p
-            className={`text-[15px] ${subTextColor} leading-relaxed max-w-xs mx-auto pt-3`}
+          <div
+            className={`text-xs ${subTextColor} leading-relaxed max-w-xs mx-auto mt-4 space-y-1`}
           >
-            Audio Enabled.
-          </p>
-          <p
-            className={`text-[15px] ${subTextColor} leading-relaxed max-w-xs mx-auto`}
-          >
-            Headphones Suggested.
-          </p>
-          <p
-            className={`text-[15px] ${subTextColor} leading-relaxed max-w-xs mx-auto`}
-          >
-            When Ready Click Next:
-          </p>
+            <p>Audio Enabled.</p>
+            <p>Headphones Suggested.</p>
+            <p>When Ready Click Next:</p>
+          </div>
         </div>
 
         {/* Primary Next button */}
-        <button
-          onClick={handleContinue}
-          className="group relative px-8 py-3 bg-transparent overflow-hidden rounded-full transition-all hover:scale-105 active:scale-95 mb-6"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-600 to-purple-600 opacity-20 group-hover:opacity-30 transition-opacity" />
-          <div className="absolute inset-0 border border-white/20 rounded-full" />
-          <div className="relative flex items-center space-x-2 justify-center">
-            <span className="text-sm font-bold uppercase tracking-[0.2em] text-slate-50">
-              Next
-            </span>
-            <Sparkles size={16} className="text-amber-300 animate-pulse" />
-          </div>
-        </button>
+        <div className="mt-8 flex justify-center">
+          <button
+            type="button"
+            onClick={handleContinue}
+            className="inline-flex items-center space-x-2 px-8 py-3 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-sm font-semibold tracking-[0.2em] uppercase text-slate-950 shadow-[0_18px_40px_rgba(249,115,22,0.55)] hover:brightness-110 transition-all"
+          >
+            <span>Next</span>
+            <Sparkles className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

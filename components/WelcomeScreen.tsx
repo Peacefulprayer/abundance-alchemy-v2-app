@@ -1,4 +1,5 @@
 // src/components/WelcomeScreen.tsx
+
 import React, { useEffect, useState } from 'react';
 import { AppMode, UserProfile } from '../types';
 import { AlchemistAvatar } from './AlchemistAvatar';
@@ -10,29 +11,40 @@ interface WelcomeScreenProps {
 
 const WELCOME_URL =
   'https://abundantthought.com/abundance-alchemy/assets/audio/voices/welcome.mp3';
-
 const WELCOME_DURATION_MS = 34000; // 34 seconds
+const TRANSITION_DELAY_MS = 500; // breath after audio ends
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
-  user,
-  onComplete,
-}) => {
+export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ user, onComplete }) => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const audio = new Audio(WELCOME_URL);
     let isCancelled = false;
+    const nextMode = user ? AppMode.DASHBOARD : AppMode.AUTH;
+    let transitionTimeout: number | undefined;
+
+    const completeOnce = () => {
+      if (isCancelled) return;
+      isCancelled = true;
+      onComplete(nextMode);
+    };
+
+    const scheduleTransition = () => {
+      if (isCancelled) return;
+      // small breath after audio completes / safety timeout
+      transitionTimeout = window.setTimeout(() => {
+        completeOnce();
+      }, TRANSITION_DELAY_MS);
+    };
 
     const handleEnded = () => {
-      if (isCancelled) return;
-      const nextMode = user ? AppMode.DASHBOARD : AppMode.AUTH;
-      onComplete(nextMode);
+      scheduleTransition();
     };
 
     audio.addEventListener('ended', handleEnded);
 
     // Small visual pause before starting audio
-    const startTimeout = setTimeout(() => {
+    const startTimeout = window.setTimeout(() => {
       if (isCancelled) return;
       audio
         .play()
@@ -48,11 +60,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       const elapsed = now - start;
       const pct = Math.min(100, (elapsed / WELCOME_DURATION_MS) * 100);
       setProgress(pct);
+
       if (elapsed < WELCOME_DURATION_MS) {
         requestAnimationFrame(tick);
       } else {
-        // Safety: if audio hasn't fired 'ended' yet, trigger completion
-        handleEnded();
+        // Safety: if audio never fired 'ended', still schedule transition
+        scheduleTransition();
       }
     };
 
@@ -60,6 +73,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
     return () => {
       isCancelled = true;
+      if (transitionTimeout) {
+        clearTimeout(transitionTimeout);
+      }
       clearTimeout(startTimeout);
       audio.pause();
       audio.removeEventListener('ended', handleEnded);
@@ -73,65 +89,70 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   return (
-    <div className="h-full w-full flex flex-col items-center justify-center relative overflow-hidden bg-black">
+    <div className="relative min-h-screen flex items-stretch justify-center bg-slate-950 text-slate-100">
       {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
           backgroundImage:
-            "url('https://abundantthought.com/abundance-alchemy/assets/images/backgrounds/splash.jpg')",
+            'url(https://abundantthought.com/abundance-alchemy/assets/images/backgrounds/splash.jpg)'
         }}
       />
-
       {/* Dark overlay for readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-black/95" />
+      <div className="absolute inset-0 bg-slate-950/80" />
 
-      <div className="relative z-10 flex flex-col items-center justify-between h-full max-w-sm w-full px-8 py-10">
-        {/* Top breathing circle + avatar */}
-        <div className="flex flex-col items-center">
-          <div className="mb-8 mt-6 relative">
-            <div className="absolute inset-0 rounded-full bg-purple-500/20 blur-3xl animate-pulse" />
-            <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-purple-500 via-indigo-500 to-amber-400 flex items-center justify-center shadow-[0_0_26px_rgba(168,85,247,0.7)] animate-[pulse_3s_ease-in-out_infinite]">
-              <div className="w-20 h-20 rounded-full bg-slate-900/95 border border-purple-200/30" />
+      {/* Content */}
+      <div className="relative z-10 flex flex-col min-h-screen max-w-md mx-auto px-6 py-10">
+        {/* Top: breathing circle + avatar + title */}
+        <div className="flex-1 flex flex-col items-center">
+          {/* Breathing circle motif */}
+          <div className="relative mb-6">
+            <div className="w-32 h-32 rounded-full bg-slate-950/80 backdrop-blur-xl border border-emerald-300/10 shadow-[0_0_60px_rgba(16,185,129,0.45)] animate-pulse-slow flex items-center justify-center">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400/40 via-cyan-400/30 to-indigo-500/40 shadow-[0_0_40px_rgba(34,197,94,0.65)]" />
+            </div>
+            {/* Alchemist avatar overlaid slightly lower */}
+            <div className="absolute inset-0 flex items-center justify-center translate-y-10">
+              <AlchemistAvatar size="lg" mood="active" speaking={true} />
             </div>
           </div>
 
-          <AlchemistAvatar size="lg" mood="active" speaking={true} />
-
-          <h1 className="mt-6 text-2xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-purple-200 to-indigo-200 drop-shadow-lg text-center">
-            Abundance Alchemy
-          </h1>
-
-          <p className="mt-4 text-sm text-slate-300 leading-relaxed text-center max-w-xs">
-            We Are Honored To Welcome You.
-            <br />
-            Take a breath and allow this sacred introduction to hold you.
-          </p>
+          {/* Title and supporting text */}
+          <div className="mt-10 text-center space-y-2">
+            <h1 className="text-2xl font-semibold tracking-[0.18em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-amber-200 to-cyan-300">
+              Abundance Alchemy
+            </h1>
+            <p className="text-sm text-slate-300">
+              We Are Honored To Welcome You.
+            </p>
+            <p className="text-sm text-slate-300 max-w-xs mx-auto leading-relaxed">
+              Take a breath and allow this sacred introduction to hold you.
+            </p>
+          </div>
         </div>
 
         {/* Middle: praying / progress */}
-        <div className="w-full mt-10 mb-6">
-          <p className="text-xs tracking-[0.2em] text-slate-400 uppercase text-center mb-3">
+        <div className="mb-8 space-y-3">
+          <div className="text-[11px] tracking-[0.2em] uppercase text-slate-400 text-center">
             We Are Praying Now
-          </p>
-          <div className="w-full h-1.5 rounded-full bg-slate-800/80 overflow-hidden">
+          </div>
+          <div className="w-full h-2 rounded-full bg-slate-800/80 overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-amber-400 via-purple-400 to-indigo-400 transition-[width]"
+              className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-300 to-amber-300 transition-[width] duration-150 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
         {/* Bottom: skip intro pill */}
-        <div className="w-full flex flex-col items-center">
+        <div className="pb-4 space-y-3">
           <button
             type="button"
             onClick={handleSkip}
-            className="px-5 py-2 rounded-full backdrop-blur-md bg-slate-900/60 border border-slate-500/50 text-xs text-slate-200 hover:bg-slate-800/80 transition-colors shadow-lg shadow-black/40"
+            className="w-full inline-flex items-center justify-center rounded-full border border-slate-600/70 bg-slate-900/60 backdrop-blur-lg px-4 py-2 text-xs font-semibold tracking-[0.18em] uppercase text-slate-200 hover:border-emerald-400/70 hover:text-emerald-200 transition-colors"
           >
             Skip intro
           </button>
-          <p className="mt-3 text-[11px] text-slate-500 text-center max-w-xs">
+          <p className="text-[11px] text-slate-400 text-center leading-relaxed">
             You can listen fully, or skip now and begin your journey.
           </p>
         </div>

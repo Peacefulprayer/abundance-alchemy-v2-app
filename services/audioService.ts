@@ -10,7 +10,7 @@ let musicEnabled = true;
 // master volume 0..1
 let masterVolume = 0.5;
 
-// --- Web Audio state for synthetic pulse ---
+// --- Web Audio state for synthetic tones ---
 let audioContext: AudioContext | null = null;
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
@@ -19,14 +19,12 @@ function resolveUrl(input?: string | Soundscape): string | null {
   if (!input) return null;
   if (typeof input === 'string') return input;
 
-  // If you store actual URLs on soundscapes, prefer those
   if (input.url) return input.url;
 
-  // Fallback: treat id as a relative asset path if you use that convention
-  // Example: id === "RAIN" -> "/abundance-alchemy/assets/audio/ambience/RAIN.mp3"
-  // If you don't want this, just return null here.
   return null;
 }
+
+// ---------- Settings / volume ----------
 
 export function setAudioSettings(effectsOn: boolean, musicOn: boolean) {
   effectsEnabled = effectsOn;
@@ -53,6 +51,7 @@ export function updateVolume(volPercent: number) {
 }
 
 // ---------- Ambience ----------
+
 export function startAmbience(input?: string | Soundscape, volumePercent?: number) {
   if (!musicEnabled) return;
 
@@ -85,6 +84,7 @@ export function stopAmbience() {
 }
 
 // ---------- Practice Audio ----------
+
 export function startPracticeAudio(input?: string | Soundscape) {
   if (!musicEnabled) return;
 
@@ -92,7 +92,7 @@ export function startPracticeAudio(input?: string | Soundscape) {
   if (!url) return;
 
   stopPracticeAudio(false);
-  // Practice pauses ambience; keeping your prior behavior:
+  // Practice pauses ambience
   stopAmbience();
 
   practiceAudio = new Audio(url);
@@ -115,6 +115,7 @@ export function stopPracticeAudio(resumeAmbience = false, ambienceToResume?: str
 }
 
 // ---------- UI helpers ----------
+
 export function previewSoundscape(input?: string | Soundscape) {
   const url = resolveUrl(input);
   if (!url) return;
@@ -124,80 +125,117 @@ export function previewSoundscape(input?: string | Soundscape) {
   preview.play().catch(() => {});
 }
 
-// Completion bell (Om-style) using audio file
-export function playCompletionSound() {
+// ---------- Sacred tone (old playBell envelope) ----------
+
+function ensureAudioContext(): AudioContext | null {
+  try {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    if (audioContext.state === 'suspended') {
+      audioContext.resume().catch(() => {});
+    }
+    return audioContext;
+  } catch {
+    return null;
+  }
+}
+
+// Deep, slowly fading 110 Hz tone from old playBell
+function playBellTone() {
   if (!effectsEnabled) return;
 
-  // Use whichever path your project actually has:
-  const bell = new Audio('/abundance-alchemy/assets/audio/bell.mp3');
-  bell.volume = masterVolume;
-  bell.play().catch(() => {});
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+
+  const t = ctx.currentTime;
+
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(110, t);
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(0.05 * masterVolume, t + 0.1);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 4);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(t);
+  osc.stop(t + 4);
+
+  osc.onended = () => {
+    try {
+      osc.disconnect();
+      gain.disconnect();
+    } catch {
+      // ignore
+    }
+  };
+}
+
+// Public APIs using the bell tone
+
+export function playCompletionSound() {
+  playBellTone();
 }
 
 // Some code expects playBell()
 export function playBell() {
-  playCompletionSound();
+  playBellTone();
 }
 
-// ---------- Synthetic deep pulse (Web Audio) ----------
+// ---------- Shorter click pulse (optional) ----------
+
 export function playClickPulse() {
-  // Respect sound effects setting
   if (!effectsEnabled) return;
 
-  try {
-    // Lazily create shared AudioContext
-    if (!audioContext) {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
 
-    const ctx = audioContext;
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
 
-    // On some browsers, context must be resumed after a user gesture
-    if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
-    }
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(130.81, ctx.currentTime);
 
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
+  const now = ctx.currentTime;
+  const initialGain = 0.6 * masterVolume;
 
-    // Deep, mystical thud ~ C3 (130.81 Hz)
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(130.81, ctx.currentTime);
+  gain.gain.setValueAtTime(initialGain, now);
+  gain.gain.exponentialRampToValueAtTime(
+    Math.max(0.0001, initialGain * 0.01),
+    now + 0.1
+  );
 
-    // Start with modest gain scaled by masterVolume, then exponential decay
-    const now = ctx.currentTime;
-    const initialGain = 0.6 * masterVolume;
+  oscillator.connect(gain);
+  gain.connect(ctx.destination);
 
-    gain.gain.setValueAtTime(initialGain, now);
-    // Fast decay over ~0.1s
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, initialGain * 0.01), now + 0.1);
+  oscillator.start(now);
+  oscillator.stop(now + 0.12);
 
-    oscillator.connect(gain);
-    gain.connect(ctx.destination);
-
-    oscillator.start(now);
-    oscillator.stop(now + 0.12);
-
-    // Cleanup
-    oscillator.onended = () => {
+  oscillator.onended = () => {
+    try {
       oscillator.disconnect();
       gain.disconnect();
-    };
-  } catch {
-    // Fail silently; do not break UI if Web Audio is unavailable
-  }
+    } catch {
+      // ignore
+    }
+  };
 }
 
 // ---------- Compatibility aliases ----------
+
 export function stopAll() {
   stopPracticeAudio(false);
   stopAmbience();
 }
 
-// Some App.tsx versions referenced these names:
 export function startSessionAudio(input?: string | Soundscape) {
   startPracticeAudio(input);
 }
+
 export function stopSessionAudio(resumeAmbience = false, ambienceToResume?: string | Soundscape) {
   stopPracticeAudio(resumeAmbience, ambienceToResume);
 }
