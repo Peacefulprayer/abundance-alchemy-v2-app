@@ -1,16 +1,10 @@
-node_modules
-dist
-.env
+# macOS
 .DS_Store
-.env
-.env.*
-!.env.example
-.env.local
+._*
+.AppleDouble
+.LSOverride
 
-# Keys
-*.pem
-*.key
-id_rsa
-id_ed25519
-abundance-alchemy-key
-abundance-alchemy-key.pub
+# Node / build
+node_modules/
+dist/
+*.tsbuildinfo
