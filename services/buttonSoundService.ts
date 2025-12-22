@@ -1,23 +1,32 @@
 // src/services/buttonSoundService.ts
-import { playBell } from './audioService';
+// Centralized UI button sound API (single source of truth)
+//
+// Goal:
+// - Keep the same public surface used across the app (play, playClick, etc.)
+// - Route all button taps to the canonical short tap tone in audioService
+// - Preserve semantic variants ('click' | 'confirm' | 'back') for future tuning
 
-// Simple wrapper so the rest of the app can call buttonSoundService.play(...)
+import { playButtonTap } from './audioService';
 
-const playClick = () => playBell();
-const playConfirm = () => playBell();
-const playBack = () => playBell();
-const playToggle = () => playBell();
+export type ButtonSoundVariant = 'click' | 'confirm' | 'back';
+
+/**
+ * Canonical button tap sound across the app.
+ * Variants are currently mapped to the same tap tone to preserve consistency.
+ * If you later want confirm/back to differ slightly, we can tune here without touching components.
+ */
+function play(variant: ButtonSoundVariant = 'click') {
+  // Right now: one sacred, consistent tap across the app.
+  // Keeping variant param for UI semantics & future flexibility.
+  void variant;
+  playButtonTap();
+}
+
+function playClick() {
+  play('click');
+}
 
 export const buttonSoundService = {
-  // Generic entry point: ignore type for now, all map to bell tone
-  play: (_type: 'click' | 'confirm' | 'back' | 'toggle' = 'click') => playBell(),
-  playClick,
-  playConfirm,
-  playBack,
-  playToggle,
-  setEnabled: (enabled: boolean) => {
-    // Effects on/off is managed via setAudioSettings in audioService.
-    // This hook is kept for API compatibility and logging.
-    console.log(`Button sounds ${enabled ? 'enabled' : 'disabled'}`);
-  }
+  play,
+  playClick
 };
