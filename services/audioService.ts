@@ -1,4 +1,4 @@
-// src/services/audioService.ts
+// services/audioService.ts
 import type { Soundscape } from '../types';
 
 let ambienceAudio: HTMLAudioElement | null = null;
@@ -18,9 +18,7 @@ const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 function resolveUrl(input?: string | Soundscape): string | null {
   if (!input) return null;
   if (typeof input === 'string') return input;
-
-  if (input.url) return input.url;
-
+  if ((input as any).url) return (input as any).url;
   return null;
 }
 
@@ -125,7 +123,7 @@ export function previewSoundscape(input?: string | Soundscape) {
   preview.play().catch(() => {});
 }
 
-// ---------- Sacred tone (old playBell envelope) ----------
+// ---------- Web Audio unlock + context ----------
 
 function ensureAudioContext(): AudioContext | null {
   try {
@@ -133,6 +131,7 @@ function ensureAudioContext(): AudioContext | null {
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
     if (audioContext.state === 'suspended') {
+      // resume must be called in/after a user gesture on iOS
       audioContext.resume().catch(() => {});
     }
     return audioContext;
@@ -140,6 +139,47 @@ function ensureAudioContext(): AudioContext | null {
     return null;
   }
 }
+
+/**
+ * Call this once on the first user gesture (pointerdown/touchstart/click).
+ * This makes synthetic UI tones reliable on iOS Safari.
+ */
+export function unlockAudio() {
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+
+  // Some browsers need a tiny "silent" node to fully unlock output
+  try {
+    const t = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, t);
+
+    gain.gain.setValueAtTime(0.00001, t);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.02);
+
+    osc.onended = () => {
+      try {
+        osc.disconnect();
+        gain.disconnect();
+      } catch {
+        // ignore
+      }
+    };
+  } catch {
+    // ignore
+  }
+}
+
+// ---------- Sacred tone (old playBell envelope) ----------
 
 // Deep, slowly fading 110 Hz tone from old playBell
 function playBellTone() {
@@ -176,7 +216,6 @@ function playBellTone() {
 }
 
 // Public APIs using the bell tone
-
 export function playCompletionSound() {
   playBellTone();
 }
@@ -186,38 +225,46 @@ export function playBell() {
   playBellTone();
 }
 
-// ---------- Shorter click pulse (optional) ----------
+// ---------- Canonical button tap (NON-NEGOTIABLE) ----------
 
-export function playClickPulse() {
+/**
+ * Canonical UI button tap.
+ * Short, soft, consistent. Safe to call on every click.
+ */
+export function playButtonTap() {
   if (!effectsEnabled) return;
 
   const ctx = ensureAudioContext();
   if (!ctx) return;
 
-  const oscillator = ctx.createOscillator();
+  const now = ctx.currentTime;
+
+  // A slightly higher pitch reads as "UI" without being harsh.
+  const baseFreq = 196; // ~G3
+  const peakGain = 0.10 * masterVolume; // keep quiet; this sits under soundscapes
+
+  const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
-  oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(130.81, ctx.currentTime);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(baseFreq, now);
+  // tiny pitch dip gives "tap" character
+  osc.frequency.exponentialRampToValueAtTime(Math.max(60, baseFreq * 0.92), now + 0.05);
 
-  const now = ctx.currentTime;
-  const initialGain = 0.6 * masterVolume;
+  // Envelope: fast attack, fast decay
+  gain.gain.setValueAtTime(0.00001, now);
+  gain.gain.linearRampToValueAtTime(peakGain, now + 0.004);
+  gain.gain.exponentialRampToValueAtTime(0.00001, now + 0.06);
 
-  gain.gain.setValueAtTime(initialGain, now);
-  gain.gain.exponentialRampToValueAtTime(
-    Math.max(0.0001, initialGain * 0.01),
-    now + 0.1
-  );
-
-  oscillator.connect(gain);
+  osc.connect(gain);
   gain.connect(ctx.destination);
 
-  oscillator.start(now);
-  oscillator.stop(now + 0.12);
+  osc.start(now);
+  osc.stop(now + 0.07);
 
-  oscillator.onended = () => {
+  osc.onended = () => {
     try {
-      oscillator.disconnect();
+      osc.disconnect();
       gain.disconnect();
     } catch {
       // ignore
@@ -225,17 +272,37 @@ export function playClickPulse() {
   };
 }
 
-// ---------- Compatibility aliases ----------
+// ---------- Backwards-compatible click pulse (optional) ----------
 
-export function stopAll() {
-  stopPracticeAudio(false);
-  stopAmbience();
+export function playClickPulse() {
+  // Keep old API, but route it to the canonical tap so the tone stays uniform.
+  playButtonTap();
 }
 
+// ---------- Back-compat exports (older code expects these names) ----------
+
+// App.tsx expects these names. Map them to the current implementation.
+// If your file already has startPracticeAudio/stopPracticeAudio, use those.
 export function startSessionAudio(input?: string | Soundscape) {
-  startPracticeAudio(input);
+  // startPracticeAudio exists in your earlier snippet
+  return startPracticeAudio(input);
 }
 
 export function stopSessionAudio(resumeAmbience = false, ambienceToResume?: string | Soundscape) {
-  stopPracticeAudio(resumeAmbience, ambienceToResume);
+  return stopPracticeAudio(resumeAmbience, ambienceToResume);
 }
+
+// Some code (audioManager.ts) expects a stopAll() helper
+export function stopAll() {
+  try {
+    stopPracticeAudio(false);
+  } catch {
+    // ignore
+  }
+  try {
+    stopAmbience();
+  } catch {
+    // ignore
+  }
+}
+
