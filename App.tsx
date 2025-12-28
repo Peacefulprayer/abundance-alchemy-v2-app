@@ -24,7 +24,7 @@ import { Library } from './components/Library';
 import { Settings } from './components/Settings';
 import { Layout } from './components/Layout';
 import { TutorialOverlay } from './components/TutorialOverlay';
-import { SplashScreen } from './components/SplashScreen';
+import { SplashScreen } from './components/SplashScreen/SplashScreen';
 import { MeditationSetup } from './components/MeditationSetup';
 import { PreSplash } from './components/PreSplash';
 import { WelcomeScreen } from './components/WelcomeScreen';

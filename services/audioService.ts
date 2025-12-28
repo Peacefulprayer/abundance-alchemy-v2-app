@@ -196,7 +196,7 @@ function playBellTone() {
 
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(0, t);
-  gain.gain.linearRampToValueAtTime(0.05 * masterVolume, t + 0.1);
+  gain.gain.linearRampToValueAtTime(0.08 * masterVolume, t + 0.1);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 4);
 
   osc.connect(gain);
@@ -229,62 +229,22 @@ export function playBell() {
 
 /**
  * Canonical UI button tap.
- * Short, soft, consistent. Safe to call on every click.
+ * Uses the sacred 110Hz bell tone for all buttons.
  */
 export function playButtonTap() {
-  if (!effectsEnabled) return;
-
-  const ctx = ensureAudioContext();
-  if (!ctx) return;
-
-  const now = ctx.currentTime;
-
-  // A slightly higher pitch reads as "UI" without being harsh.
-  const baseFreq = 196; // ~G3
-  const peakGain = 0.10 * masterVolume; // keep quiet; this sits under soundscapes
-
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(baseFreq, now);
-  // tiny pitch dip gives "tap" character
-  osc.frequency.exponentialRampToValueAtTime(Math.max(60, baseFreq * 0.92), now + 0.05);
-
-  // Envelope: fast attack, fast decay
-  gain.gain.setValueAtTime(0.00001, now);
-  gain.gain.linearRampToValueAtTime(peakGain, now + 0.004);
-  gain.gain.exponentialRampToValueAtTime(0.00001, now + 0.06);
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-
-  osc.start(now);
-  osc.stop(now + 0.07);
-
-  osc.onended = () => {
-    try {
-      osc.disconnect();
-      gain.disconnect();
-    } catch {
-      // ignore
-    }
-  };
+  playBellTone();
 }
 
 // ---------- Backwards-compatible click pulse (optional) ----------
 
 export function playClickPulse() {
-  // Keep old API, but route it to the canonical tap so the tone stays uniform.
   playButtonTap();
 }
 
 // ---------- Back-compat exports (older code expects these names) ----------
 
 // App.tsx expects these names. Map them to the current implementation.
-// If your file already has startPracticeAudio/stopPracticeAudio, use those.
 export function startSessionAudio(input?: string | Soundscape) {
-  // startPracticeAudio exists in your earlier snippet
   return startPracticeAudio(input);
 }
 
@@ -305,4 +265,3 @@ export function stopAll() {
     // ignore
   }
 }
-

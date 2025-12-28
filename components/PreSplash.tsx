@@ -1,106 +1,116 @@
-// src/components/PreSplash.tsx
-
-import React from 'react';
-import { Sparkles } from 'lucide-react';
+// components/PreSplash.tsx - FULLY RESTORED
+import React, { useEffect } from 'react'; // React FIRST
+import { ThemeMode } from '../types';
 import { buttonSoundService } from '../services/buttonSoundService';
-import { AlchemistAvatar } from './AlchemistAvatar';
+import { unlockAudio } from '../services/audioService';
+import BreathingOrb from './BreathingOrb';
 
 interface PreSplashProps {
   onContinue: () => void;
-  theme?: 'light' | 'dark';
+  theme: ThemeMode;
 }
 
-export const PreSplash: React.FC<PreSplashProps> = ({
-  onContinue,
-  theme = 'dark',
-}) => {
-  const titleColor =
-    theme === 'light' ? 'text-amber-500' : 'text-orange-400';
-  const subTextColor =
-    theme === 'light' ? 'text-yellow-600' : 'text-yellow-300';
+export const PreSplash: React.FC<PreSplashProps> = ({ onContinue, theme }) => {
+    // Add this useEffect INSIDE the component function
+  useEffect(() => {
+    unlockAudio(); // This unlocks audio for iOS/Safari
+  }, []);
 
   const handleContinue = () => {
-    buttonSoundService.playClick();
+    buttonSoundService.play('click');
     onContinue();
   };
 
+  // Base card styling - CONSISTENT SHADOW FOR ALL
+  const baseCardClasses = `backdrop-blur-md rounded-2xl border p-6 mb-4 transition-all w-full max-w-xs shadow-xl`;
+  
+  // Standard cards
+  const standardCardClasses = `${baseCardClasses} ${
+    theme === 'dark' 
+      ? 'bg-gradient-to-b from-slate-800/80 to-slate-900/80 border-white/10' 
+      : 'bg-gradient-to-b from-white to-slate-50 border-slate-200'
+  }`;
+  
+  // Enhanced title card - DARKER, NOT FLAT
+  const titleCardClasses = `${baseCardClasses} ${
+    theme === 'dark' 
+      ? 'bg-gradient-to-b from-slate-900/90 to-slate-950/90 border-amber-500/15' 
+      : 'bg-gradient-to-b from-slate-100 to-white border-slate-300/40'
+  }`;
+
+  const textColor = theme === 'dark' ? 'text-slate-100' : 'text-slate-800';
+  const subTextColor = theme === 'dark' ? 'text-slate-300' : 'text-slate-600';
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-slate-100 px-6">
-      {/* Background gradient layer to delineate container */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-950 to-black" />
+    <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${
+      theme === 'dark' 
+        ? 'bg-gradient-to-b from-slate-950 to-black' 
+        : 'bg-gradient-to-b from-amber-50 to-white'
+    }`}>
+      
+      {/* UNIVERSAL ORB - POSITIONED HIGHER */}
+      <div className="mb-2 -mt-4">
+        <BreathingOrb 
+          size={120}
+          breathingSpeed={4000}
+        />
+      </div>
 
-      {/* Soft ambience glows */}
-      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl" />
-      <div className="absolute bottom-0 right-0 w-72 h-72 rounded-full bg-indigo-500/10 blur-3xl" />
+      {/* TITLE CARD - DARKER, SMALLER TEXT */}
+      <div className={titleCardClasses}>
+        <h1 className="text-xl font-light tracking-[0.2em] text-amber-500 text-center">
+          Abundance Alchemy
+        </h1>
+      </div>
 
-      <div className="relative z-10 max-w-md w-full pb-10">
-        {/* Logo with 80% opacity so it emerges from the dark */}
-        <div className="flex flex-col items-center mb-10">
-          <div className="mb-4 opacity-80">
-            <img
-              src="/logo.png"
-              alt="Abundance Alchemy"
-              className="h-10 w-auto drop-shadow-lg"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = 'none';
-              }}
-            />
+      {/* WELCOME CARD - CENTERED TEXT */}
+      <div className={standardCardClasses}>
+        <div className="space-y-3 text-center">
+          <p className={`text-base font-light ${textColor}`}>
+            With Great Love, Welcome.
+          </p>
+          <div className={`space-y-2 ${subTextColor}`}>
+            <p className="text-sm font-light leading-relaxed">
+              We Are Honored, Standing Here With You
+            </p>
+            <p className="text-sm font-light leading-relaxed">
+              As You Learn To Embrace The Power
+            </p>
+            <p className="text-sm font-light leading-relaxed">
+              Of Your I Am Consciousness.
+            </p>
           </div>
-
-          {/* Black-moon style orb: smaller, dark center with halo */}
-          <div className="scale-90 relative">
-            {/* Soft outer halo behind orb */}
-            <div className="absolute inset-0 rounded-full bg-amber-400/15 blur-3xl" />
-            {/* Orb itself */}
-            <div className="relative">
-              <AlchemistAvatar
-                size="sm"
-                mood="active"
-                speaking={false}
-                progress={0}
-              />
-              {/* Darken core to feel like a black moon */}
-              <div className="absolute inset-[20%] rounded-full bg-black/70" />
-            </div>
-          </div>
-        </div>
-
-        {/* Copy with audio guidance emphasis */}
-        <div className="space-y-4 text-center">
-          <h1
-            className={`text-xl font-serif font-bold ${titleColor}`}
-          >
-            Abundance Alchemy
-          </h1>
-
-          <div className="text-sm text-slate-300 leading-relaxed max-w-xs mx-auto">
-            <p>With Great Love, Welcome.</p>
-            <p>We Are Honored, Standing Here With You</p>
-            <p>As You Learn To Embrace The Power</p>
-            <p>Of Your I Am Consciousness.</p>
-          </div>
-
-          <div
-            className={`text-xs ${subTextColor} leading-relaxed max-w-xs mx-auto mt-4 space-y-1`}
-          >
-            <p>Audio Enabled.</p>
-            <p>Headphones Suggested.</p>
-            <p>When Ready Click Next:</p>
-          </div>
-        </div>
-
-        {/* Primary Next button */}
-        <div className="mt-8 flex justify-center">
-          <button
-            type="button"
-            onClick={handleContinue}
-            className="inline-flex items-center space-x-2 px-8 py-3 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-sm font-semibold tracking-[0.2em] uppercase text-slate-950 shadow-[0_18px_40px_rgba(249,115,22,0.55)] hover:brightness-110 transition-all"
-          >
-            <span>Next</span>
-            <Sparkles className="w-4 h-4" />
-          </button>
         </div>
       </div>
+
+      {/* AUDIO CARD - ORANGE LINES, BOLDER TEXT */}
+      <div className={standardCardClasses}>
+        <div className="space-y-3 text-center">
+          {/* Top line - ORANGE */}
+          <div className="border-t border-amber-500/40 pt-3"></div>
+          
+          {/* Bolder audio text */}
+          <div className="space-y-1">
+            <p className="text-xs text-amber-500 font-semibold tracking-wide">
+              Audio Enabled.
+            </p>
+            <p className="text-xs text-amber-500 font-semibold tracking-wide">
+              Headphones Suggested.
+            </p>
+          </div>
+          
+          {/* Bottom line - ORANGE */}
+          <div className="border-b border-amber-500/40 pb-3"></div>
+        </div>
+      </div>
+
+      {/* UNIVERSAL BUTTON WITH TONE */}
+      <button
+        onClick={handleContinue}
+        className="mt-6 px-5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-sm tracking-wider hover:opacity-90 transition-opacity shadow-lg"
+      >
+        Enter When Ready
+      </button>
     </div>
   );
 };

@@ -1,162 +1,126 @@
-// src/components/WelcomeScreen.tsx
-
+// components/WelcomeScreen.tsx - USING SACREDBACKGROUND
 import React, { useEffect, useState } from 'react';
 import { AppMode, UserProfile } from '../types';
-import { AlchemistAvatar } from './AlchemistAvatar';
+import { SacredBackground } from './SacredBackground';
+import { buttonSoundService } from '../services/buttonSoundService';
+import { startAmbience } from '../services/audioService';
+import BreathingOrb from './BreathingOrb';
 
 interface WelcomeScreenProps {
   user: UserProfile | null;
   onComplete: (nextMode: AppMode) => void;
+  theme?: 'light' | 'dark';
 }
 
-const WELCOME_URL =
-  'https://abundantthought.com/abundance-alchemy/assets/audio/voices/welcome.mp3';
-const WELCOME_DURATION_MS = 34000; // 34 seconds
-const TRANSITION_DELAY_MS = 500; // breath after audio ends
+const WELCOME_URL = '/abundance-alchemy/assets/audio/voices/welcome.mp3';
+const WELCOME_DURATION_MS = 34000;
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ user, onComplete }) => {
+export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ 
+  user, 
+  onComplete,
+  theme = 'dark'
+}) => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const audio = new Audio(WELCOME_URL);
-    let isCancelled = false;
-    const nextMode = user ? AppMode.DASHBOARD : AppMode.AUTH;
-    let transitionTimeout: number | undefined;
+    // Wait 0.5s, then play welcome.mp3
+    const timer = setTimeout(() => {
+      const audio = new Audio(WELCOME_URL);
+      
+      audio.play().catch((err) => {
+        console.log('Welcome audio play failed:', err);
+      });
 
-    const completeOnce = () => {
-      if (isCancelled) return;
-      isCancelled = true;
-      onComplete(nextMode);
-    };
+      const start = performance.now();
+      const tick = (now: number) => {
+        const elapsed = now - start;
+        const pct = Math.min(100, (elapsed / WELCOME_DURATION_MS) * 100);
+        setProgress(pct);
 
-    const scheduleTransition = () => {
-      if (isCancelled) return;
-      // small breath after audio completes / safety timeout
-      transitionTimeout = window.setTimeout(() => {
-        completeOnce();
-      }, TRANSITION_DELAY_MS);
-    };
+        if (elapsed < WELCOME_DURATION_MS) {
+          requestAnimationFrame(tick);
+        } else {
+          // Welcome audio ended, wait 0.5s then go to Auth
+          setTimeout(() => {
+            const nextMode = user ? AppMode.DASHBOARD : AppMode.AUTH;
+            onComplete(nextMode);
+            startAmbience('/abundance-alchemy/assets/audio/ambient/default.mp3', 50);
+          }, 500);
+        }
+      };
 
-    const handleEnded = () => {
-      scheduleTransition();
-    };
+      requestAnimationFrame(tick);
 
-    audio.addEventListener('ended', handleEnded);
-
-    // Small visual pause before starting audio
-    const startTimeout = window.setTimeout(() => {
-      if (isCancelled) return;
-      audio
-        .play()
-        .catch(() => {
-          // If autoplay fails, still allow progress + manual skip
-        });
+      return () => {
+        audio.pause();
+      };
     }, 500);
 
-    const start = performance.now();
-
-    const tick = (now: number) => {
-      if (isCancelled) return;
-      const elapsed = now - start;
-      const pct = Math.min(100, (elapsed / WELCOME_DURATION_MS) * 100);
-      setProgress(pct);
-
-      if (elapsed < WELCOME_DURATION_MS) {
-        requestAnimationFrame(tick);
-      } else {
-        // Safety: if audio never fired 'ended', still schedule transition
-        scheduleTransition();
-      }
-    };
-
-    const rafId = requestAnimationFrame(tick);
-
-    return () => {
-      isCancelled = true;
-      if (transitionTimeout) {
-        clearTimeout(transitionTimeout);
-      }
-      clearTimeout(startTimeout);
-      audio.pause();
-      audio.removeEventListener('ended', handleEnded);
-      cancelAnimationFrame(rafId);
-    };
+    return () => clearTimeout(timer);
   }, [user, onComplete]);
 
   const handleSkip = () => {
+    console.log('Skip button clicked');
+    buttonSoundService.play('click');
     const nextMode = user ? AppMode.DASHBOARD : AppMode.AUTH;
     onComplete(nextMode);
+    startAmbience('/abundance-alchemy/assets/audio/ambient/default.mp3', 50);
   };
 
   return (
-    <div className="relative min-h-screen flex items-stretch justify-center bg-slate-950 text-slate-100">
-      {/* Background image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage:
-            'url(https://abundantthought.com/abundance-alchemy/assets/images/backgrounds/splash.jpg)'
-        }}
-      />
-      {/* Dark overlay for readability */}
-      <div className="absolute inset-0 bg-slate-950/80" />
-
-      {/* Content */}
-      <div className="relative z-10 flex flex-col min-h-screen max-w-md mx-auto px-6 py-10">
-        {/* Top: breathing circle + avatar + title */}
-        <div className="flex-1 flex flex-col items-center">
-          {/* Breathing circle motif */}
-          <div className="relative mb-6">
-            <div className="w-32 h-32 rounded-full bg-slate-950/80 backdrop-blur-xl border border-emerald-300/10 shadow-[0_0_60px_rgba(16,185,129,0.45)] animate-pulse-slow flex items-center justify-center">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400/40 via-cyan-400/30 to-indigo-500/40 shadow-[0_0_40px_rgba(34,197,94,0.65)]" />
-            </div>
-            {/* Alchemist avatar overlaid slightly lower */}
-            <div className="absolute inset-0 flex items-center justify-center translate-y-10">
-              <AlchemistAvatar size="lg" mood="active" speaking={true} />
-            </div>
+    <SacredBackground theme={theme}>
+      <div className="relative z-10 flex flex-col min-h-screen max-w-md mx-auto px-6 py-10 items-center justify-center">
+        
+        <div className="backdrop-blur-md rounded-2xl border p-8 w-full max-w-xs shadow-xl bg-gradient-to-b from-slate-800/80 to-slate-900/80 border-white/10">
+          
+          <div className="mb-2 -mt-4">
+            <BreathingOrb 
+              size={100}
+              breathingSpeed={4000}
+            />
           </div>
-
-          {/* Title and supporting text */}
-          <div className="mt-10 text-center space-y-2">
-            <h1 className="text-2xl font-semibold tracking-[0.18em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-amber-200 to-cyan-300">
+          
+          <div className="text-center space-y-2 mb-6">
+            <h1 className="text-xl font-light tracking-[0.2em] text-amber-500">
               Abundance Alchemy
             </h1>
             <p className="text-sm text-slate-300">
               We Are Honored To Welcome You.
             </p>
-            <p className="text-sm text-slate-300 max-w-xs mx-auto leading-relaxed">
-              Take a breath and allow this sacred introduction to hold you.
+          </div>
+          
+          <div className="space-y-3 mb-6">
+            <div className="text-[11px] tracking-[0.2em] uppercase text-slate-400 text-center">
+              We Are Praying Now
+            </div>
+            <div className="w-full h-2 rounded-full bg-slate-800/80 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-[width] duration-150 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+          
+          <div className="text-center mb-6">
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Take a sacred moment.{"\n"}
+              Allow this introduction to hold you.
             </p>
           </div>
-        </div>
-
-        {/* Middle: praying / progress */}
-        <div className="mb-8 space-y-3">
-          <div className="text-[11px] tracking-[0.2em] uppercase text-slate-400 text-center">
-            We Are Praying Now
-          </div>
-          <div className="w-full h-2 rounded-full bg-slate-800/80 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-300 to-amber-300 transition-[width] duration-150 ease-out"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Bottom: skip intro pill */}
-        <div className="pb-4 space-y-3">
+          
           <button
             type="button"
             onClick={handleSkip}
-            className="w-full inline-flex items-center justify-center rounded-full border border-slate-600/70 bg-slate-900/60 backdrop-blur-lg px-4 py-2 text-xs font-semibold tracking-[0.18em] uppercase text-slate-200 hover:border-emerald-400/70 hover:text-emerald-200 transition-colors"
+            className="w-full px-5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-sm tracking-wider hover:opacity-90 transition-opacity shadow-lg"
           >
-            Skip intro
+            Skip Intro
           </button>
-          <p className="text-[11px] text-slate-400 text-center leading-relaxed">
-            You can listen fully, or skip now and begin your journey.
+          
+          <p className="text-[11px] text-slate-400 text-center mt-3 leading-relaxed">
+            Listen fully, or skip now and begin your journey.
           </p>
         </div>
       </div>
-    </div>
+    </SacredBackground>
   );
 };

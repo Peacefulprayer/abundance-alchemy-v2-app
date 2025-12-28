@@ -1,0 +1,288 @@
+/* BreathingOrb.css - ENHANCED VERSION */
+:root {
+  --orb-size: clamp(80px, 18vw, 140px);
+  --orb-color-black: #000000;
+  --orb-color-orange: #ff5500;
+  --orb-color-gold: #ffdd00;
+  --orb-color-blue: #00ccff;
+  --orb-color-white: #ffffff;
+  --breath-phase: 0.5;
+  --audio-intensity: 0;
+  --hover-intensity: 0;
+  --spark-intensity: 1;
+  --pulse-glow: 20px;
+  --breathing-speed: 4000ms;
+}
+
+.breathing-orb-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem 0;
+  position: relative;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.breathing-orb {
+  width: var(--orb-size);
+  height: var(--orb-size);
+  position: relative;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: 
+    drop-shadow(0 0 calc(var(--pulse-glow) * 0.8) rgba(255, 100, 0, 0.8))
+    drop-shadow(0 0 calc(var(--pulse-glow) * 1.6) rgba(255, 200, 0, 0.5))
+    drop-shadow(0 0 calc(var(--pulse-glow) * 2.4) rgba(0, 200, 255, 0.3));
+  pointer-events: auto;
+  animation: float-orb 8s ease-in-out infinite;
+}
+
+/* Core Orb - More breathing motion */
+.orb-core {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: 
+    radial-gradient(
+      circle at 40% 40%,
+      #111111 0%,
+      #000000 40%,
+      #000000 70%,
+      #0a0a0a 100%
+    );
+  z-index: 10;
+  box-shadow: 
+    inset 0 0 80px rgba(0, 0, 0, 0.9),
+    inset 0 0 40px rgba(40, 40, 40, 0.6),
+    0 0 40px rgba(0, 0, 0, 0.8);
+  animation: core-pulse var(--breathing-speed) ease-in-out infinite;
+}
+
+.orb-inner-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 40% 40%,
+    rgba(255, 100, 0, 0.25) 0%,
+    rgba(255, 69, 0, 0.1) 30%,
+    transparent 70%
+  );
+  animation: inner-glow-pulse calc(var(--breathing-speed) * 1.5) ease-in-out infinite;
+  z-index: 11;
+  mix-blend-mode: screen;
+}
+
+/* ENHANCED Fire Ring - More vibrant, living fire */
+.fire-ring {
+  position: absolute;
+  width: calc(100% + 50px);
+  height: calc(100% + 50px);
+  top: -25px;
+  left: -25px;
+  border-radius: 50%;
+  z-index: 5;
+  pointer-events: none;
+  animation: ring-rotate 20s linear infinite;
+}
+
+.fire-layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  animation: fire-pulse var(--breathing-speed) ease-in-out infinite;
+}
+
+.fire-orange {
+  background: radial-gradient(
+    circle,
+    rgba(255, 100, 0, 0.9) 0%,
+    rgba(255, 69, 0, 0.7) 20%,
+    rgba(255, 69, 0, 0.3) 40%,
+    transparent 70%
+  );
+  filter: blur(15px);
+  animation-delay: 0s;
+}
+
+.fire-gold {
+  background: radial-gradient(
+    circle,
+    rgba(255, 221, 0, 0.8) 0%,
+    rgba(255, 215, 0, 0.6) 20%,
+    rgba(255, 215, 0, 0.2) 40%,
+    transparent 70%
+  );
+  filter: blur(20px);
+  animation-delay: calc(var(--breathing-speed) * -0.125);
+}
+
+.fire-blue {
+  background: radial-gradient(
+    circle,
+    rgba(0, 204, 255, 0.6) 0%,
+    rgba(0, 191, 255, 0.4) 15%,
+    rgba(0, 191, 255, 0.1) 30%,
+    transparent 60%
+  );
+  filter: blur(25px);
+  animation-delay: calc(var(--breathing-speed) * -0.25);
+}
+
+.fire-white {
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(255, 255, 255, 0.4) 15%,
+    rgba(255, 255, 255, 0.1) 30%,
+    transparent 50%
+  );
+  filter: blur(30px);
+  animation-delay: calc(var(--breathing-speed) * -0.375);
+}
+
+/* Living Fire Particles */
+.fire-particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.fire-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ff5500, #ffdd00);
+  filter: blur(1px);
+  opacity: 0;
+  animation: particle-float 3s ease-in-out infinite;
+}
+
+/* ENHANCED Animations - More breathing motion */
+@keyframes core-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 
+      inset 0 0 80px rgba(0, 0, 0, 0.9),
+      inset 0 0 40px rgba(40, 40, 40, 0.6),
+      0 0 40px rgba(0, 0, 0, 0.8);
+  }
+  50% {
+    transform: scale(0.97);
+    box-shadow: 
+      inset 0 0 100px rgba(0, 0, 0, 0.95),
+      inset 0 0 60px rgba(60, 60, 60, 0.8),
+      0 0 60px rgba(0, 0, 0, 0.9);
+  }
+}
+
+@keyframes inner-glow-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  25% {
+    opacity: 0.6;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(0.96);
+  }
+  75% {
+    opacity: 0.6;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes fire-pulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  25% {
+    opacity: 0.9;
+    transform: scale(calc(1.05 + 0.1 * var(--breath-phase)));
+  }
+  50% {
+    opacity: 1;
+    transform: scale(calc(1.1 + 0.15 * var(--breath-phase)));
+    filter: blur(calc(20px + 5 * var(--audio-intensity)));
+  }
+  75% {
+    opacity: 0.9;
+    transform: scale(calc(1.05 + 0.1 * var(--breath-phase)));
+  }
+}
+
+@keyframes ring-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes float-orb {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes particle-float {
+  0%, 100% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.5);
+  }
+  20% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--particle-x, 20px), var(--particle-y, -20px)) scale(1);
+  }
+}
+
+/* Hover Effects */
+.breathing-orb:hover {
+  transform: scale(1.08);
+  filter: 
+    drop-shadow(0 0 calc(var(--pulse-glow) * 1.2) rgba(255, 100, 0, 1))
+    drop-shadow(0 0 calc(var(--pulse-glow) * 2.4) rgba(255, 200, 0, 0.7))
+    drop-shadow(0 0 calc(var(--pulse-glow) * 3.6) rgba(0, 200, 255, 0.5));
+}
+
+.breathing-orb.orb-clicked {
+  animation: orb-click 0.4s ease;
+}
+
+@keyframes orb-click {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  :root {
+    --orb-size: clamp(70px, 20vw, 120px);
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --orb-size: clamp(60px, 25vw, 100px);
+  }
+}

@@ -1,28 +1,42 @@
-// src/services/buttonSoundService.ts
-// Centralized UI button sound API (single source of truth)
-//
-// Goal:
-// - Keep the same public surface used across the app (play, playClick, etc.)
-// - Route all button taps to the canonical short tap tone in audioService
-// - Preserve semantic variants ('click' | 'confirm' | 'back') for future tuning
-
-import { playButtonTap } from './audioService';
+// src/services/buttonSoundService.ts - WITH DEBUGGING
+import { playButtonTap, unlockAudio } from './audioService';
 
 export type ButtonSoundVariant = 'click' | 'confirm' | 'back';
 
-/**
- * Canonical button tap sound across the app.
- * Variants are currently mapped to the same tap tone to preserve consistency.
- * If you later want confirm/back to differ slightly, we can tune here without touching components.
- */
-function play(variant: ButtonSoundVariant = 'click') {
-  // Right now: one sacred, consistent tap across the app.
-  // Keeping variant param for UI semantics & future flexibility.
-  void variant;
-  playButtonTap();
+let lastPlayMs = 0;
+const MIN_GAP_MS = 80;
+
+function play(_variant: ButtonSoundVariant = 'click') {
+  console.log('=== BUTTON TONE DEBUG START ===');
+  const now = Date.now();
+  console.log('Current time:', now, 'Last play:', lastPlayMs, 'Diff:', now - lastPlayMs);
+  
+  if (now - lastPlayMs < MIN_GAP_MS) {
+    console.log('Button tone: Too soon since last play (cooldown)');
+    console.log('=== BUTTON TONE DEBUG END ===');
+    return;
+  }
+  lastPlayMs = now;
+
+  console.log('Button tone: Attempting to play...');
+  
+  try {
+    console.log('Step 1: Unlocking audio...');
+    unlockAudio();
+    console.log('Step 2: Audio unlocked');
+    
+    console.log('Step 3: Calling playButtonTap...');
+    playButtonTap();
+    console.log('Step 4: playButtonTap called successfully');
+  } catch (error) {
+    console.error('Button tone: Error playing tone:', error);
+  }
+  
+  console.log('=== BUTTON TONE DEBUG END ===');
 }
 
 function playClick() {
+  console.log('Button tone: playClick() called');
   play('click');
 }
 

@@ -12,7 +12,16 @@ export type FocusArea =
       icon?: string;
     };
 
-// src/types.ts
+// Updated: FocusChoice should be an object with Swahili support
+export type FocusChoice = {
+  id: string;
+  label: string;
+  swahili?: string;
+  description?: string;
+  swahiliAffirmation?: string; // Added this missing property
+  swAffirmation?: string; // Alternative name used in some components
+  icon?: string;
+};
 
 export enum AppMode {
   SPLASH = 'SPLASH',
