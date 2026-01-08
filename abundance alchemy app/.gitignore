@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+
+# Node / build
+node_modules/
+dist/
+*.tsbuildinfo
