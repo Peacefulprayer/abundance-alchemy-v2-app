@@ -8,3 +8,13 @@
 node_modules/
 dist/
 *.tsbuildinfo
+# macOS metadata
+._*
+.DS_Store
+
+# Logs
+error_log
+*.log
+
+# Sensitive config (real file only lives on server / local)
+abundance-alchemy-api/config.php
