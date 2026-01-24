@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, ArrowRight, ArrowLeft } from 'lucide-react';
 import { buttonSoundService } from '../services/buttonSoundService';
+import BreathingOrb from './BreathingOrb';
 
 interface TutorialOverlayProps {
   onComplete: () => void;
@@ -10,6 +11,17 @@ interface TutorialOverlayProps {
 
 export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, onChangeFocus, theme }) => {
   const [step, setStep] = useState(0);
+
+  const titleCardClasses =
+    'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
+
+  const getContentCardClasses = () => {
+    const base =
+      'backdrop-blur-md rounded-2xl border p-4 md:p-6 w-full max-w-[280px] shadow-xl';
+    return theme === 'dark'
+      ? `${base} bg-gradient-to-b from-slate-800/80 to-slate-900/80 border-white/10`
+      : `${base} bg-gradient-to-b from-white to-slate-50 border-slate-200`;
+  };
 
   const steps = [
     {
@@ -76,60 +88,77 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
     }
   };
 
-  const textColor = 'text-slate-100';
+  const textColor = theme === 'dark' ? 'text-slate-100' : 'text-slate-800';
+  const subTextColor = theme === 'dark' ? 'text-slate-300' : 'text-slate-600';
 
   return (
-    <div className="h-full flex flex-col items-center justify-center p-8 max-w-md mx-auto">
-      <div className={`w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 ${textColor}`}>
-        <div className="text-center space-y-4">
-          <Sparkles size={48} className="mx-auto text-amber-500" />
-          <h1 className="text-2xl font-serif font-bold text-amber-400 drop-shadow-sm">{steps[step].title}</h1>
-          <div className="leading-relaxed text-sm">
-            {typeof steps[step].content === 'string' ? <p>{steps[step].content}</p> : steps[step].content}
+    <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto">
+      <div className="mt-8 md:mt-12 mb-4 md:mb-6">
+        <BreathingOrb size={80} breathingSpeed={4000} />
+      </div>
+
+      <div className={`${titleCardClasses} mb-4 md:mb-6`}>
+        <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
+          Abundance Alchemy
+        </h1>
+      </div>
+
+      <div className={`${getContentCardClasses()} mb-6 md:mb-8`}>
+        <div className="text-center space-y-3">
+          <Sparkles size={28} className="mx-auto text-amber-500" />
+          <h2 className={`text-base md:text-lg font-bold text-amber-400 ${textColor}`}>
+            {steps[step].title}
+          </h2>
+          <div className={`leading-relaxed text-xs md:text-sm ${subTextColor}`}>
+            <div className="max-h-[45vh] overflow-y-auto custom-scrollbar pr-1 text-left">
+              {typeof steps[step].content === 'string' ? <p>{steps[step].content}</p> : steps[step].content}
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-center space-x-2">
+        <div className="flex justify-center space-x-2 pt-4">
           {steps.map((_, i) => (
             <div
               key={i}
-              className={`h-2 w-8 rounded-full transition-all ${
-                i === step ? 'bg-amber-500' : 'bg-slate-700'
+              className={`h-1.5 w-8 rounded-full transition-all ${
+                i === step ? 'bg-amber-500' : 'bg-slate-600/60'
               }`}
             />
           ))}
         </div>
+      </div>
 
-        <div className="space-y-3 pt-4">
-          <div className="flex space-x-3">
-            {step > 0 && (
-              <button
-                onClick={handleBack}
-                className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center"
-              >
-                <ArrowLeft size={20} />
-              </button>
-            )}
+      <div className="w-full max-w-[280px] space-y-3">
+        <div className="flex space-x-3">
+          {step > 0 && (
             <button
-              onClick={handleNext}
-              className="flex-[3] bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2"
+              onClick={handleBack}
+              className="flex-1 px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800 font-bold transition-all flex items-center justify-center"
             >
-              <span>{step === steps.length - 1 ? 'Start Practicing' : 'Next'}</span>
-              <ArrowRight size={20} />
+              <ArrowLeft size={18} />
             </button>
-          </div>
-
+          )}
           <button
-            onClick={() => {
-              buttonSoundService.play('back');
-              onComplete();
-            }}
-            className="w-full text-slate-400 hover:text-slate-300 text-sm transition-colors pt-2"
+            onClick={handleNext}
+            className="flex-[3] px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-xs md:text-sm tracking-wide hover:opacity-90 transition-opacity shadow-lg flex items-center justify-center space-x-2"
           >
-            Skip Tutorial
+            <span>{step === steps.length - 1 ? 'Start Practicing' : 'Next'}</span>
+            <ArrowRight size={18} />
           </button>
-          <p className="text-center text-[10px] text-slate-500 italic mt-2">When you are ready, click Next.</p>
         </div>
+
+        <button
+          onClick={() => {
+            buttonSoundService.play('back');
+            onComplete();
+          }}
+          className="w-full text-slate-400 hover:text-slate-300 text-xs transition-colors pt-2"
+        >
+          Skip Tutorial
+        </button>
+        <p className="text-center text-[10px] text-slate-500 italic mt-2">
+          When you are ready, click Next.
+        </p>
       </div>
     </div>
   );

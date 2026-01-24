@@ -1,5 +1,5 @@
 // Always point explicitly at the app's API directory
-const API_BASE = '/abundance-alchemy/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy-api';
 const ENABLE_BACKEND = true;
 
 // Generic fetch helper with timeout + abort support
@@ -24,11 +24,17 @@ const fetchWithTimeout = async (resource: string, options: RequestInit = {}) => 
 // ---------- Dynamic backgrounds ----------
 
 export type BackgroundSlot =
+  | 'PRE_SPLASH'
   | 'SPLASH'
   | 'SPLASH_WELCOME'
-  | 'AUTH'
-  | 'HOME'
   | 'WELCOME'
+  | 'NAMING_CEREMONY'
+  | 'AUTH'
+  | 'RETURN_PORTAL'
+  | 'ONBOARDING'
+  | 'TUTORIAL'
+  | 'DASHBOARD'
+  | 'LIBRARY'
   | 'IAM_SETUP'
   | 'IAM_PRACTICE'
   | 'ILOVE_SETUP'
@@ -36,7 +42,10 @@ export type BackgroundSlot =
   | 'MEDITATION_SETUP'
   | 'MEDITATION_PRACTICE'
   | 'SETTINGS'
-  | 'PROGRESS';
+  | 'PROFILE'
+  | 'STATS'
+  | 'PROGRESS'
+  | 'HOME';
 
 export interface BackgroundEntry {
   imageUrl: string;

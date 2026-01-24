@@ -1,12 +1,12 @@
-// components/WelcomeScreen.tsx - ORIGINAL SACRED INVOCATION VERSION
+// components/WelcomeScreen.tsx - SACRED INVOCATION (validated-user only; no localStorage trust)
 import React, { useEffect, useRef, useState } from 'react';
 import { AppMode, UserAccount } from '../types';
 import { SacredBackground } from './SacredBackground';
 import { buttonSoundService } from '../services/buttonSoundService';
-import { startAmbience } from '../services/audioService';
 import BreathingOrb from './BreathingOrb';
 
 interface WelcomeScreenProps {
+  // IMPORTANT: this must be the *validated* user passed from App.tsx
   user: UserAccount | null;
   onComplete: (nextMode: AppMode) => void;
   theme?: 'light' | 'dark';
@@ -21,7 +21,10 @@ const titleCardClasses =
 
 // UNIVERSAL CONTENT CARD CLASSES
 const bodyCardClasses =
-  'backdrop-blur-md rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-xl space-y-3 md:space-y-4 bg-slate-900/40';
+  'backdrop-blur-md rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-xl space-y-3 md:space-y-4 bg-slate-900/30';
+
+const footerCardClasses =
+  'backdrop-blur-md rounded-2xl border border-amber-500/20 p-3 w-full max-w-[280px] shadow-xl bg-slate-900/20';
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   user,
@@ -31,30 +34,32 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [hasExistingUser, setHasExistingUser] = useState(false);
 
-  useEffect(() => {
-    const storedAuth = localStorage.getItem('abundance_auth');
-    setHasExistingUser(!!storedAuth || !!user);
-  }, [user]);
+  // ✅ Returning/new decision is based ONLY on validated user prop (no localStorage)
+  const isReturningUser = !!user;
 
   useEffect(() => {
     const audio = new Audio(WELCOME_URL);
     audioRef.current = audio;
 
     const timer = setTimeout(() => {
-      audio
-        .play()
-        .catch((err) => {
-          console.log('Welcome audio play failed:', err);
-          setIsPlaying(false);
-        });
+      audio.play().catch((err) => {
+        console.log('Welcome audio play failed:', err);
+        setIsPlaying(false);
+      });
     }, 500);
 
     const start = performance.now();
-    const tick = (now: number) => {
-      if (!audioRef.current) return;
 
+    const finish = () => {
+      const nextMode = isReturningUser ? AppMode.DASHBOARD : AppMode.NAMING_CEREMONY;
+
+      // ✅ Do NOT restart/replace ambience here.
+      // Music continuity is governed upstream; user controls on Dashboard only.
+      onComplete(nextMode);
+    };
+
+    const tick = (now: number) => {
       const elapsed = now - start;
       const pct = Math.min(100, (elapsed / WELCOME_DURATION_MS) * 100);
       setProgress(pct);
@@ -62,17 +67,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       if (elapsed < WELCOME_DURATION_MS) {
         requestAnimationFrame(tick);
       } else {
-        setTimeout(() => {
-          const nextMode = hasExistingUser
-            ? AppMode.DASHBOARD
-            : AppMode.NAMING_CEREMONY;
-
-          onComplete(nextMode);
-          startAmbience(
-            '/abundance-alchemy/assets/audio/ambient/default.mp3',
-            50
-          );
-        }, 1500);
+        setTimeout(finish, 1500);
       }
     };
 
@@ -80,17 +75,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
     const handleEnded = () => {
       setIsPlaying(false);
-      setTimeout(() => {
-        const nextMode = hasExistingUser
-          ? AppMode.DASHBOARD
-          : AppMode.NAMING_CEREMONY;
-
-        onComplete(nextMode);
-        startAmbience(
-          '/abundance-alchemy/assets/audio/ambient/default.mp3',
-          50
-        );
-      }, 1500);
+      setTimeout(finish, 1500);
     };
 
     audio.addEventListener('ended', handleEnded);
@@ -102,7 +87,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         audioRef.current.removeEventListener('ended', handleEnded);
       }
     };
-  }, [hasExistingUser, onComplete]);
+  }, [isReturningUser, onComplete]);
 
   const handleSkip = () => {
     buttonSoundService.play('click');
@@ -113,34 +98,37 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       setIsPlaying(false);
     }
 
-    const nextMode = hasExistingUser
-      ? AppMode.DASHBOARD
-      : AppMode.NAMING_CEREMONY;
+    const nextMode = isReturningUser ? AppMode.DASHBOARD : AppMode.NAMING_CEREMONY;
 
-    startAmbience('/abundance-alchemy/assets/audio/ambient/default.mp3', 50);
+    // ✅ Do NOT restart/replace ambience here.
     onComplete(nextMode);
   };
 
   return (
-    <SacredBackground theme={theme} backgroundType="welcome">
+    <SacredBackground
+      theme={theme}
+      // ✅ Explicit per screen:
+      backgroundType="SPLASH_WELCOME"
+      // ✅ Optional, explicit fallback:
+      fallbackBackgroundType="SPLASH"
+    >
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto">
-        {/* ORB */}
         <div className="mt-8 md:mt-12 mb-4 md:mb-6">
           <BreathingOrb size={80} breathingSpeed={4000} />
         </div>
 
-        {/* TITLE */}
         <div className={`${titleCardClasses} mb-4 md:mb-6`}>
           <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
             Abundance Alchemy
           </h1>
         </div>
 
-        {/* INVOCATION BODY */}
         <div className={`${bodyCardClasses} mb-6 md:mb-8`}>
           <div className="text-center space-y-2 md:space-y-3">
             <p className="text-sm md:text-base text-slate-200 font-light">
-              We Are Honored To Be Here Wih You Now
+              We Are Honored To Be Here
+              <br />
+              With You Now
             </p>
             <div className="space-y-1 md:space-y-1.5 text-slate-300 text-xs md:text-sm">
               <p>Pausing A Moment</p>
@@ -148,13 +136,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <p>We Let Go And Allow</p>
               <p>Immersing Ourselves</p>
               <p>In This Sacred Invocation</p>
-               <p>Uniting Hearts And Minds</p>
+              <p>Uniting Hearts And Minds</p>
               <p className="pt-1 text-amber-500 text-xs md:text-sm">Ase.</p>
             </div>
           </div>
         </div>
 
-        {/* PROGRESS */}
         <div className="w-full max-w-[280px] space-y-3 md:space-y-4">
           <div className="text-center">
             <div className="text-[11px] md:text-[12px] tracking-[0.15em] md:tracking-[0.2em] uppercase text-amber-500 mb-1 md:mb-2">
@@ -179,14 +166,19 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           </div>
         </div>
 
-        {/* FOOTER */}
-        <div className="text-center space-y-1.5 md:space-y-2 max-w-[280px] mt-6 md:mt-8">
-          <p className="text-xs text-amber-500/80 leading-relaxed">
-            Collectively affirming what in our hearts we know is true.
-          </p>
-          <div className="text-[10px] md:text-[11px] text-slate-500 space-y-0.5">
-            <p>All images and Music: Pixabay.com free use license</p>
-            <p>(unless otherwise noted)</p>
+        <div className="mt-6 md:mt-8 w-full flex justify-center">
+          <div className={footerCardClasses}>
+            <div className="text-center space-y-2">
+              <p className="text-xs text-amber-500/80 leading-relaxed">
+                Collectively affirming
+                <br />
+                what in our hearts we know is true.
+              </p>
+              <div className="text-[10px] md:text-[11px] text-slate-500 space-y-0.5">
+                <p>All images and Music: Pixabay.com free use license</p>
+                <p>(unless otherwise noted)</p>
+              </div>
+            </div>
           </div>
         </div>
 

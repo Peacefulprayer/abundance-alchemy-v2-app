@@ -1,267 +1,307 @@
 // services/audioService.ts
-import type { Soundscape } from '../types';
+// Robust singleton for managing background ambience + narration ducking
 
-let ambienceAudio: HTMLAudioElement | null = null;
-let practiceAudio: HTMLAudioElement | null = null;
+import { Soundscape } from '../types';
+import { getAudioContext, unlockAudio as unlockToneAudio } from './buttonTone';
 
-let effectsEnabled = true;
-let musicEnabled = true;
+let masterVolume = 1;
 
-// master volume 0..1
-let masterVolume = 0.5;
-
-// --- Web Audio state for synthetic tones ---
-let audioContext: AudioContext | null = null;
-
-const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
-
-function resolveUrl(input?: string | Soundscape): string | null {
-  if (!input) return null;
-  if (typeof input === 'string') return input;
-  if ((input as any).url) return (input as any).url;
-  return null;
-}
-
-// ---------- Settings / volume ----------
-
-export function setAudioSettings(effectsOn: boolean, musicOn: boolean) {
-  effectsEnabled = effectsOn;
-  musicEnabled = musicOn;
-
-  if (ambienceAudio) ambienceAudio.muted = !musicEnabled;
-  if (practiceAudio) practiceAudio.muted = !musicEnabled;
-}
-
-export function setMasterVolume(v: number) {
-  masterVolume = clamp01(v);
-  if (ambienceAudio) ambienceAudio.volume = masterVolume;
-  if (practiceAudio) practiceAudio.volume = masterVolume;
-}
-
-// Some code calls this name
-export function setVolume(v: number) {
-  setMasterVolume(v);
-}
-
-// Legacy components often pass 0–100
-export function updateVolume(volPercent: number) {
-  setMasterVolume(clamp01(volPercent / 100));
-}
-
-// ---------- Ambience ----------
-
-export function startAmbience(input?: string | Soundscape, volumePercent?: number) {
-  if (!musicEnabled) return;
-
-  const url = resolveUrl(input);
-  if (!url) return;
-
-  const v = volumePercent === undefined ? masterVolume : clamp01(volumePercent / 100);
-
-  // If same ambience already playing, do nothing
-  if (ambienceAudio && ambienceAudio.src.includes(url) && !ambienceAudio.paused) {
-    ambienceAudio.volume = v;
-    return;
-  }
-
-  stopAmbience();
-
-  ambienceAudio = new Audio(url);
-  ambienceAudio.loop = true;
-  ambienceAudio.volume = v;
-  ambienceAudio.muted = !musicEnabled;
-
-  ambienceAudio.play().catch(() => {});
-}
-
-export function stopAmbience() {
-  if (ambienceAudio) {
-    ambienceAudio.pause();
-    ambienceAudio = null;
-  }
-}
-
-// ---------- Practice Audio ----------
-
-export function startPracticeAudio(input?: string | Soundscape) {
-  if (!musicEnabled) return;
-
-  const url = resolveUrl(input);
-  if (!url) return;
-
-  stopPracticeAudio(false);
-  // Practice pauses ambience
-  stopAmbience();
-
-  practiceAudio = new Audio(url);
-  practiceAudio.loop = true;
-  practiceAudio.volume = masterVolume;
-  practiceAudio.muted = !musicEnabled;
-
-  practiceAudio.play().catch(() => {});
-}
-
-export function stopPracticeAudio(resumeAmbience = false, ambienceToResume?: string | Soundscape) {
-  if (practiceAudio) {
-    practiceAudio.pause();
-    practiceAudio = null;
-  }
-
-  if (resumeAmbience) {
-    startAmbience(ambienceToResume);
-  }
-}
-
-// ---------- UI helpers ----------
-
-export function previewSoundscape(input?: string | Soundscape) {
-  const url = resolveUrl(input);
-  if (!url) return;
-
-  const preview = new Audio(url);
-  preview.volume = masterVolume;
-  preview.play().catch(() => {});
-}
-
-// ---------- Web Audio unlock + context ----------
-
-function ensureAudioContext(): AudioContext | null {
-  try {
-    if (!audioContext) {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    if (audioContext.state === 'suspended') {
-      // resume must be called in/after a user gesture on iOS
-      audioContext.resume().catch(() => {});
-    }
-    return audioContext;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Call this once on the first user gesture (pointerdown/touchstart/click).
- * This makes synthetic UI tones reliable on iOS Safari.
- */
-export function unlockAudio() {
-  const ctx = ensureAudioContext();
-  if (!ctx) return;
-
-  // Some browsers need a tiny "silent" node to fully unlock output
-  try {
-    const t = ctx.currentTime;
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(440, t);
-
-    gain.gain.setValueAtTime(0.00001, t);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(t);
-    osc.stop(t + 0.02);
-
-    osc.onended = () => {
-      try {
-        osc.disconnect();
-        gain.disconnect();
-      } catch {
-        // ignore
-      }
-    };
-  } catch {
-    // ignore
-  }
-}
-
-// ---------- Sacred tone (old playBell envelope) ----------
-
-// Deep, slowly fading 110 Hz tone from old playBell
-function playBellTone() {
-  if (!effectsEnabled) return;
-
-  const ctx = ensureAudioContext();
-  if (!ctx) return;
-
-  const t = ctx.currentTime;
-
+function playTone(frequency: number, durationMs: number, volume = 0.25) {
+  const ctx = getAudioContext();
   const osc = ctx.createOscillator();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(110, t);
-
   const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0, t);
-  gain.gain.linearRampToValueAtTime(0.08 * masterVolume, t + 0.1);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + 4);
+
+  osc.type = 'sine';
+  osc.frequency.value = frequency;
+  gain.gain.value = 0.0001;
 
   osc.connect(gain);
   gain.connect(ctx.destination);
 
-  osc.start(t);
-  osc.stop(t + 4);
+  const now = ctx.currentTime;
+  const attack = 0.02;
+  const release = Math.max(0.03, durationMs / 1000 - attack);
 
-  osc.onended = () => {
-    try {
-      osc.disconnect();
-      gain.disconnect();
-    } catch {
-      // ignore
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(volume, now + attack);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + attack + release);
+
+  osc.start(now);
+  osc.stop(now + attack + release);
+}
+
+class AudioService {
+  private static instance: AudioService;
+
+  // Audio elements
+  private ambience: HTMLAudioElement;
+  private narration: HTMLAudioElement | null = null;
+
+  // State
+  private currentSoundscapeId: string | null = null;
+  private isAmbiencePlaying = false;
+  private baseVolume = 0.5; // Applied volume (0.0 - 1.0)
+  private baseVolumeRaw = 0.5; // Unscaled volume (0.0 - 1.0)
+  private fadeInterval: number | null = null;
+
+  private constructor() {
+    this.ambience = new Audio();
+    this.ambience.loop = true;
+    this.ambience.preload = 'auto';
+
+    // Resume context on first interaction if needed (browser policy)
+    const unlockAudio = () => {
+      if (this.ambience.paused && this.isAmbiencePlaying) {
+        this.ambience.play().catch(() => {});
+      }
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+  }
+
+  public static getInstance(): AudioService {
+    if (!AudioService.instance) {
+      AudioService.instance = new AudioService();
     }
-  };
+    return AudioService.instance;
+  }
+
+  /**
+   * Starts playing a soundscape. 
+   * If already playing this ID, does nothing (seamless).
+   * If changing IDs, crossfades.
+   */
+  public async playAmbience(soundscape: Soundscape, volume = 0.5) {
+    this.baseVolumeRaw = volume / 100; // Convert 0-100 to 0.0-1.0 if needed, or assume input is 0-1
+
+    // Normalization: specific check if input is > 1 (e.g. 50 vs 0.5)
+    if (volume > 1) this.baseVolumeRaw = volume / 100;
+    else this.baseVolumeRaw = volume;
+    this.baseVolume = Math.max(0, Math.min(1, this.baseVolumeRaw)) * masterVolume;
+
+    // Guard: Missing URL
+    if (!soundscape.url) {
+      console.warn('AudioService: No URL for soundscape', soundscape.label);
+      return;
+    }
+
+    // Case 1: Already playing this track
+    if (this.currentSoundscapeId === soundscape.id && this.isAmbiencePlaying) {
+      // Just ensure volume is correct (in case it was ducked)
+      this.fadeVolume(this.baseVolume, 1000); 
+      if (this.ambience.paused) this.ambience.play().catch(e => console.warn('Resume failed', e));
+      return;
+    }
+
+    // Case 2: Changing tracks (or starting from stopped)
+    this.currentSoundscapeId = soundscape.id;
+    this.isAmbiencePlaying = true;
+
+    // Fade out old if playing
+    if (!this.ambience.paused) {
+      await this.fadeVolume(0, 800);
+    }
+
+    this.ambience.src = soundscape.url;
+    this.ambience.volume = 0; // Start silent for fade-in
+
+    try {
+      await this.ambience.play();
+      this.fadeVolume(this.baseVolume, 2000); // 2s fade in
+    } catch (error) {
+      console.warn('AudioService: Autoplay prevented or load failed', error);
+    }
+  }
+
+  /**
+   * Stops ambience with a fade out.
+   */
+  public async stopAmbience(duration = 1500) {
+    if (!this.isAmbiencePlaying) return;
+
+    this.isAmbiencePlaying = false;
+    this.currentSoundscapeId = null; // Reset ID so next play is fresh
+
+    await this.fadeVolume(0, duration);
+    this.ambience.pause();
+    this.ambience.currentTime = 0; // Reset track
+  }
+
+  /**
+   * Plays a narration file (one-shot).
+   * Automatically ducks (lowers) ambience volume while playing.
+   * Restores ambience when done.
+   */
+  public playNarration(url: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Stop any existing narration
+      if (this.narration) {
+        this.narration.pause();
+        this.narration = null;
+      }
+
+      const audio = new Audio(url);
+      this.narration = audio;
+
+      // Duck ambience to 20% of its base volume
+      const duckedVolume = this.baseVolume * 0.2;
+      this.fadeVolume(duckedVolume, 500);
+
+      audio.volume = 1.0; // Narrator is always full volume
+
+      const finish = () => {
+        // Only restore if we haven't started a NEW narration in the meantime
+        if (this.narration === audio) {
+          this.fadeVolume(this.baseVolume, 1000); // Restore ambience
+          this.narration = null;
+        }
+        resolve();
+      };
+
+      audio.onended = finish;
+
+      audio.onerror = (e) => {
+        console.error('Narration error', e);
+        finish(); // Restore ambience anyway
+        reject(e);
+      };
+
+      audio.play().catch(e => {
+        console.warn('Narration playback failed', e);
+        finish();
+      });
+    });
+  }
+
+  /**
+   * Stops any active narration immediately and restores ambience.
+   */
+  public stopNarration() {
+    if (this.narration) {
+      this.narration.pause();
+      this.narration = null;
+      // Restore ambience immediately
+      this.fadeVolume(this.baseVolume, 800);
+    }
+  }
+
+  public setMasterVolume(volume: number) {
+    masterVolume = Math.max(0, Math.min(1, volume));
+    this.baseVolume = Math.max(0, Math.min(1, this.baseVolumeRaw)) * masterVolume;
+    if (this.isAmbiencePlaying) {
+      this.ambience.volume = this.baseVolume;
+    }
+  }
+
+  /**
+   * Smoothly fades volume to target value over duration (ms).
+   */
+  private fadeVolume(target: number, duration: number): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.fadeInterval) window.clearInterval(this.fadeInterval);
+
+      const start = this.ambience.volume;
+      const startTime = Date.now();
+
+      // Clamp target
+      const safeTarget = Math.max(0, Math.min(1, target));
+
+      if (duration === 0) {
+        this.ambience.volume = safeTarget;
+        resolve();
+        return;
+      }
+
+      this.fadeInterval = window.setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(1, elapsed / duration);
+
+        // Linear fade (simple but effective)
+        this.ambience.volume = start + (safeTarget - start) * progress;
+
+        if (progress >= 1) {
+          if (this.fadeInterval) window.clearInterval(this.fadeInterval);
+          this.fadeInterval = null;
+          resolve();
+        }
+      }, 50); // 20fps update
+    });
+  }
 }
 
-// Public APIs using the bell tone
-export function playCompletionSound() {
-  playBellTone();
-}
+// Export singleton instance + standalone helper for App.tsx compatibility
+export const audioService = AudioService.getInstance();
+export const stopAmbience = () => audioService.stopAmbience();
+export const playAmbience = (s: Soundscape, v?: number) => audioService.playAmbience(s, v);
+export const playNarration = (url: string) => audioService.playNarration(url);
+export const unlockAudio = () => unlockToneAudio();
 
-// Some code expects playBell()
-export function playBell() {
-  playBellTone();
-}
-
-// ---------- Canonical button tap (NON-NEGOTIABLE) ----------
-
-/**
- * Canonical UI button tap.
- * Uses the sacred 110Hz bell tone for all buttons.
- */
-export function playButtonTap() {
-  playBellTone();
-}
-
-// ---------- Backwards-compatible click pulse (optional) ----------
-
-export function playClickPulse() {
-  playButtonTap();
-}
-
-// ---------- Back-compat exports (older code expects these names) ----------
-
-// App.tsx expects these names. Map them to the current implementation.
-export function startSessionAudio(input?: string | Soundscape) {
-  return startPracticeAudio(input);
-}
-
-export function stopSessionAudio(resumeAmbience = false, ambienceToResume?: string | Soundscape) {
-  return stopPracticeAudio(resumeAmbience, ambienceToResume);
-}
-
-// Some code (audioManager.ts) expects a stopAll() helper
-export function stopAll() {
+export const playButtonTap = () => {
   try {
-    stopPracticeAudio(false);
+    playBell();
   } catch {
     // ignore
   }
+};
+
+export const playBell = () => {
   try {
-    stopAmbience();
+    unlockToneAudio();
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const t = ctx.currentTime;
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    // 110Hz = Deep A2 note (Tibetan bowl style)
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(110, t);
+
+    // Envelope: quick attack, long sacred decay
+    gainNode.gain.setValueAtTime(0, t);
+    gainNode.gain.linearRampToValueAtTime(0.05, t + 0.05);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
+
+    oscillator.start(t);
+    oscillator.stop(t + 2.5);
   } catch {
     // ignore
   }
-}
+};
+
+export const playCompletionSound = () => {
+  try {
+    unlockToneAudio();
+    playTone(660, 140, 0.22);
+    playTone(880, 180, 0.18);
+  } catch {
+    // ignore
+  }
+};
+
+export const startAmbience = (soundscape: Soundscape | string, volume = 50) => {
+  if (typeof soundscape === 'string') {
+    return audioService.playAmbience({ id: soundscape, label: 'Ambience', url: soundscape }, volume);
+  }
+  return audioService.playAmbience(soundscape, volume);
+};
+
+export const stopAll = async () => {
+  audioService.stopNarration();
+  await audioService.stopAmbience(0);
+};
+
+export const setMasterVolume = (volume: number) => {
+  audioService.setMasterVolume(volume);
+};
+
+export const updateVolume = (volume: number) => {
+  const normalized = volume > 1 ? volume / 100 : volume;
+  audioService.setMasterVolume(normalized);
+};

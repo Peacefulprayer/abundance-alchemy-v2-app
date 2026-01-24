@@ -5,8 +5,7 @@ export default defineConfig({
   plugins: [react()],
   base: './',
   optimizeDeps: {
-    include: ['react', 'react-dom'], // Explicitly include core
-    exclude: ['lucide-react']
+    include: ['react', 'react-dom', 'lucide-react']
   },
   server: {
     fs: {

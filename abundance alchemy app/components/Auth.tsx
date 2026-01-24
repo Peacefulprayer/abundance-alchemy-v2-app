@@ -1,5 +1,5 @@
-// components/Auth.tsx - UPDATED WITH INITIALNAME SUPPORT
-import React, { useState, useEffect } from 'react';
+// components/Auth.tsx - UPDATED: signup autofill suppression (best-effort) + initialName support preserved
+import React, { useState, useEffect, useMemo } from 'react';
 import { UserAccount } from '../types';
 import { Lock, Mail, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { apiService } from '../services/apiService';
@@ -11,42 +11,71 @@ interface AuthProps {
   onLogin: (account: UserAccount) => void;
   onBack?: () => void;
   theme: 'light' | 'dark';
-  initialName?: string; // NEW PROP
+  initialName?: string;
 }
 
 // UNIVERSAL TITLE CARD CLASSES (exact match WelcomeScreen)
-const titleCardClasses = "backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10";
+const titleCardClasses =
+  'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
 
 // UNIVERSAL CONTENT CARD CLASSES
-const contentCardClasses = "backdrop-blur-lg rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-2xl space-y-4 md:space-y-6 bg-slate-900/40";
+const contentCardClasses =
+  'backdrop-blur-lg rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-2xl space-y-4 md:space-y-6 bg-slate-900/40';
 
-export const Auth: React.FC<AuthProps> = ({ 
-  onRegister, 
-  onLogin, 
-  onBack, 
+export const Auth: React.FC<AuthProps> = ({
+  onRegister,
+  onLogin,
+  onBack,
   theme,
-  initialName = '' // NEW: Default value
+  initialName = '',
 }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [name, setName] = useState(initialName); // USE INITIAL NAME
+  const [name, setName] = useState(initialName);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // ========== FIX: Check if user exists on this device ==========
+  // ========== Default mode ==========
+  // NOTE: This is "device-local" heuristic and may be refined later.
   useEffect(() => {
     const storedAuth = localStorage.getItem('abundance_auth');
-    // If no account exists, default to register mode
-    if (!storedAuth) {
-      setMode('register');
-    } else {
-      setMode('login');
-    }
+    if (!storedAuth) setMode('register');
+    else setMode('login');
   }, []);
 
-  // ========== EXISTING AUTH LOGIC (UNTOUCHED) ==========
+  // Keep naming ceremony name if it changes upstream
+  useEffect(() => {
+    setName((prev) => (prev ? prev : initialName));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialName]);
+
+  // Autofill controls (best-effort across browsers)
+  const formAutoComplete = useMemo(() => {
+    // For register, many browsers ignore "off", but "new-password" helps steer password managers.
+    return mode === 'register' ? 'new-password' : 'on';
+  }, [mode]);
+
+  const inputNames = useMemo(() => {
+    // Distinct field names reduce aggressive autofill collisions between login/register.
+    return mode === 'register'
+      ? {
+          email: 'signup_email',
+          password: 'signup_password',
+          name: 'signup_name',
+        }
+      : {
+          email: 'login_email',
+          password: 'login_password',
+          name: 'login_name',
+        };
+  }, [mode]);
+
+  const emailAutoComplete = mode === 'register' ? 'off' : 'email';
+  const passwordAutoComplete = mode === 'register' ? 'new-password' : 'current-password';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -77,20 +106,19 @@ export const Auth: React.FC<AuthProps> = ({
         }
 
         await apiService.register(name, email, password);
-        
+
         const newAccount: UserAccount = {
           email,
           name,
-          password: btoa(password)
+          password: btoa(password),
         };
 
         localStorage.setItem('abundance_auth', JSON.stringify(newAccount));
         setLoading(false);
         onRegister(newAccount);
-
       } else {
         const storedAuth = localStorage.getItem('abundance_auth');
-        
+
         if (!storedAuth) {
           setError('No account found on this device. Please register.');
           setLoading(false);
@@ -98,11 +126,9 @@ export const Auth: React.FC<AuthProps> = ({
         }
 
         const authData = JSON.parse(storedAuth);
-        
+
         const storedPwd = authData.password || authData.passwordHash;
-        const isPasswordMatch = 
-          storedPwd === btoa(password) || 
-          storedPwd === password;
+        const isPasswordMatch = storedPwd === btoa(password) || storedPwd === password;
 
         if (authData.email !== email) {
           setError('Email not found.');
@@ -135,59 +161,46 @@ export const Auth: React.FC<AuthProps> = ({
 
   return (
     <SacredBackground theme={theme} backgroundType="default">
-      {/* UNIVERSAL FOUNDATION: Centered Container */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 space-y-4 md:space-y-5 overflow-y-auto">
-        
-        {/* UNIVERSAL: Breathing Orb - 80PX SIZE with consistent margins */}
         <div className="mt-8 md:mt-12 mb-4 md:mb-6">
           <BreathingOrb size={80} breathingSpeed={4000} />
         </div>
 
-        {/* UNIVERSAL: Title Card - "Abundance Alchemy" */}
         <div className={`${titleCardClasses} mb-4 md:mb-6`}>
           <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
             Abundance Alchemy
           </h1>
         </div>
 
-        {/* SCREEN-SPECIFIC: Auth Content Card */}
-        <div className={`${contentCardClasses} mb-6 md:mb-8`}>
-          
-          {/* Logo (Register mode only) - BIGGER SIZE */}
+        <div className={`${contentCardClasses} mb-6 md:mb-8 relative`}>
           {mode === 'register' && (
             <div className="flex justify-center -mt-1 mb-3 md:mb-4">
-              <img 
-                src="https://abundantthought.com/abundance-alchemy/logo.png" 
-                alt="Abundance Alchemy" 
+              <img
+                src="https://abundantthought.com/abundance-alchemy/logo.png"
+                alt="Abundance Alchemy"
                 className="h-14 md:h-16 object-contain drop-shadow-[0_0_15px_rgba(251,191,36,0.3)]"
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
               />
             </div>
           )}
 
-          {/* Screen-Specific Title */}
           <div className="text-center space-y-2">
             <h2 className={`text-base md:text-lg font-bold ${textColor}`}>
               {mode === 'login' ? 'Welcome Back' : 'Namaste Initiate'}
             </h2>
-            
+
             {mode === 'login' ? (
-              <p className={`text-xs md:text-sm ${subTextColor}`}>
-                Continue your transformation
-              </p>
+              <p className={`text-xs md:text-sm ${subTextColor}`}>Continue your transformation</p>
             ) : (
               <div className="space-y-1">
-                <p className={`text-sm md:text-sm font-medium ${textColor}`}>
-                  Create Your Account Now
-                </p>
-                <p className={`text-xs ${subTextColor}`}>
-                  Your Practice Awaits
-                </p>
+                <p className={`text-sm md:text-sm font-medium ${textColor}`}>Create Your Account Now</p>
+                <p className={`text-xs ${subTextColor}`}>Your Practice Awaits</p>
               </div>
             )}
           </div>
 
-          {/* Back Button */}
           {onBack && (
             <button
               onClick={onBack}
@@ -198,8 +211,20 @@ export const Auth: React.FC<AuthProps> = ({
             </button>
           )}
 
-          {/* Screen-Specific: Auth Form */}
-          <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4 mt-3 md:mt-4">
+          {/* Auth Form */}
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-3 md:space-y-4 mt-3 md:mt-4"
+            autoComplete={formAutoComplete}
+          >
+            {/* Autofill bait fields (best-effort): keeps browsers from stuffing the real fields on register */}
+            {mode === 'register' && (
+              <div className="hidden" aria-hidden="true">
+                <input type="text" name="username" autoComplete="username" tabIndex={-1} />
+                <input type="password" name="password" autoComplete="current-password" tabIndex={-1} />
+              </div>
+            )}
+
             {mode === 'register' && (
               <div className="space-y-2">
                 <label className={`text-xs font-bold ${subTextColor}`}>Name</label>
@@ -207,6 +232,8 @@ export const Auth: React.FC<AuthProps> = ({
                   <User size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${subTextColor}`} />
                   <input
                     type="text"
+                    name={inputNames.name}
+                    autoComplete="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
@@ -222,6 +249,9 @@ export const Auth: React.FC<AuthProps> = ({
                 <Mail size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${subTextColor}`} />
                 <input
                   type="email"
+                  name={inputNames.email}
+                  autoComplete={emailAutoComplete}
+                  inputMode="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
@@ -236,6 +266,8 @@ export const Auth: React.FC<AuthProps> = ({
                 <Lock size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${subTextColor}`} />
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  name={inputNames.password}
+                  autoComplete={passwordAutoComplete}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -251,7 +283,6 @@ export const Auth: React.FC<AuthProps> = ({
               </div>
             </div>
 
-            {/* FIXED: Error message with sacred aesthetic */}
             {error && (
               <div className="backdrop-blur-sm rounded-xl border border-amber-500/30 p-3 text-xs text-amber-400 bg-gradient-to-r from-amber-500/5 to-orange-500/5">
                 <div className="flex items-center space-x-2">
@@ -261,7 +292,6 @@ export const Auth: React.FC<AuthProps> = ({
               </div>
             )}
 
-            {/* UNIVERSAL: Button Style */}
             <button
               type="submit"
               disabled={loading}
@@ -271,14 +301,18 @@ export const Auth: React.FC<AuthProps> = ({
             </button>
           </form>
 
-          {/* Screen-Specific: Toggle Login/Register */}
-          <div className={`text-center text-xs ${subTextColor} pt-2 md:pt-3 border-t border-slate-700/30 mt-3 md:mt-4`}>
-            {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
+          <div
+            className={`text-center text-xs ${subTextColor} pt-2 md:pt-3 border-t border-slate-700/30 mt-3 md:mt-4`}
+          >
+            {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
             <button
+              type="button"
               onClick={() => {
-                setMode(mode === 'login' ? 'register' : 'login');
+                const next = mode === 'login' ? 'register' : 'login';
+                setMode(next);
                 setError('');
-                setName(initialName); // Reset to initial name
+                setShowPassword(false);
+                setName(next === 'register' ? initialName : '');
                 setEmail('');
                 setPassword('');
               }}
@@ -287,10 +321,8 @@ export const Auth: React.FC<AuthProps> = ({
               {mode === 'login' ? 'Sign Up' : 'Sign In'}
             </button>
           </div>
-
         </div>
 
-        {/* Bottom Spacing for Mobile */}
         <div className="h-6 md:h-4"></div>
       </div>
     </SacredBackground>

@@ -1,10 +1,7 @@
-// services/api.ts
-import { Affirmation, Soundscape, PracticeType } from '../types'; // Only import what actually exists [file:29]
+import { Affirmation, Soundscape, PracticeType } from '../types';
 
-// Match PHP get-backgrounds.php slot map style (SPLASH/AUTH/WELCOME/etc.) [file:29]
 export type BackgroundMap = Record<string, { imageUrl: string }>;
 
-// Match me.php actual output (it returns the object directly, not wrapped) [file:59]
 export type MeUser = {
   id: number;
   name: string;
@@ -15,18 +12,15 @@ export type MeUser = {
   affirmationsCompleted: number;
 };
 
-// Until you formalize a MeditationTrack type, keep this permissive.
-// get_meditation_tracks.php returns an array of DB rows [file:54]
 export type MeditationTrack = Record<string, any>;
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost/abundance-alchemy-api';
+  import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy-api';
 
 const STORAGE_KEYS = {
   TOKEN: 'abundance_token',
 } as const;
 
-// Auth helpers (defined before client() so they are callable safely)
 export const setToken = (token: string) =>
   localStorage.setItem(STORAGE_KEYS.TOKEN, token);
 
@@ -39,7 +33,6 @@ export const logout = () => {
 
 export class ApiError extends Error {
   status: number;
-
   constructor(message: string, status: number) {
     super(message);
     this.status = status;
@@ -47,8 +40,6 @@ export class ApiError extends Error {
   }
 }
 
-// IMPORTANT: This is the fix for your “BodyInit” errors.
-// We accept `body?: any` and then serialize it ourselves.
 type ClientConfig = Omit<RequestInit, 'body' | 'method' | 'headers'> & {
   body?: any;
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -57,30 +48,19 @@ type ClientConfig = Omit<RequestInit, 'body' | 'method' | 'headers'> & {
 
 async function client<T>(endpoint: string, config: ClientConfig = {}): Promise<T> {
   const { body, method, headers: customHeaders, ...rest } = config;
-
   const token = getToken();
-
-  // Decide body + headers
-  const headers: HeadersInit = {
-    ...(customHeaders || {}),
-  };
+  const headers: HeadersInit = { ...(customHeaders || {}) };
 
   let finalBody: BodyInit | undefined = undefined;
-
   if (body !== undefined) {
-    // Allow FormData uploads later without breaking
     if (body instanceof FormData) {
       finalBody = body;
-      // Do NOT set Content-Type; browser will set multipart boundary.
     } else {
       finalBody = JSON.stringify(body);
-      // Only set JSON header when sending JSON
       if (!('Content-Type' in (headers as any))) {
         (headers as any)['Content-Type'] = 'application/json';
       }
     }
-  } else {
-    // Default Content-Type is not needed for GETs
   }
 
   if (token) {
@@ -97,15 +77,9 @@ async function client<T>(endpoint: string, config: ClientConfig = {}): Promise<T
     ...rest,
   });
 
-  // Parse response safely (PHP might return empty body sometimes)
   const raw = await response.text();
   let data: any = null;
-
-  try {
-    data = raw ? JSON.parse(raw) : null;
-  } catch {
-    data = raw;
-  }
+  try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
 
   if (response.status === 401) {
     logout();
@@ -113,43 +87,48 @@ async function client<T>(endpoint: string, config: ClientConfig = {}): Promise<T
   }
 
   if (!response.ok) {
-    const msg =
-      (data && (data.message || data.error)) ||
-      'API Request Failed';
-    throw new ApiError(msg, response.status);
+    throw new ApiError((data && (data.message || data.error)) || 'API Request Failed', response.status);
   }
 
   return data as T;
 }
 
 export const api = {
-  // USER
-  me: () => client<MeUser>('me.php'), // me.php returns user object directly [file:59]
+  me: () => client<MeUser>('me.php'),
 
-  // PROGRESS
-  updateProgress: (payload: {
-    userId: string | number;
-    type: 'meditation' | 'affirmation' | 'journal';
-    duration?: number;
-    itemId?: string | number;
-  }) => client<{ ok?: boolean; message?: string }>('sync-progress.php', { body: payload }),
+  // Maps to your ACTUAL PHP files
+  login: (email: string, password?: string) => 
+    client<{ token: string; user: MeUser }>('login.php', { body: { email, password } }),
 
-  // CONTENT
-  getSoundscapes: () => client<Soundscape[]>('get-soundscapes.php'),
+  // CHANGED: signup.php -> register.php to match your file
+  register: (name: string, email: string, password?: string) => 
+    client<{ token: string; user: MeUser }>('register.php', { body: { name, email, password } }),
+
+  updateProgress: (payload: { userId: string | number; type: string; duration?: number; itemId?: string }) => 
+    client<{ ok: boolean }>('sync-progress.php', { body: payload }),
+
+  getSoundscapes: (email?: string) => client<Soundscape[]>('get-soundscapes.php' + (email ? `?email=${encodeURIComponent(email)}` : '')),
 
   getBackgrounds: () => client<BackgroundMap>('get-backgrounds.php'),
 
   getAffirmations: () => client<Affirmation[]>('get-system-affirmations.php'),
 
-  // Match Affirmation requiring `type: PracticeType` in your types.ts [file:29]
-  addUserAffirmation: (affirmationText: string, type: PracticeType) =>
-    client<Affirmation>('add-user-affirmation.php', {
-      body: { text: affirmationText, type },
-    }),
+  addUserAffirmation: (email: string, text: string, type: PracticeType) =>
+    client<Affirmation>('add-user-affirmation.php', { body: { email, text, type } }),
 
-  getMeditationTracks: () => client<MeditationTrack[]>('get_meditation_tracks.php'),
+  removeUserAffirmation: (id: string) => client<{ ok: boolean }>(`delete-affirmation.php`, { body: { id }, method: 'POST' }),
 
-  // GENERIC
-  get: <T>(endpoint: string) => client<T>(endpoint),
-  post: <T>(endpoint: string, body: any) => client<T>(endpoint, { body }),
+  // CHANGED: upload-audio.php -> user-upload-audio.php to match your user-facing script
+  uploadUserAudio: (file: File, category: string, email: string) => {
+    const formData = new FormData();
+    formData.append('audio_file', file);
+    formData.append('category', category);
+    formData.append('email', email);
+    return client<{ url: string }>('user-upload-audio.php', { body: formData });
+  },
+
+  syncProgress: (data: any) => client('sync-progress.php', { body: data }),
 };
+
+// ALIAS for backward compatibility with your App.tsx
+export const apiService = api;

@@ -21,7 +21,8 @@ import {
   ChevronDown,
   BookOpen,
   Sparkles as SparklesIcon,
-  Wind
+  Wind,
+  User
 } from 'lucide-react';
 import { AlchemistAvatar } from './AlchemistAvatar';
 import { apiService } from '../services/apiService';
@@ -38,6 +39,11 @@ interface DashboardProps {
   onStartPractice: (type: PracticeType, duration: number) => void;
   onOpenMeditation?: () => void;
   onOpenSettings: () => void;
+  onOpenProfile?: () => void;
+  musicOn: boolean;
+  ambienceVolume: number;
+  onToggleMusic: () => void;
+  onVolumeChange: (volume: number) => void;
   onSignOut: () => void;
   theme: 'light' | 'dark';
   userAudioFile?: File | null;
@@ -49,6 +55,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onStartPractice,
   onOpenMeditation,
   onOpenSettings,
+  onOpenProfile,
+  musicOn,
+  ambienceVolume,
+  onToggleMusic,
+  onVolumeChange,
   onSignOut,
   theme,
   userAudioFile,
@@ -194,16 +205,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </span>
             </div>
           </div>
-          <button
-            onClick={onOpenSettings}
-            className={`p-2 rounded-full transition-colors z-10 ${
-              theme === 'light'
-                ? 'bg-white/50 hover:bg-white text-slate-600'
-                : 'bg-slate-800/50 hover:bg-slate-800 text-slate-400'
-            }`}
-          >
-            <SettingsIcon size={20} />
-          </button>
+          <div className="flex items-center gap-2 z-10">
+            {onOpenProfile ? (
+              <button
+                onClick={onOpenProfile}
+                aria-label="Open profile"
+                className={`p-2 rounded-full transition-colors ${
+                  theme === 'light'
+                    ? 'bg-white/50 hover:bg-white text-slate-600'
+                    : 'bg-slate-800/50 hover:bg-slate-800 text-slate-400'
+                }`}
+              >
+                <User size={20} />
+              </button>
+            ) : null}
+            <button
+              onClick={onOpenSettings}
+              className={`p-2 rounded-full transition-colors ${
+                theme === 'light'
+                  ? 'bg-white/50 hover:bg-white text-slate-600'
+                  : 'bg-slate-800/50 hover:bg-slate-800 text-slate-400'
+              }`}
+            >
+              <SettingsIcon size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Wisdom card */}
@@ -547,6 +573,53 @@ export const Dashboard: React.FC<DashboardProps> = ({
             >
               CHANGE
             </button>
+          </div>
+        </div>
+
+        {/* Quick Audio Controls */}
+        <div className="py-3 border-t border-slate-700/10 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Music size={14} className="text-amber-500" />
+              <span className={`text-xs font-bold uppercase tracking-wider ${subTextColor}`}>
+                Music
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                playBell();
+                onToggleMusic();
+              }}
+              className={`w-10 h-5 rounded-full transition-colors ${
+                musicOn ? 'bg-emerald-600' : 'bg-slate-600'
+              } relative`}
+              aria-label="Toggle music"
+            >
+              <div
+                className={`absolute top-0.5 ${
+                  musicOn ? 'right-0.5' : 'left-0.5'
+                } w-4 h-4 bg-white rounded-full transition-all`}
+              />
+            </button>
+          </div>
+          <div>
+            <div className="flex items-center justify-between">
+              <span className={`text-[10px] uppercase font-bold tracking-wider ${subTextColor}`}>
+                Volume
+              </span>
+              <span className="text-[10px] text-amber-500 font-bold">
+                {ambienceVolume}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={ambienceVolume}
+              onChange={(e) => onVolumeChange(Number(e.target.value))}
+              className="w-full mt-2"
+              aria-label="Music volume"
+            />
           </div>
         </div>
 

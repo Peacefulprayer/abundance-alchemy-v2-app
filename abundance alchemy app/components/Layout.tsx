@@ -39,37 +39,54 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
     mode === AppMode.PROFILE ||
     mode === AppMode.STATS;
 
-  const slot: BackgroundSlot | null = useMemo(() => {
-    // Map app modes to backend slots WITHOUT introducing new enums/types.
+  const slotCandidates: BackgroundSlot[] = useMemo(() => {
     switch (mode) {
+      case AppMode.PRE_SPLASH:
+        return ['PRE_SPLASH', 'SPLASH'];
       case AppMode.SPLASH:
-        return 'SPLASH';
+        return ['SPLASH', 'SPLASH_WELCOME'];
+      case AppMode.WELCOME:
+        return ['WELCOME', 'SPLASH_WELCOME'];
+      case AppMode.NAMING_CEREMONY:
+        return ['NAMING_CEREMONY', 'WELCOME'];
       case AppMode.AUTH:
-        return 'AUTH';
+        return ['AUTH', 'WELCOME'];
+      case AppMode.RETURN_PORTAL:
+        return ['RETURN_PORTAL', 'PROGRESS'];
       case AppMode.ONBOARDING:
-        return 'WELCOME';
+        return ['ONBOARDING', 'WELCOME'];
+      case AppMode.TUTORIAL:
+        return ['TUTORIAL', 'WELCOME'];
       case AppMode.DASHBOARD:
-        return 'HOME';
+        return ['DASHBOARD', 'HOME'];
       case AppMode.LIBRARY:
-        return 'HOME';
+        return ['LIBRARY', 'HOME'];
       case AppMode.SETTINGS:
-        return 'SETTINGS';
+        return ['SETTINGS', 'HOME'];
       case AppMode.PROFILE:
+        return ['PROFILE', 'PROGRESS'];
       case AppMode.STATS:
-        return 'PROGRESS';
+        return ['STATS', 'PROGRESS'];
       case AppMode.MEDITATION_SETUP:
-        return 'MEDITATION_SETUP';
+        return ['MEDITATION_SETUP', 'HOME'];
       case AppMode.PRACTICE: {
-        // Use practiceType when available
-        if (practiceType === PracticeType.MEDITATION) return 'MEDITATION_PRACTICE';
-        if (practiceType === PracticeType.MORNING_IAM) return 'IAM_PRACTICE';
-        if (practiceType === PracticeType.EVENING_ILOVE) return 'ILOVE_PRACTICE';
-        return 'HOME';
+        if (practiceType === PracticeType.MEDITATION) return ['MEDITATION_PRACTICE', 'HOME'];
+        if (practiceType === PracticeType.MORNING_IAM) return ['IAM_PRACTICE', 'HOME'];
+        if (practiceType === PracticeType.EVENING_ILOVE) return ['ILOVE_PRACTICE', 'HOME'];
+        return ['HOME'];
       }
       default:
-        return 'HOME';
+        return ['HOME'];
     }
   }, [mode, practiceType]);
+
+  const slot: BackgroundSlot | null = useMemo(() => {
+    for (const candidate of slotCandidates) {
+      const imageUrl = backgrounds?.[candidate]?.imageUrl;
+      if (imageUrl) return candidate;
+    }
+    return slotCandidates[0] || 'HOME';
+  }, [backgrounds, slotCandidates]);
 
   const bgEntry = slot ? backgrounds?.[slot] : undefined;
   const bgImageUrl = bgEntry?.imageUrl ? normalizeImageUrl(bgEntry.imageUrl) : '';
@@ -118,8 +135,8 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
       <div
         className={[
           'relative mx-auto min-h-screen w-full',
-          // Tight mobile-first container per your spec (375–420)
-          'max-w-[420px]',
+          // Responsive container: tighter on mobile, roomier on desktop
+          'max-w-[420px] md:max-w-[520px]',
           // Floating device feel on desktop
           'shadow-2xl shadow-black/40',
           isBottomNavMode ? 'pb-24' : 'pb-0'
