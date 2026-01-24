@@ -4,6 +4,8 @@ import { AppMode, UserAccount } from '../types';
 import { SacredBackground } from './SacredBackground';
 import { buttonSoundService } from '../services/buttonSoundService';
 import BreathingOrb from './BreathingOrb';
+import { href } from '../services/base';
+import { stopAmbience } from '../services/audioService';
 
 interface WelcomeScreenProps {
   // IMPORTANT: this must be the *validated* user passed from App.tsx
@@ -12,8 +14,9 @@ interface WelcomeScreenProps {
   theme?: 'light' | 'dark';
 }
 
-const WELCOME_URL = '/abundance-alchemy/assets/audio/voices/welcome.mp3';
+const WELCOME_URL = href('assets/audio/voices/welcome.mp3');
 const WELCOME_DURATION_MS = 35000;
+const FINISH_DELAY_MS = 1500;
 
 // UNIVERSAL TITLE CARD CLASSES
 const titleCardClasses =
@@ -34,11 +37,24 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  const didFinishRef = useRef(false);
+  const finishTimeoutRef = useRef<number | null>(null);
 
   // ✅ Returning/new decision is based ONLY on validated user prop (no localStorage)
   const isReturningUser = !!user;
 
+  const proceed = React.useCallback(() => {
+    if (didFinishRef.current) return;
+    didFinishRef.current = true;
+
+    const nextMode = isReturningUser ? AppMode.DASHBOARD : AppMode.NAMING_CEREMONY;
+    finishTimeoutRef.current = window.setTimeout(() => {
+      onComplete(nextMode);
+    }, FINISH_DELAY_MS);
+  }, [isReturningUser, onComplete]);
+
   useEffect(() => {
+    void stopAmbience();
     const audio = new Audio(WELCOME_URL);
     audioRef.current = audio;
 
@@ -51,15 +67,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
     const start = performance.now();
 
-    const finish = () => {
-      const nextMode = isReturningUser ? AppMode.DASHBOARD : AppMode.NAMING_CEREMONY;
-
-      // ✅ Do NOT restart/replace ambience here.
-      // Music continuity is governed upstream; user controls on Dashboard only.
-      onComplete(nextMode);
-    };
-
     const tick = (now: number) => {
+      if (didFinishRef.current) return;
       const elapsed = now - start;
       const pct = Math.min(100, (elapsed / WELCOME_DURATION_MS) * 100);
       setProgress(pct);
@@ -67,7 +76,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       if (elapsed < WELCOME_DURATION_MS) {
         requestAnimationFrame(tick);
       } else {
-        setTimeout(finish, 1500);
+        proceed();
       }
     };
 
@@ -75,19 +84,23 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
     const handleEnded = () => {
       setIsPlaying(false);
-      setTimeout(finish, 1500);
+      proceed();
     };
 
     audio.addEventListener('ended', handleEnded);
 
     return () => {
       clearTimeout(timer);
+      if (finishTimeoutRef.current) {
+        window.clearTimeout(finishTimeoutRef.current);
+        finishTimeoutRef.current = null;
+      }
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.removeEventListener('ended', handleEnded);
       }
     };
-  }, [isReturningUser, onComplete]);
+  }, [proceed]);
 
   const handleSkip = () => {
     buttonSoundService.play('click');
@@ -98,10 +111,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       setIsPlaying(false);
     }
 
-    const nextMode = isReturningUser ? AppMode.DASHBOARD : AppMode.NAMING_CEREMONY;
-
-    // ✅ Do NOT restart/replace ambience here.
-    onComplete(nextMode);
+    proceed();
   };
 
   return (

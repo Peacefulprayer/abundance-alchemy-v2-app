@@ -31,6 +31,7 @@ import { MeditationSetup } from './components/MeditationSetup';
 import { Stats } from './components/Stats';
 import { Layout } from './components/Layout';
 import { playAmbience, stopAmbience } from './services/audioService';
+import { href } from './services/base';
 
 // UPDATED IMPORT: Use 'api' from the unified service
 import { api } from './services/api';
@@ -478,7 +479,7 @@ function App() {
   const defaultSoundscape: Soundscape = {
     id: 'default',
     label: 'Default Ambience',
-    url: '/abundance-alchemy/assets/audio/ambient/default.mp3',
+    url: href('assets/audio/ambient/default.mp3'),
   };
 
 
@@ -493,20 +494,27 @@ function App() {
     return soundscapes.find(s => s.id === settings.soundscapeId) || defaultSoundscape;
   };
 
-  // Keep ambient music synced with dashboard-level settings.
+  // Keep ambient music synced with app-level settings.
   useEffect(() => {
     if (currentMode === AppMode.PRACTICE) return;
+    if (currentMode === AppMode.SPLASH) return;
+    if (currentMode === AppMode.WELCOME) return;
 
-    const dashboardModes = new Set<AppMode>([
+    const ambienceModes = new Set<AppMode>([
+      AppMode.NAMING_CEREMONY,
+      AppMode.AUTH,
+      AppMode.ONBOARDING,
+      AppMode.TUTORIAL,
       AppMode.DASHBOARD,
       AppMode.LIBRARY,
       AppMode.SETTINGS,
       AppMode.STATS,
       AppMode.PROFILE,
       AppMode.RETURN_PORTAL,
+      AppMode.MEDITATION_SETUP,
     ]);
 
-    if (settings.musicOn && dashboardModes.has(currentMode)) {
+    if (settings.musicOn && ambienceModes.has(currentMode)) {
       playAmbience(getActiveSoundscape(), settings.ambienceVolume);
     } else {
       stopAmbience();

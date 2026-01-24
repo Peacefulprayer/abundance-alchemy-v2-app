@@ -2,8 +2,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import BreathingOrb from '../BreathingOrb';
 import { buttonSoundService } from '../../services/buttonSoundService';
-import { startAmbience, stopAmbience } from '../../services/audioService';
+import { startAmbience } from '../../services/audioService';
 import { SacredBackground } from '../SacredBackground';
+import { href } from '../../services/base';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -47,11 +48,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
   // Start background music when SplashScreen loads
   useEffect(() => {
-    startAmbience('/abundance-alchemy/assets/audio/ambient/default.mp3', 50);
-
-    return () => {
-      stopAmbience();
-    };
+    startAmbience(href('assets/audio/ambient/default.mp3'), 50);
   }, []);
 
   // Best-effort background preloading during preparation
@@ -136,7 +133,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
   const handleReadyClick = () => {
     console.log('Ready button clicked');
     buttonSoundService.play('click');
-    stopAmbience();
     setTimeout(() => {
       onComplete();
     }, 200);
