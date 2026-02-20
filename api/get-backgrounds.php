@@ -1,12 +1,8 @@
 <?php
-require_once '../config.php';
-require_once '../db.php';
-
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json; charset=UTF-8');
+include_once 'config.php';
 
 try {
-    $stmt = $pdo->query("SELECT slot, image_url FROM backgrounds WHERE is_active = 1");
+    $stmt = $conn->query("SELECT slot, image_url FROM backgrounds WHERE is_active = 1");
     $result = [];
 
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {

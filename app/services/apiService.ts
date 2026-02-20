@@ -9,10 +9,11 @@ const fetchWithTimeout = async (resource: string, options: RequestInit = {}) => 
   const id = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(resource, {
-      ...options,
-      signal: controller.signal,
-    });
+  const response = await fetch(resource, {
+    credentials: 'include',
+    ...options,
+    signal: controller.signal,
+  });
     clearTimeout(id);
     return response;
   } catch (error) {
@@ -102,19 +103,17 @@ export const apiService = {
         data = JSON.parse(text);
       } catch (e) {
         console.warn('API Register: Could not parse JSON', text);
-        return { message: `Server Error: ${text.substring(0, 100)}...` };
+        throw new Error(`Server Error: ${text.substring(0, 100)}...`);
       }
 
       if (!response.ok) {
-        return {
-          message: data?.message || `Registration failed (${response.status})`,
-        };
+        throw new Error(data?.message || `Registration failed (${response.status})`);
       }
 
       return data;
     } catch (error: any) {
       console.log('API Register error:', error);
-      return { message: error instanceof Error ? error.message : 'Network error' };
+      throw error instanceof Error ? error : new Error('Network error');
     }
   },
 
@@ -134,19 +133,17 @@ export const apiService = {
         data = JSON.parse(text);
       } catch (e) {
         console.warn('API Login: Could not parse JSON', text);
-        return { message: `Server Error: ${text.substring(0, 100)}...` };
+        throw new Error(`Server Error: ${text.substring(0, 100)}...`);
       }
 
       if (!response.ok) {
-        return {
-          message: data?.message || `Login failed (${response.status})`,
-        };
+        throw new Error(data?.message || `Login failed (${response.status})`);
       }
 
       return data;
     } catch (error: any) {
       console.log('API Login error:', error);
-      return { message: error instanceof Error ? error.message : 'Network error' };
+      throw error instanceof Error ? error : new Error('Network error');
     }
   },
 
@@ -252,9 +249,7 @@ export const apiService = {
   async getUserAffirmations(email: string): Promise<any[]> {
     if (!ENABLE_BACKEND) return [];
     try {
-      const response = await fetchWithTimeout(
-        `${API_BASE}/get-user-affirmations.php?email=${encodeURIComponent(email)}`
-      );
+      const response = await fetchWithTimeout(`${API_BASE}/get-user-affirmations.php`);
       if (!response.ok) return [];
       const data = await response.json();
       return data.map((item: any) => ({
@@ -288,10 +283,11 @@ export const apiService = {
   async removeUserAffirmation(id: string): Promise<boolean> {
     if (!ENABLE_BACKEND) return true;
     try {
-      await fetchWithTimeout(
-        `${API_BASE}/remove-user-affirmation.php?id=${encodeURIComponent(id)}`,
-        { method: 'POST' }
-      );
+      await fetchWithTimeout(`${API_BASE}/delete-user-affirmation.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
       return true;
     } catch (e) {
       return false;

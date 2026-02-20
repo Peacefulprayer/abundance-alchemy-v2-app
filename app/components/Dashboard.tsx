@@ -165,7 +165,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     : `Greetings, ${user.name}`;
 
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-300';
+  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
   const buttonBg =
     theme === 'light'
       ? 'bg-slate-100 hover:bg-amber-100 border-slate-200'
@@ -192,10 +192,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }`}
     >
       {/* Header Section */}
-      <div className="relative pt-6 px-6 pb-2">
+      <div className="relative pt-4 px-4 pb-2">
         <div className="flex justify-between items-start">
           <div className="space-y-1 z-10">
-            <h1 className={`text-2xl font-serif font-bold ${textColor}`}>
+            <h1 className={`text-xl font-serif font-bold ${textColor}`}>
               {greeting}
             </h1>
             <div className="flex items-center space-x-2">
@@ -234,7 +234,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Wisdom card */}
         <div
-          className={`mt-6 relative p-5 rounded-2xl border backdrop-blur-md shadow-sm overflow-hidden group ${
+          className={`mt-4 relative p-4 rounded-2xl border backdrop-blur-md shadow-sm overflow-hidden group ${
             theme === 'light'
               ? 'bg-white/70 border-white/50'
               : 'bg-slate-800/40 border-slate-700/30'
@@ -263,7 +263,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      <div className="px-6 space-y-6 mt-2">
+      <div className="px-4 space-y-4 mt-2">
         {/* Focus card */}
         <div className="space-y-2">
           <div className="flex justify-between items-end px-1">
@@ -280,14 +280,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div
-            className={`p-5 rounded-2xl border transition-all ${
+            className={`p-4 rounded-2xl border transition-all ${
               theme === 'light'
                 ? 'bg-white border-slate-200 shadow-sm'
                 : 'bg-slate-800/40 border-slate-700/50'
             }`}
           >
             <div className="flex justify-between items-start mb-2">
-              <h2 className={`text-xl font-bold ${textColor}`}>
+              <h2 className={`text-lg font-bold ${textColor}`}>
                 {getFocusAreaLabel(user.focusAreas[0]) || 'your focus'}
               </h2>
               {/* If you had an icon for focus, it could go here */}
@@ -405,7 +405,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div
-            className={`rounded-3xl p-6 relative overflow-hidden transition-all duration-700 ${
+            className={`rounded-3xl p-4 relative overflow-hidden transition-all duration-700 ${
               mode === PracticeType.MORNING_IAM
                 ? 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/20'
                 : 'bg-gradient-to-br from-indigo-600 to-purple-800 shadow-lg shadow-purple-500/20'
@@ -421,12 +421,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             <div className="relative z-10">
-              <h2 className="text-2xl font-bold text-white mb-1">
+              <h2 className="text-xl font-bold text-white mb-1">
                 {mode === PracticeType.MORNING_IAM
                   ? 'Begin I Am Practice'
                   : 'Begin I Love Practice'}
               </h2>
-              <p className="text-white/80 text-xs mb-6 max-w-[200px] leading-relaxed">
+              <p className="text-white/80 text-xs mb-4 max-w-[200px] leading-relaxed">
                 {mode === PracticeType.MORNING_IAM
                   ? 'Align your vibration with your highest self through powerful affirmations.'
                   : 'Release the day and return to love through gratitude and forgiveness.'}

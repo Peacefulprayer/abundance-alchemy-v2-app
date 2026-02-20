@@ -95,68 +95,47 @@ export const Auth: React.FC<AuthProps> = ({
 
     try {
       if (mode === 'register') {
-        const existingAuth = localStorage.getItem('abundance_auth');
-        if (existingAuth) {
-          const existing = JSON.parse(existingAuth);
-          if (existing.email === email) {
-            setError('Email already registered locally. Please login.');
-            setLoading(false);
-            return;
-          }
-        }
-
-        await apiService.register(name, email, password);
+        const data = await apiService.register(name, email, password);
 
         const newAccount: UserAccount = {
-          email,
-          name,
-          password: btoa(password),
+          id: data?.id,
+          email: data?.email ?? email,
+          name: data?.name ?? name,
+          streak: data?.streak,
+          level: data?.level,
+          focusAreas: data?.focusAreas,
+          affirmationsCompleted: data?.affirmationsCompleted,
         };
 
         localStorage.setItem('abundance_auth', JSON.stringify(newAccount));
         setLoading(false);
         onRegister(newAccount);
       } else {
-        const storedAuth = localStorage.getItem('abundance_auth');
-
-        if (!storedAuth) {
-          setError('No account found on this device. Please register.');
-          setLoading(false);
-          return;
-        }
-
-        const authData = JSON.parse(storedAuth);
-
-        const storedPwd = authData.password || authData.passwordHash;
-        const isPasswordMatch = storedPwd === btoa(password) || storedPwd === password;
-
-        if (authData.email !== email) {
-          setError('Email not found.');
-          setLoading(false);
-          return;
-        }
-
-        if (!isPasswordMatch) {
-          setError('Incorrect password.');
-          setLoading(false);
-          return;
-        }
-
-        await apiService.login(email, password);
+        const data = await apiService.login(email, password);
 
         setLoading(false);
-        onLogin(authData);
+        const account: UserAccount = {
+          id: data?.id,
+          email: data?.email ?? email,
+          name: data?.name,
+          streak: data?.streak,
+          level: data?.level,
+          focusAreas: data?.focusAreas,
+          affirmationsCompleted: data?.affirmationsCompleted,
+        };
+        localStorage.setItem('abundance_auth', JSON.stringify(account));
+        onLogin(account);
       }
     } catch (err: any) {
       console.error(err);
-      setError('Authentication failed. Please check your connection.');
+      setError(err?.message || 'Authentication failed. Please check your connection.');
       setLoading(false);
     }
   };
 
   // Theme colors
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-400';
+  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-400';
   const inputBg = theme === 'light' ? 'bg-white border-slate-300' : 'bg-slate-900/50 border-slate-700';
 
   return (

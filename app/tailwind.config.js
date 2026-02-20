@@ -18,8 +18,8 @@ export default {
         }
       },
       fontFamily: {
-        serif: ['Georgia', 'Times New Roman', 'serif'],
-        sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        serif: ['Trebuchet MS', 'Trebuchet', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', 'Tahoma', 'sans-serif'],
+        sans: ['Trebuchet MS', 'Trebuchet', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', 'Tahoma', 'sans-serif'],
       },
       animation: {
         'spin-slow': 'spin 3s linear infinite',

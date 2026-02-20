@@ -1,6 +1,7 @@
 // src/components/Library.tsx
 import React, { useMemo, useState } from 'react';
-import type { Affirmation, GratitudeLog, PracticeType, Soundscape } from '../types';
+import { PracticeType } from '../types';
+import type { Affirmation, GratitudeLog, Soundscape } from '../types';
 import { audioManager } from '../services/audioManager';
 
 interface LibraryProps {
@@ -42,8 +43,24 @@ export const Library: React.FC<LibraryProps> = (props) => {
   );
 
   const [previewingId, setPreviewingId] = useState<string>('');
+  const [newAffirmationText, setNewAffirmationText] = useState('');
+  const [newAffirmationType, setNewAffirmationType] = useState<PracticeType>(PracticeType.MORNING_IAM);
+  const [isSavingAffirmation, setIsSavingAffirmation] = useState(false);
 
   const cardBg = theme === 'light' ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900/50 border-white/10 text-slate-100';
+
+  const handleAddAffirmation = async () => {
+    const text = newAffirmationText.trim();
+    if (!text || isSavingAffirmation) return;
+
+    setIsSavingAffirmation(true);
+    try {
+      await onAdd(text, newAffirmationType);
+      setNewAffirmationText('');
+    } finally {
+      setIsSavingAffirmation(false);
+    }
+  };
 
   return (
     <div className="p-6 max-w-md mx-auto pb-24">
@@ -114,6 +131,40 @@ export const Library: React.FC<LibraryProps> = (props) => {
 
       <div className={`${cardBg} rounded-2xl border p-4 mb-4`}>
         <div className="text-xs uppercase tracking-wider opacity-70 mb-2">Affirmations</div>
+        <div className="space-y-2 mb-3">
+          <textarea
+            value={newAffirmationText}
+            onChange={(e) => setNewAffirmationText(e.target.value)}
+            placeholder="Add your personal affirmation..."
+            rows={2}
+            className={`w-full rounded-xl border p-2 text-sm ${
+              theme === 'light'
+                ? 'border-slate-300 bg-slate-50 text-slate-900'
+                : 'border-slate-700 bg-slate-800 text-slate-100'
+            }`}
+          />
+          <div className="flex items-center gap-2">
+            <select
+              value={newAffirmationType}
+              onChange={(e) => setNewAffirmationType(e.target.value as PracticeType)}
+              className={`rounded-lg border px-2 py-2 text-xs ${
+                theme === 'light'
+                  ? 'border-slate-300 bg-white text-slate-900'
+                  : 'border-slate-700 bg-slate-900 text-slate-100'
+              }`}
+            >
+              <option value={PracticeType.MORNING_IAM}>I Am</option>
+              <option value={PracticeType.EVENING_ILOVE}>I Love</option>
+            </select>
+            <button
+              className="px-3 py-2 rounded-lg bg-emerald-500 text-slate-900 text-xs font-bold disabled:opacity-50"
+              onClick={handleAddAffirmation}
+              disabled={isSavingAffirmation || !newAffirmationText.trim()}
+            >
+              {isSavingAffirmation ? 'Saving...' : 'Add'}
+            </button>
+          </div>
+        </div>
         {affirmations.length === 0 ? (
           <div className="text-sm opacity-70">No affirmations yet.</div>
         ) : (

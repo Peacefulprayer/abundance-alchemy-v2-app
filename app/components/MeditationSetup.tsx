@@ -28,7 +28,7 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
   const [loading, setLoading] = useState(true);
 
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-400';
+  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-400';
   const cardBg =
     theme === 'light'
       ? 'bg-white border-slate-200'

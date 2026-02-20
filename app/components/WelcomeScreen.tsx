@@ -179,12 +179,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         <div className="mt-6 md:mt-8 w-full flex justify-center">
           <div className={footerCardClasses}>
             <div className="text-center space-y-2">
-              <p className="text-xs text-amber-500/80 leading-relaxed">
+              <p className="text-xs text-white leading-relaxed">
                 Collectively affirming
                 <br />
                 what in our hearts we know is true.
               </p>
-              <div className="text-[10px] md:text-[11px] text-slate-500 space-y-0.5">
+              <div className="text-[10px] md:text-[11px] text-white space-y-0.5">
                 <p>All images and Music: Pixabay.com free use license</p>
                 <p>(unless otherwise noted)</p>
               </div>

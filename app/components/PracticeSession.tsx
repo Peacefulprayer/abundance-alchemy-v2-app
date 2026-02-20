@@ -3,13 +3,16 @@ import { PracticeSessionConfig, Affirmation, GratitudeLog, PracticeType, Soundsc
 import { Heart, Play, Pause, RotateCcw, Volume2, VolumeX, SkipBack, Zap } from 'lucide-react';
 import { playCompletionSound, updateVolume, stopAmbience, startAmbience } from '../services/audioService';
 import { getMeditationWisdom } from '../services/geminiService';
-import { apiService } from '../services/apiService';
+import { api } from '../services/api';
 
 // ADDED: Helper to extract string from FocusArea union type
 const getFocusAreaLabel = (focusArea: FocusArea | undefined): string => {
   if (!focusArea) return '';
   return typeof focusArea === 'string' ? focusArea : focusArea.label;
 };
+
+const normalizeAffirmation = (text: string): string =>
+  text.replace(/\s+/g, ' ').trim().toLowerCase();
 
 interface PracticeSessionProps {
   config: PracticeSessionConfig;
@@ -35,9 +38,11 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const [isRunning, setIsRunning] = useState(false);
 
   // Content State
-  const [affirmationQueue, setAffirmationQueue] = useState<string[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [fallbackQueue, setFallbackQueue] = useState<string[]>([]);
+  const [fallbackIndex, setFallbackIndex] = useState(0);
+  const [currentAffirmation, setCurrentAffirmation] = useState('');
   const [meditationWisdom, setMeditationWisdom] = useState('');
+  const [isFetchingAffirmation, setIsFetchingAffirmation] = useState(false);
 
   // UI State
   const [showGratitude, setShowGratitude] = useState(false);
@@ -48,6 +53,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const [volume, setVolume] = useState(50);
   const [isMuted, setIsMuted] = useState(false);
   const audioInitialized = useRef(false);
+  const isAdvancingRef = useRef(false);
+  const recentAffirmationsRef = useRef<string[]>([]);
 
   const isMeditation = config.type === PracticeType.MEDITATION;
   const isMorning = config.type === PracticeType.MORNING_IAM;
@@ -86,6 +93,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   // Load Content Logic
   const loadSessionContent = async () => {
     setIsLoadingContent(true);
+    recentAffirmationsRef.current = [];
 
     // FIXED: Use helper function to extract label
     const focusAreaRaw = config.focusAreas?.[0] || 'General';
@@ -95,8 +103,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       const wisdom = await getMeditationWisdom(focusLabel);
       setMeditationWisdom(wisdom);
     } else {
-      // System + User affirmations
-      const systemAffs = await apiService.getSystemAffirmations(config.type);
+      // Build a local fallback queue in case live DB pulls fail.
+      const systemAffs = await api.getSystemAffirmations(config.type).catch(() => []);
       const userAffs = customAffirmations.filter((a) => a.type === config.type);
 
       let allTexts = [
@@ -116,15 +124,83 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
         [allTexts[i], allTexts[j]] = [allTexts[j], allTexts[i]];
       }
 
-      setAffirmationQueue(allTexts);
+      setFallbackQueue(allTexts);
+      setFallbackIndex(0);
+
+      // Pull first visible affirmation from DB.
+      let firstAffirmation: string | null = null;
+      for (let i = 0; i < 6; i++) {
+        const text = await api.getRandomAffirmation(config.type, focusLabel);
+        if (text && normalizeAffirmation(text) !== normalizeAffirmation(currentAffirmation)) {
+          firstAffirmation = text;
+          break;
+        }
+      }
+      const initialAffirmation = firstAffirmation || allTexts[0];
+      setCurrentAffirmation(initialAffirmation);
+      if (initialAffirmation) {
+        recentAffirmationsRef.current = [normalizeAffirmation(initialAffirmation)];
+      }
     }
 
     setIsLoadingContent(false);
   };
 
-  const handleNextAffirmation = () => {
-    if (!isMeditation && affirmationQueue.length > 0) {
-      setCurrentIndex((prev) => (prev + 1) % affirmationQueue.length);
+  const handleNextAffirmation = async () => {
+    if (isMeditation || isLoadingContent || isFetchingAffirmation || isAdvancingRef.current) {
+      return;
+    }
+
+    isAdvancingRef.current = true;
+    setIsFetchingAffirmation(true);
+    try {
+      const focusAreaRaw = config.focusAreas?.[0] || 'General';
+      const focusLabel = getFocusAreaLabel(focusAreaRaw as FocusArea) || 'General';
+      const currentNorm = normalizeAffirmation(currentAffirmation);
+      const recentNorms = new Set(recentAffirmationsRef.current);
+
+      let nextAffirmation: string | null = null;
+      for (let i = 0; i < 6; i++) {
+        const text = await api.getRandomAffirmation(config.type, focusLabel);
+        if (!text) continue;
+        const candidateNorm = normalizeAffirmation(text);
+        if (candidateNorm !== '' && candidateNorm !== currentNorm && !recentNorms.has(candidateNorm)) {
+          nextAffirmation = text;
+          break;
+        }
+      }
+
+      if (nextAffirmation) {
+        setCurrentAffirmation(nextAffirmation);
+        const nextNorm = normalizeAffirmation(nextAffirmation);
+        recentAffirmationsRef.current = [...recentAffirmationsRef.current, nextNorm].slice(-4);
+        return;
+      }
+
+      if (fallbackQueue.length > 0) {
+        const size = fallbackQueue.length;
+        let pickedIndex = -1;
+        for (let step = 1; step <= size; step++) {
+          const candidateIndex = (fallbackIndex + step) % size;
+          const candidateText = fallbackQueue[candidateIndex];
+          const candidateNorm = normalizeAffirmation(candidateText);
+          if (candidateNorm !== '' && candidateNorm !== currentNorm && !recentNorms.has(candidateNorm)) {
+            pickedIndex = candidateIndex;
+            break;
+          }
+        }
+        if (pickedIndex < 0) {
+          pickedIndex = (fallbackIndex + 1) % size;
+        }
+        const pickedText = fallbackQueue[pickedIndex];
+        setFallbackIndex(pickedIndex);
+        setCurrentAffirmation(pickedText);
+        const pickedNorm = normalizeAffirmation(pickedText);
+        recentAffirmationsRef.current = [...recentAffirmationsRef.current, pickedNorm].slice(-4);
+      }
+    } finally {
+      setIsFetchingAffirmation(false);
+      isAdvancingRef.current = false;
     }
   };
 
@@ -363,7 +439,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
           {/* Main Content (affirmations or meditation wisdom) */}
           <button
             onClick={handleNextAffirmation}
-            disabled={isMeditation || isLoadingContent}
+            disabled={isMeditation || isLoadingContent || isFetchingAffirmation}
             className={`text-center animate-in fade-in slide-in-from-bottom-4 min-h-[120px] flex flex-col items-center justify-center w-full rounded-2xl p-4 transition-all ${
               !isMeditation ? 'active:scale-95 hover:bg-white/5 cursor-pointer' : ''
             }`}
@@ -382,8 +458,11 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
                 </p>
               </div>
             ) : (
-              <p className="text-xl md:text-2xl font-serif text-white leading-relaxed px-4 drop-shadow-md font-medium">
-                {affirmationQueue[currentIndex]}
+              <p
+                className="text-base md:text-lg text-white leading-relaxed px-4 drop-shadow-md font-medium"
+                style={{ fontFamily: 'Trebuchet MS, Trebuchet, Arial, sans-serif' }}
+              >
+                {currentAffirmation}
               </p>
             )}
 

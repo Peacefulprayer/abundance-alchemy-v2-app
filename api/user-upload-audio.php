@@ -4,9 +4,21 @@ include_once 'config.php';
 header('Content-Type: application/json; charset=utf-8');
 
 // Simple user upload - minimal data
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['audioFile']) && isset($_POST['email'])) {
-    
-    $email = trim($_POST['email']);
+$fileKey = null;
+if (isset($_FILES['audioFile'])) {
+    $fileKey = 'audioFile';
+} elseif (isset($_FILES['audio_file'])) {
+    $fileKey = 'audio_file';
+}
+
+$email = '';
+if (isset($_POST['email'])) {
+    $email = trim((string)$_POST['email']);
+} elseif (isset($_SESSION['user_email'])) {
+    $email = trim((string)$_SESSION['user_email']);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $fileKey && $email !== '') {
     $category = trim($_POST['category'] ?? 'GENERAL');
     $usage_purpose = trim($_POST['purpose'] ?? 'meditation');
     
@@ -17,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['audioFile']) && isse
         exit();
     }
     
-    $file = $_FILES['audioFile'];
+    $file = $_FILES[$fileKey];
     $target_dir = "../assets/audio/";
     
     if (!file_exists($target_dir)) {

@@ -1,7 +1,16 @@
 <?php
 include_once 'config.php';
 
-echo "<h1>Database Inspector</h1>";
+$remoteAddr = $_SERVER['REMOTE_ADDR'] ?? '';
+$isLocalRequest = in_array($remoteAddr, ['127.0.0.1', '::1'], true);
+
+if (!(defined('DEBUG_MODE') && DEBUG_MODE && $isLocalRequest)) {
+    http_response_code(403);
+    echo "Forbidden";
+    exit();
+}
+
+echo "<h1>Database Inspector (Debug Local Only)</h1>";
 
 try {
     // List all tables

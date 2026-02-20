@@ -38,6 +38,7 @@ export enum AppMode {
   LIBRARY = 'LIBRARY',
   STATS = 'STATS',
   MEDITATION_SETUP = 'MEDITATION_SETUP',
+  PRAYER_SETUP = 'PRAYER_SETUP',
   PROFILE = 'PROFILE',
 }
 
@@ -79,9 +80,13 @@ export interface AppSettings {
 }
 
 export interface UserAccount {
+  id?: number;
   email?: string; // keep optional because some flows store just email/token
-  password?: string;
   name?: string;
+  streak?: number;
+  level?: number;
+  focusAreas?: FocusArea[];
+  affirmationsCompleted?: number;
 }
 
 export interface Soundscape {

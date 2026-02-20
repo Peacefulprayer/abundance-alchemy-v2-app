@@ -6,6 +6,12 @@ header('Content-Type: application/json; charset=utf-8');
 try {
     // Get parameters
     $user_email = $_GET['user_email'] ?? null;
+    if (!$user_email && isset($_GET['email'])) {
+        $user_email = $_GET['email'];
+    }
+    if (!$user_email && isset($_SESSION['user_email'])) {
+        $user_email = $_SESSION['user_email'];
+    }
     $purpose = $_GET['purpose'] ?? null;
     $category = $_GET['category'] ?? null;
     $energy = $_GET['energy'] ?? null;

@@ -28,8 +28,10 @@ import { PracticeSession } from './components/PracticeSession';
 import { Settings } from './components/Settings';
 import { Library } from './components/Library';
 import { MeditationSetup } from './components/MeditationSetup';
+import { PrayerSetup } from './components/PrayerSetup';
 import { Stats } from './components/Stats';
 import { Layout } from './components/Layout';
+import { BottomNav } from './components/BottomNav';
 import { playAmbience, stopAmbience } from './services/audioService';
 import { href } from './services/base';
 
@@ -38,7 +40,7 @@ import { api } from './services/api';
 
 // Default app settings
 const DEFAULT_SETTINGS: AppSettings = {
-  theme: 'dark',
+  theme: 'light',
   soundEffectsOn: true,
   musicOn: true,
   soundscapeId: 'default',
@@ -59,7 +61,7 @@ const DEFAULT_SETTINGS: AppSettings = {
 function App() {
   // START WITH PRE_SPLASH (not SPLASH)
   const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.PRE_SPLASH);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
 
   // Dashboard expects UserProfile
@@ -121,76 +123,84 @@ function App() {
   };
 
 
-  // ✅ Boot validation: localStorage is a hint, backend is truth.
+  // ✅ Boot validation: server session is the source of truth.
   useEffect(() => {
-    const raw = localStorage.getItem('abundance_auth');
-
-
-    // No stored session → treat as new
-    if (!raw) {
-      setUser(null);
-      setAuthChecked(true);
-      return;
-    }
-
-
-    let parsed: any = null;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (error) {
-      console.error('Failed to parse stored auth:', error);
-      localStorage.removeItem('abundance_auth');
-      setUser(null);
-      setAuthChecked(true);
-      return;
-    }
-
-
-    const email = parsed?.email;
-    if (!email || typeof email !== 'string') {
-      localStorage.removeItem('abundance_auth');
-      setUser(null);
-      setAuthChecked(true);
-      return;
-    }
-
+    let isMounted = true;
 
     (async () => {
       try {
-        // Use the new API service for consistency
         const res = await api.me();
+        if (!isMounted) return;
 
-        // Hydrate from backend-validated profile
         setUser(toUserProfile(res));
 
-
-        // Optional: refresh stored auth with validated data (keeps email/name in sync)
         try {
-          localStorage.setItem('abundance_auth', JSON.stringify(res));
+          localStorage.setItem(
+            'abundance_auth',
+            JSON.stringify({ id: res.id, email: res.email, name: res.name })
+          );
         } catch {
           // ignore storage errors
         }
-
-
-        setAuthChecked(true);
       } catch (e) {
-        // Network error → safest: do not assume returning
+        if (!isMounted) return;
         console.error('me.php validation failed:', e);
-        // Don't auto-logout on network error, but don't validate either
-        // If 401/403, api.ts handles logout automatically
-        setAuthChecked(true); 
+        localStorage.removeItem('abundance_auth');
+        setUser(null);
+      } finally {
+        if (isMounted) setAuthChecked(true);
       }
     })();
+
+    return () => {
+      isMounted = false;
+    };
   }, [API_BASE]);
 
+  // Keep user affirmations synced from DB after session/user is known.
+  useEffect(() => {
+    if (!user?.email) return;
+
+    let isMounted = true;
+    (async () => {
+      try {
+        const dbAffirmations = await api.getUserAffirmations();
+        if (!isMounted) return;
+        setUser((prev) => (prev ? { ...prev, customAffirmations: dbAffirmations } : prev));
+      } catch (e) {
+        console.error('Failed to load user affirmations:', e);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.email]);
+
+
+  const normalizeSoundscapes = (raw: any): Soundscape[] => {
+    const rows = Array.isArray(raw)
+      ? raw
+      : Array.isArray(raw?.data)
+      ? raw.data
+      : [];
+
+    return rows.map((row: any, index: number) => ({
+      id: String(row?.id ?? row?.soundscape_id ?? row?.name ?? index),
+      label: row?.label ?? row?.name ?? row?.title ?? 'Soundscape',
+      url: row?.audio_url ?? row?.url,
+      category: row?.category ?? row?.usage_purpose,
+    }));
+  };
 
   // ✅ Load soundscapes from backend
   useEffect(() => {
     const loadSoundscapes = async () => {
       try {
-        const data = await api.getSoundscapes(user?.email);
-        if (data && data.length > 0) {
-          setSoundscapes(data);
+        const raw = await api.getSoundscapes(user?.email);
+        const normalized = normalizeSoundscapes(raw);
+        if (normalized.length > 0) {
+          setSoundscapes(normalized);
         } else {
           // Fallback default soundscape
           setSoundscapes([defaultSoundscape]);
@@ -288,12 +298,17 @@ function App() {
   // ✅ Onboarding complete → Tutorial
   const handleOnboardingComplete = (profile: UserProfile) => {
     console.log('Onboarding complete → going to Tutorial');
-    setUser(profile);
+    const mergedProfile: UserProfile = {
+      ...(user ?? {}),
+      ...profile,
+    };
+    setUser(mergedProfile);
     // Save updated profile to localStorage
-    localStorage.setItem('abundance_user', JSON.stringify(profile));
+    localStorage.setItem('abundance_user', JSON.stringify(mergedProfile));
     // Sync focus to backend
-    if (user?.email) {
-      api.syncProgress({ ...profile, email: user.email });
+    const email = user?.email ?? (profile as any)?.email;
+    if (email) {
+      api.syncProgress({ ...profile, email });
     }
     setCurrentMode(AppMode.TUTORIAL);
   };
@@ -371,22 +386,12 @@ function App() {
   // ✅ Library handlers
   const handleAddAffirmation = async (text: string, type: PracticeType) => {
     if (!user?.email) return;
-    const id = await api.addUserAffirmation(user.email, text, type);
-    if (id && user) {
-      // Create a temporary Affirmation object for UI (assuming API returned just ID or partial)
-      // In a real app, 'id' from api.addUserAffirmation should be the full object or ID
-      // If api returns object, cast it:
-      const newAffirmation: Affirmation = {
-        id: (id as any).id || String(id), 
-        text,
-        type,
-        category: 'Personal',
-        isFavorite: true,
-        dateAdded: new Date().toISOString(),
-      };
+    const result = await api.addUserAffirmation(user.email, text, type);
+    if (result?.success && user) {
+      const dbAffirmations = await api.getUserAffirmations();
       const updatedUser = {
         ...user,
-        customAffirmations: [...(user.customAffirmations || []), newAffirmation],
+        customAffirmations: dbAffirmations,
       };
       setUser(updatedUser);
     }
@@ -396,9 +401,10 @@ function App() {
   const handleRemoveAffirmation = async (id: string) => {
     await api.removeUserAffirmation(id);
     if (user) {
+      const dbAffirmations = await api.getUserAffirmations().catch(() => []);
       const updatedUser = {
         ...user,
-        customAffirmations: (user.customAffirmations || []).filter(a => a.id !== id),
+        customAffirmations: dbAffirmations.length ? dbAffirmations : (user.customAffirmations || []).filter(a => a.id !== id),
       };
       setUser(updatedUser);
     }
@@ -469,7 +475,9 @@ function App() {
 
   const handleSignOut = () => {
     console.log('Dashboard: sign out');
+    api.logout().catch(() => {});
     localStorage.removeItem('abundance_auth');
+    localStorage.removeItem('abundance_user');
     setUser(null);
     setAuthChecked(true);
     setCurrentMode(AppMode.AUTH);
@@ -512,6 +520,7 @@ function App() {
       AppMode.PROFILE,
       AppMode.RETURN_PORTAL,
       AppMode.MEDITATION_SETUP,
+      AppMode.PRAYER_SETUP,
     ]);
 
     if (settings.musicOn && ambienceModes.has(currentMode)) {
@@ -534,7 +543,7 @@ function App() {
       case AppMode.PRE_SPLASH:
         return (
           <UniversalLayout showBottomMenu={false}>
-            <PreSplash onContinue={handlePreSplashComplete} theme={theme} />
+            <PreSplash onContinue={handlePreSplashComplete} theme="dark" />
           </UniversalLayout>
         );
 
@@ -667,7 +676,7 @@ function App() {
       // ✅ SETTINGS - App settings panel
       case AppMode.SETTINGS:
         return (
-          <UniversalLayout showBottomMenu={false}>
+          <UniversalLayout showBottomMenu={true}>
             <Settings
               settings={settings}
               onChangeSettings={handleSettingsChange}
@@ -680,6 +689,7 @@ function App() {
               userAudioFile={userAudioFile}
               availableSoundscapes={soundscapes}
             />
+            <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
         );
 
@@ -698,6 +708,7 @@ function App() {
               theme={theme}
               soundscapes={soundscapes}
             />
+            <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
         );
 
@@ -726,6 +737,7 @@ function App() {
                 </button>
               </div>
             )}
+            <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
         );
 
@@ -744,6 +756,7 @@ function App() {
                 Back to Dashboard
               </button>
             </div>
+            <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
         );
 
@@ -761,6 +774,16 @@ function App() {
           </UniversalLayout>
         );
 
+      case AppMode.PRAYER_SETUP:
+        return (
+          <UniversalLayout showBottomMenu={false}>
+            <PrayerSetup
+              onBack={() => setCurrentMode(AppMode.DASHBOARD)}
+              theme={theme}
+            />
+          </UniversalLayout>
+        );
+
 
       case AppMode.DASHBOARD:
         return (
@@ -770,6 +793,7 @@ function App() {
                 user={user}
                 theme={theme}
                 onStartPractice={handleStartPractice}
+                onOpenMeditation={handleOpenMeditation}
                 onOpenSettings={handleOpenSettings}
                 onOpenProfile={() => setCurrentMode(AppMode.PROFILE)}
                 musicOn={settings.musicOn}
@@ -794,10 +818,11 @@ function App() {
               </div>
             )}
 
+            <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
 
             <button
               onClick={handleResetAndStartOver}
-              className="fixed bottom-4 right-4 px-3 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90 shadow-lg text-xs"
+              className="fixed bottom-24 right-4 px-3 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90 shadow-lg text-xs"
               aria-label="Reset and start over"
               title="Reset & Start Over"
             >

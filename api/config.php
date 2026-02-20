@@ -4,6 +4,7 @@
 // - Creates $conn PDO using root config.php
 
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/session.php';
 
 // CORS allowlist
 $origin         = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -17,6 +18,7 @@ if ($origin && is_array($allowedOrigins) && in_array($origin, $allowedOrigins, t
     header("Access-Control-Allow-Origin: {$defaultOrigin}");
 }
 header("Vary: Origin");
+header("Access-Control-Allow-Credentials: true");
 
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
@@ -29,8 +31,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Create PDO connection for API
 try {
+    $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+    if (defined('DB_PORT') && DB_PORT) {
+        $dsn .= ";port=" . DB_PORT;
+    }
     $conn = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET,
+        $dsn,
         DB_USER,
         DB_PASSWORD,
         [
@@ -38,6 +44,8 @@ try {
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]
     );
+    // Back-compat alias for endpoints still using $pdo.
+    $pdo = $conn;
 } catch (PDOException $e) {
     if (defined('DEBUG_MODE') && DEBUG_MODE) {
         http_response_code(500);

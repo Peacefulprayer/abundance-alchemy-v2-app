@@ -252,29 +252,22 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           </div>
         )}
 
-        {/* FOOTER WITH PROPER SPACING & LIGHTER TEXT */}
-        <div className="mt-8 text-center max-w-xs space-y-4">
-          <p className="text-xs text-slate-400">Based on the book "I Am Practice" by Michael Soaries.</p>
-
-          <div className="space-y-2">
-            <p className="text-xs text-slate-400 leading-relaxed">
-              By continuing you agree to be a part of
-              <br />
-              the{' '}
-              <a href="/community-standards" className="text-amber-400 hover:text-amber-300 underline">
-                Abundant Thought Community
-              </a>{' '}
-              and abide by{' '}
-              <a href="/community-standards" className="text-amber-400 hover:text-amber-300 underline">
-                community standards
-              </a>
-              .
+        {/* FOOTER TEXT - MATCH CARD STYLE */}
+        <div className={`${contentCardClasses} mt-6 md:mt-8`}>
+          <div className="text-center space-y-3">
+            <p className="text-xs text-slate-300">
+              Based on the book "I Am Practice" by Michael Soaries.
             </p>
 
-            {/* SPACER */}
-            <div className="h-4"></div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              By continuing you agree to be a part of
+              <br />
+              the Abundant Thought Community
+              <br />
+              and abide by community standards.
+            </p>
 
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-300">
               <a href="/privacy-policy" className="text-amber-400 hover:text-amber-300 underline">
                 View our privacy policy here.
               </a>

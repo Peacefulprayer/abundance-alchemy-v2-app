@@ -1,17 +1,18 @@
 <?php
 include_once 'config.php';
 
-$email = isset($_GET['email']) ? $_GET['email'] : '';
+$userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 
-if ($email) {
-    // Join to get user ID first, or just join directly
-    $query = "SELECT ua.* FROM user_affirmations ua 
-              JOIN users u ON ua.user_id = u.id 
-              WHERE u.email = :email 
-              ORDER BY ua.created_at DESC";
-              
+if ($userId > 0) {
+    $query = "
+        SELECT id, text, type, created_at
+        FROM user_affirmations
+        WHERE user_id = :uid
+        ORDER BY created_at DESC
+    ";
+
     $stmt = $conn->prepare($query);
-    $stmt->bindParam(":email", $email);
+    $stmt->bindParam(":uid", $userId, PDO::PARAM_INT);
     $stmt->execute();
     
     $data = [];
@@ -20,6 +21,7 @@ if ($email) {
     }
     echo json_encode($data);
 } else {
+    http_response_code(401);
     echo json_encode([]);
 }
 ?>

@@ -56,7 +56,7 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
   };
 
   const textColor = theme === 'light' ? 'text-slate-800' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-300';
+  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
   const inputBg =
     theme === 'light'
       ? 'bg-white border-slate-300'
@@ -82,23 +82,29 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
           </h1>
         </div>
 
-        <div className={`${getContentCardClasses(theme)} mb-6 md:mb-8`}>
+        <div
+          className={`${getContentCardClasses(theme)} mb-6 md:mb-8 ${
+            step === 'prelude'
+              ? 'max-w-[260px] p-3 md:p-4 backdrop-blur-sm from-slate-800/50 to-slate-900/50 border-white/5'
+              : ''
+          }`}
+        >
           {step === 'prelude' && (
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-3">
               <div className="space-y-1">
-                <h2 className={`text-base md:text-lg font-bold ${textColor}`}>
+                <h2 className={`text-sm md:text-base font-bold ${textColor}`}>
                   Before the Naming
                 </h2>
-                <p className={`text-xs md:text-sm ${subTextColor}`}>
+                <p className={`text-[11px] md:text-xs ${subTextColor}`}>
                   A quiet moment of intention
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div className="h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
 
                 <div className="space-y-1">
-                  <p className="text-amber-400 text-sm font-semibold tracking-wide">
+                  <p className="text-amber-400 text-xs font-semibold tracking-wide">
                     Orúkọ ńróni
                   </p>
                 </div>
@@ -106,24 +112,24 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
                 <div className="h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
 
                 <div className="space-y-2">
-                  <p className={`text-sm md:text-base ${textColor} font-light`}>
+                  <p className={`text-xs md:text-sm ${textColor} font-light`}>
                     A name shapes
                     <br />
                     the one who bears it.
                   </p>
 
-                  <p className={`text-sm md:text-base ${textColor} font-light`}>
+                  <p className={`text-xs md:text-sm ${textColor} font-light`}>
                     Pause a moment.
                   </p>
 
-                  <p className={`text-xs md:text-sm ${subTextColor}`}>
+                  <p className={`text-[11px] md:text-xs ${subTextColor}`}>
                     You are about to choose how you will be called
                     <br />
                     in this sacred space.
                   </p>
                 </div>
 
-                <p className={`text-xs md:text-sm ${subTextColor}`}>
+                <p className={`text-[11px] md:text-xs ${subTextColor}`}>
                   Some names are given at birth.
                   <br />
                   Others are chosen along the way—
@@ -139,33 +145,33 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
 
                 <div className="h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
 
-                <div className="space-y-2">
-                  <p className={`text-xs md:text-sm ${subTextColor}`}>
+                <div className="space-y-1.5">
+                  <p className={`text-[11px] md:text-xs ${subTextColor}`}>
                     Walk into this space with intention.
                     <br />
                     How do you want to be called?
                   </p>
-                  <div className="text-xs md:text-sm text-amber-200/90 space-y-0.5">
+                  <div className="text-[11px] md:text-xs text-amber-200/90 space-y-0.5">
                     <p>Your given name?</p>
                     <p>A nickname?</p>
                     <p>A spiritual name?</p>
                   </div>
                 </div>
 
-                <div className="space-y-2 pt-1">
-                  <p className={`text-xs md:text-sm ${subTextColor}`}>
+                <div className="space-y-1.5 pt-1">
+                  <p className={`text-[11px] md:text-xs ${subTextColor}`}>
                     Give it some thought.
                   </p>
-                  <p className={`text-xs md:text-sm ${subTextColor}`}>
+                  <p className={`text-[11px] md:text-xs ${subTextColor}`}>
                     When you are ready, click:
                   </p>
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-1.5">
                 <button
                   onClick={handlePreludeNext}
-                  className={`w-full px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-xs md:text-sm tracking-wide shadow-lg hover:opacity-90 transition-all ${
+                  className={`w-full px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-[10px] md:text-xs tracking-wide shadow-lg hover:opacity-90 transition-all ${
                     showPreludeNext ? 'opacity-100' : 'opacity-0 pointer-events-none'
                   }`}
                 >
@@ -232,25 +238,27 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
           {step === 'affirmation' && (
             <div className="text-center space-y-4">
               <div className="space-y-2">
-                <h2 className={`text-base md:text-lg font-bold ${textColor}`}>
+                <h2 className={`text-sm md:text-base font-semibold ${textColor}`}>
                   We Honor You, {name}
                 </h2>
-                <div className="h-1 w-16 mx-auto bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"></div>
+                <div className="h-1 w-14 mx-auto bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"></div>
               </div>
 
               <div className="space-y-3">
                 <div className="border border-amber-500/30 rounded-xl p-4 bg-gradient-to-b from-amber-500/5 to-transparent">
-                  <p className={`text-sm md:text-base ${textColor} font-light`}>
-                    Your name is now woven into
+                  <p className={`text-xs md:text-sm ${textColor} font-light`}>
+                    Your name is now woven
                     <br />
-                    the fabric of this sacred space.
+                    into the fabric
+                    <br />
+                    of this sacred space.
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <p className={`text-xs md:text-sm ${subTextColor}`}>We honor your journey.</p>
                   <p className={`text-xs md:text-sm ${subTextColor}`}>We witness your becoming.</p>
-                  <p className={`text-xs md:text-sm font-bold text-amber-500 mt-3`}>
+                  <p className={`text-xs md:text-sm font-semibold text-amber-500 mt-3`}>
                     Ase. And so it is.
                   </p>
                 </div>

@@ -1,25 +1,10 @@
 <?php
-require_once '../config.php';
-require_once '../db.php';
+include_once 'config.php';
 
-// Handle preflight OPTIONS request for CORS
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-    http_response_code(200);
-    exit();
-}
-
-// CORS + JSON response
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json; charset=UTF-8');
-
-$email = isset($_GET['email']) ? trim((string)$_GET['email']) : '';
-
-if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    http_response_code(400);
-    echo json_encode(["message" => "Valid email is required"]);
+$userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+if ($userId <= 0) {
+    http_response_code(401);
+    echo json_encode(["message" => "Unauthorized"]);
     exit();
 }
 
@@ -29,10 +14,10 @@ try {
     $stmt = $pdo->prepare("
         SELECT id, name, email, level, streak, focus_area, affirmations_completed
         FROM users
-        WHERE email = ?
+        WHERE id = ?
         LIMIT 1
     ");
-    $stmt->execute([$email]);
+    $stmt->execute([$userId]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {

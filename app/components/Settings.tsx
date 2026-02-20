@@ -32,7 +32,7 @@ export const Settings: React.FC<SettingsProps> = ({
   const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-400';
+  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-400';
   const cardBg = theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/70 border-slate-700';
   const inputBg = theme === 'light' ? 'bg-slate-50 border-slate-300' : 'bg-slate-800 border-slate-600';
 

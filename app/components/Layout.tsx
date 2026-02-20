@@ -37,7 +37,8 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
     mode === AppMode.DASHBOARD ||
     mode === AppMode.LIBRARY ||
     mode === AppMode.PROFILE ||
-    mode === AppMode.STATS;
+    mode === AppMode.STATS ||
+    mode === AppMode.SETTINGS;
 
   const slotCandidates: BackgroundSlot[] = useMemo(() => {
     switch (mode) {
@@ -68,6 +69,8 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
       case AppMode.STATS:
         return ['STATS', 'PROGRESS'];
       case AppMode.MEDITATION_SETUP:
+        return ['MEDITATION_SETUP', 'HOME'];
+      case AppMode.PRAYER_SETUP:
         return ['MEDITATION_SETUP', 'HOME'];
       case AppMode.PRACTICE: {
         if (practiceType === PracticeType.MEDITATION) return ['MEDITATION_PRACTICE', 'HOME'];

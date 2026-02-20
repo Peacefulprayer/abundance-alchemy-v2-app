@@ -17,6 +17,7 @@ type FocusChoice = {
   icon: string;
   explanation: string;  // shown on the next screen
   swAffirmation: string; // bonus affirmation (Swahili)
+  swAffirmationEn: string; // English translation
 };
 
 const FOCUS_AREAS: FocusChoice[] = [
@@ -27,7 +28,8 @@ const FOCUS_AREAS: FocusChoice[] = [
     icon: '☮️',
     explanation:
       'Used for both inner peace and societal peace. Example: “Nina amani moyoni.” (I have peace in my heart).',
-    swAffirmation: 'Nina amani moyoni.'
+    swAffirmation: 'Nina amani moyoni.',
+    swAffirmationEn: 'I have peace in my heart.'
   },
   {
     id: 'purpose',
@@ -36,7 +38,8 @@ const FOCUS_AREAS: FocusChoice[] = [
     icon: '🎯',
     explanation:
       'Kusudi means intention or purpose — the inner “why” that guides your steps.',
-    swAffirmation: 'Nina kusudi wazi na thabiti.'
+    swAffirmation: 'Nina kusudi wazi na thabiti.',
+    swAffirmationEn: 'I have clear and steady purpose.'
   },
   {
     id: 'love',
@@ -45,7 +48,8 @@ const FOCUS_AREAS: FocusChoice[] = [
     icon: '💖',
     explanation:
       'Upendo = love (deep affection); mahusiano = relationships (between people).',
-    swAffirmation: 'Nina upendo na mahusiano yenye afya.'
+    swAffirmation: 'Nina upendo na mahusiano yenye afya.',
+    swAffirmationEn: 'I have love and healthy relationships.'
   },
   {
     id: 'wealth',
@@ -54,7 +58,8 @@ const FOCUS_AREAS: FocusChoice[] = [
     icon: '💰',
     explanation:
       'Utajiri means wealth/riches; wingi means plenty/abundance — used spiritually and materially.',
-    swAffirmation: 'Utajiri na wingi vinaflow kwangu.'
+    swAffirmation: 'Utajiri na wingi vinaflow kwangu.',
+    swAffirmationEn: 'Wealth and abundance flow to me.'
   },
   {
     id: 'confidence',
@@ -63,7 +68,8 @@ const FOCUS_AREAS: FocusChoice[] = [
     icon: '🔥',
     explanation:
       'Kujiamini = self-confidence; nguvu ya ndani = inner strength/power.',
-    swAffirmation: 'Ninajiamini; nina nguvu ya ndani.'
+    swAffirmation: 'Ninajiamini; nina nguvu ya ndani.',
+    swAffirmationEn: 'I am confident; I have inner strength.'
   },
   {
     id: 'health',
@@ -72,7 +78,8 @@ const FOCUS_AREAS: FocusChoice[] = [
     icon: '🌿',
     explanation:
       'Afya = health; ukamilifu = completeness/wholeness — balance in body, mind, and spirit.',
-    swAffirmation: 'Nina afya na ukamilifu.'
+    swAffirmation: 'Nina afya na ukamilifu.',
+    swAffirmationEn: 'I have health and wholeness.'
   },
   {
     id: 'selflove',
@@ -81,7 +88,8 @@ const FOCUS_AREAS: FocusChoice[] = [
     icon: '🪞',
     explanation:
       'Kujipenda = self-love; ustahili = worthiness/deserving.',
-    swAffirmation: 'Najipenda; ninastahili mema.'
+    swAffirmation: 'Najipenda; ninastahili mema.',
+    swAffirmationEn: 'I love myself; I deserve good things.'
   }
 ];
 
@@ -94,7 +102,6 @@ const contentCardClasses =
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName }) => {
   const [step, setStep] = useState(1);
   const [name, setName] = useState(initialName || '');
-  const [preferredName, setPreferredName] = useState('');
   const [selectedFocus, setSelectedFocus] = useState<string>('');
   const [cycleType, setCycleType] = useState<CycleType>(CycleType.DAILY);
 
@@ -108,15 +115,26 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
   );
 
   const selectedFocusLabel = selectedFocusObj?.label || '';
+  const displayName = name.trim() || '___';
 
   const next = () => {
     buttonSoundService.play();
-    setStep((s) => Math.min(5, s + 1));
+    setStep((s) => {
+      if (s === 1) return 3;
+      if (s === 3) return 4;
+      if (s === 4) return 5;
+      return 5;
+    });
   };
 
   const back = () => {
     buttonSoundService.play();
-    setStep((s) => Math.max(1, s - 1));
+    setStep((s) => {
+      if (s === 5) return 4;
+      if (s === 4) return 3;
+      if (s === 3) return 1;
+      return 1;
+    });
   };
 
   const complete = () => {
@@ -127,7 +145,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
     // - cyclePreference: CycleType
     // - NO preferredName field in UserProfile (in your current types.ts)
     const profile: UserProfile = {
-      name: (preferredName || name).trim(),          // keeps your “preferred name” behavior without changing types
+      name: name.trim(),
       focusAreas: [selectedFocusLabel || 'General'], // string[]
       cyclePreference: cycleType,
       streak: 0,
@@ -166,10 +184,14 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
           {/* Step 1: Name */}
           {step === 1 && (
             <div className="space-y-4">
-              <h3 className="text-base md:text-lg font-bold">What should we call you?</h3>
+              <div className="space-y-1">
+                <h3 className="text-base md:text-lg font-bold">
+                  We welcome you {displayName}.
+                </h3>
+                <p className="text-xs text-slate-300">It has been spoken. So it is, Ase.</p>
+              </div>
               <p className="text-xs text-slate-300">
                 This is the name that follows you through the app experience.
-                If <span className="text-amber-400 font-bold">{name || 'your name'}</span> is fine, click Next.
               </p>
               <input
                 value={name}
@@ -190,43 +212,14 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
             </div>
           )}
 
-          {/* Step 2: Preferred Name */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <h3 className="text-base md:text-lg font-bold">Preferred name</h3>
-              <p className="text-xs text-slate-300">
-                Optional. Leave blank to use <span className="text-amber-400 font-bold">{name}</span>.
-              </p>
-              <input
-                value={preferredName}
-                onChange={(e) => setPreferredName(e.target.value)}
-                placeholder={`e.g., ${name}`}
-                className="w-full bg-slate-900/50 border border-slate-600 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-amber-500"
-              />
-              <div className="mt-2 flex justify-between">
-                <button
-                  onClick={back}
-                  className="px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800 font-bold text-xs md:text-sm"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={next}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-xs md:text-sm tracking-wide shadow-lg flex items-center space-x-2"
-                >
-                  <span>Next</span>
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Step 3: Focus selection (English + Swahili only) */}
           {step === 3 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-base md:text-lg font-bold mb-1">Choose your focus</h3>
-                <p className="text-xs text-slate-300">Pick the area you want to strengthen first.</p>
+                <h3 className="text-base md:text-lg font-bold mb-1">
+                  Name chosen: {displayName}. Select your practice focus here.
+                </h3>
+                <p className="text-xs text-slate-300">This will add strength to the work.</p>
               </div>
 
               <div className="grid grid-cols-1 gap-2">
@@ -292,6 +285,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
                   {selectedFocusObj ? `(${selectedFocusObj.swahili})` : ''}
                 </span>
               </h3>
+              <p className="text-xs text-slate-300">We now hold your focus in our vision.</p>
 
               <div className="rounded-2xl border border-amber-500/20 bg-slate-900/40 p-4">
                 <p className="text-xs md:text-sm text-slate-200 leading-relaxed">
@@ -300,12 +294,14 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
 
                 {selectedFocusObj?.swAffirmation && (
                   <div className="mt-3 pt-3 border-t border-amber-500/20">
-                    <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
-                      Bonus affirmation (Swahili)
-                    </div>
                     <div className="mt-1 text-sm font-bold text-amber-300">
                       “{selectedFocusObj.swAffirmation}”
                     </div>
+                    {selectedFocusObj.swAffirmationEn && (
+                      <div className="mt-1 text-xs text-slate-300">
+                        “{selectedFocusObj.swAffirmationEn}”
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -332,7 +328,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
           {step === 5 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-base md:text-lg font-bold mb-1">How often do you want to practice?</h3>
+                <h3 className="text-base md:text-lg font-normal mb-1">Choose your practice period</h3>
                 <p className="text-xs text-slate-300">You can change this later.</p>
               </div>
 

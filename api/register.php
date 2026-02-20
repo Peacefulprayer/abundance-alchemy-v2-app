@@ -1,34 +1,20 @@
 <?php
-require_once '../config.php';
-require_once '../db.php';
-
-// Handle preflight OPTIONS request for CORS
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-    http_response_code(200);
-    exit();
-}
-
-// CORS + JSON response
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json; charset=UTF-8');
+include_once 'config.php';
 
 // Get JSON input
 $raw  = file_get_contents("php://input");
-$data = json_decode($raw);
+$data = json_decode($raw, true);
 
 // Basic validation
-if (!$data || !isset($data->name, $data->email, $data->password)) {
+if (!$data || !isset($data['name'], $data['email'], $data['password'])) {
     http_response_code(400);
     echo json_encode(["message" => "Missing required fields"]);
     exit();
 }
 
-$name     = trim((string) $data->name);
-$email    = trim((string) $data->email);
-$password = (string) $data->password;
+$name     = trim((string) $data['name']);
+$email    = trim((string) $data['email']);
+$password = (string) $data['password'];
 
 if ($name === '' || $email === '') {
     http_response_code(400);
@@ -57,8 +43,8 @@ try {
 
     // Optional focus areas (front-end may send array of strings)
     $focusArea = '';
-    if (isset($data->focusAreas) && is_array($data->focusAreas)) {
-        $focusArea = implode(',', array_map('strval', $data->focusAreas));
+    if (isset($data['focusAreas']) && is_array($data['focusAreas'])) {
+        $focusArea = implode(',', array_map('strval', $data['focusAreas']));
     }
 
     // Insert user: match your schema
@@ -82,6 +68,11 @@ try {
     ]);
 
     $userId = (int) $pdo->lastInsertId();
+
+    session_regenerate_id(true);
+    $_SESSION['user_id'] = $userId;
+    $_SESSION['user_email'] = $email;
+    $_SESSION['user_name'] = $name;
 
     // ------------------------------------------------------------------
     // SEND WELCOME EMAIL (same template as admin/add-user.php)
@@ -115,11 +106,13 @@ try {
     // ------------------------------------------------------------------
     http_response_code(201);
     echo json_encode([
-        "id"     => $userId,
-        "name"   => $name,
-        "email"  => $email,
+        "id" => $userId,
+        "name" => $name,
+        "email" => $email,
         "streak" => 0,
-        "level"  => 1,
+        "level" => 1,
+        "focusAreas" => $focusArea ? array_values(array_filter(array_map('trim', explode(',', $focusArea)))) : [],
+        "affirmationsCompleted" => 0,
     ]);
 
 } catch (PDOException $e) {

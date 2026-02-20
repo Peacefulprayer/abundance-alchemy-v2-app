@@ -2,26 +2,34 @@
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
 
-// The frontend sends { streak, level, affirmationsCompleted, focusAreas, email (implied via user context in some versions, check apiService) }
-// We need to ensure apiService.ts sends the email in the body for sync-progress. 
-// If your apiService doesn't send email in body, we need to fix apiService.ts or rely on session.
-// Assuming we fix apiService to send email, or we rely on the client passing it.
+$userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 
-// Let's verify what apiService sends. It looks like it sends: { streak, level, affirmationsCompleted, focusAreas }
-// It DOES NOT currently send email in the provided code. We need to update apiService.ts to send the email.
-
-if (!empty($data->email)) {
+if ($userId > 0 && $data) {
     // Convert array to JSON string for storage if multiple, or just take the first string
-    $focusArea = is_array($data->focusAreas) ? implode(", ", $data->focusAreas) : $data->focusAreas;
+    $focusArea = '';
+    if (isset($data->focusAreas)) {
+        $focusArea = is_array($data->focusAreas) ? implode(", ", $data->focusAreas) : (string)$data->focusAreas;
+    }
 
-    $query = "UPDATE users SET streak = :streak, level = :level, affirmations_completed = :ac, focus_area = :fa WHERE email = :email";
+    $streak = isset($data->streak) ? (int)$data->streak : 0;
+    $level = isset($data->level) ? (int)$data->level : 1;
+    $affirmationsCompleted = isset($data->affirmationsCompleted) ? (int)$data->affirmationsCompleted : 0;
+
+    $query = "
+        UPDATE users
+        SET streak = :streak,
+            level = :level,
+            affirmations_completed = :ac,
+            focus_area = :fa
+        WHERE id = :uid
+    ";
     $stmt = $conn->prepare($query);
     
-    $stmt->bindParam(":streak", $data->streak);
-    $stmt->bindParam(":level", $data->level);
-    $stmt->bindParam(":ac", $data->affirmationsCompleted);
+    $stmt->bindParam(":streak", $streak, PDO::PARAM_INT);
+    $stmt->bindParam(":level", $level, PDO::PARAM_INT);
+    $stmt->bindParam(":ac", $affirmationsCompleted, PDO::PARAM_INT);
     $stmt->bindParam(":fa", $focusArea);
-    $stmt->bindParam(":email", $data->email);
+    $stmt->bindParam(":uid", $userId, PDO::PARAM_INT);
     
     if ($stmt->execute()) {
         echo json_encode(["success" => true]);
@@ -29,6 +37,12 @@ if (!empty($data->email)) {
         echo json_encode(["success" => false, "message" => "Update failed"]);
     }
 } else {
-    echo json_encode(["success" => false, "message" => "Email missing"]);
+    if ($userId <= 0) {
+        http_response_code(401);
+        echo json_encode(["success" => false, "message" => "Unauthorized"]);
+    } else {
+        http_response_code(400);
+        echo json_encode(["success" => false, "message" => "Invalid payload"]);
+    }
 }
 ?>
