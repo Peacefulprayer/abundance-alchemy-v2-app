@@ -1,50 +1,20 @@
 import React, { useMemo, useState } from 'react';
 import { HandHeart, ChevronRight } from 'lucide-react';
 import { buttonSoundService } from '../services/buttonSoundService';
+import { PRAYER_PATHS } from './prayerContent';
+import type { PrayerPathId } from './prayerContent';
 
 interface PrayerSetupProps {
   onBack: () => void;
+  onContinue: (pathId: PrayerPathId) => void;
   theme: 'light' | 'dark';
 }
 
-type PrayerPath = {
-  id: string;
-  label: string;
-  swahili: string;
-  description: string;
-};
-
-const PRAYER_PATHS: PrayerPath[] = [
-  {
-    id: 'christian',
-    label: 'Christian',
-    swahili: 'Kikristo',
-    description: 'Christ-centered prayer language and scripture-style guidance.',
-  },
-  {
-    id: 'muslim',
-    label: 'Muslim',
-    swahili: 'Kiislamu',
-    description: 'Respectful guidance language aligned with Islamic prayer tone.',
-  },
-  {
-    id: 'traditional',
-    label: 'Traditional / Ancestral',
-    swahili: 'Kimila',
-    description: 'Grounded in heritage, gratitude, elders, and ancestral wisdom.',
-  },
-  {
-    id: 'universal',
-    label: 'Universal / Spiritual',
-    swahili: 'Kiroho',
-    description: 'Non-denominational spiritual focus on peace, healing, and intention.',
-  },
-];
-
-export const PrayerSetup: React.FC<PrayerSetupProps> = ({ onBack, theme }) => {
-  const [selectedPathId, setSelectedPathId] = useState<string>(() => {
+export const PrayerSetup: React.FC<PrayerSetupProps> = ({ onBack, onContinue, theme }) => {
+  const [selectedPathId, setSelectedPathId] = useState<PrayerPathId | ''>(() => {
     try {
-      return localStorage.getItem('abundance_prayer_path') || '';
+      const value = localStorage.getItem('abundance_prayer_path') || '';
+      return (PRAYER_PATHS.find((item) => item.id === value)?.id ?? '') as PrayerPathId | '';
     } catch {
       return '';
     }
@@ -69,6 +39,7 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({ onBack, theme }) => {
     }
     setSaved(true);
     setTimeout(() => setSaved(false), 1800);
+    onContinue(selectedPathId);
   };
 
   return (
@@ -142,7 +113,7 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({ onBack, theme }) => {
         disabled={!selectedPath}
         className="w-full py-3 rounded-xl bg-amber-500 text-black font-bold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Save Prayer Path (Phase 1)
+        Save & Continue
       </button>
 
       <div className={`text-center text-xs mt-3 ${saved ? 'text-emerald-400' : subTextColor}`}>

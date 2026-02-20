@@ -23,6 +23,9 @@ $slots = [
     'ILOVE_PRACTICE'      => 'Evening "I Love" – Practice',
     'MEDITATION_SETUP'    => 'Meditation – Setup',
     'MEDITATION_PRACTICE' => 'Meditation – Session',
+    'PRAYER_SETUP'        => 'Prayer (Omba) – Setup',
+    'PRAYER_GUIDE'        => 'Prayer (Omba) – Guide',
+    'PRAYER_SESSION'      => 'Prayer (Omba) – Session',
     'SETTINGS'            => 'Settings Screen',
     'PROGRESS'            => 'Progress / Journey Overview',
 ];

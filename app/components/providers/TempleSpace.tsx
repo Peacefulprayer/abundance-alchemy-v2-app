@@ -33,6 +33,9 @@ function toSlotKey(input: string): string {
   if (key === 'ilove_practice') return 'ILOVE_PRACTICE';
   if (key === 'meditation_setup') return 'MEDITATION_SETUP';
   if (key === 'meditation_practice') return 'MEDITATION_PRACTICE';
+  if (key === 'prayer_setup') return 'PRAYER_SETUP';
+  if (key === 'prayer_guide') return 'PRAYER_GUIDE';
+  if (key === 'prayer_session') return 'PRAYER_SESSION';
 
   // "default" is not a backend slot; we resolve it later with best effort.
   return 'DEFAULT';

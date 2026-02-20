@@ -29,11 +29,14 @@ import { Settings } from './components/Settings';
 import { Library } from './components/Library';
 import { MeditationSetup } from './components/MeditationSetup';
 import { PrayerSetup } from './components/PrayerSetup';
+import { PrayerGuide } from './components/PrayerGuide';
+import { PrayerSession } from './components/PrayerSession';
 import { Stats } from './components/Stats';
 import { Layout } from './components/Layout';
 import { BottomNav } from './components/BottomNav';
 import { playAmbience, stopAmbience } from './services/audioService';
 import { href } from './services/base';
+import type { PrayerPathId } from './components/prayerContent';
 
 // UPDATED IMPORT: Use 'api' from the unified service
 import { api } from './services/api';
@@ -80,6 +83,17 @@ function App() {
   const [practiceConfig, setPracticeConfig] = useState<PracticeSessionConfig | null>(null);
   const [soundscapes, setSoundscapes] = useState<Soundscape[]>([]);
   const [userAudioFile, setUserAudioFile] = useState<File | null>(null);
+  const [prayerPathId, setPrayerPathId] = useState<PrayerPathId | null>(() => {
+    try {
+      const value = localStorage.getItem('abundance_prayer_path');
+      if (value === 'christian' || value === 'muslim' || value === 'traditional' || value === 'universal') {
+        return value;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
 
 
   const API_BASE =
@@ -466,6 +480,19 @@ function App() {
     setCurrentMode(AppMode.MEDITATION_SETUP);
   };
 
+  const handlePrayerPathContinue = (pathId: PrayerPathId) => {
+    setPrayerPathId(pathId);
+    setCurrentMode(AppMode.PRAYER_GUIDE);
+  };
+
+  const handlePrayerStart = () => {
+    setCurrentMode(AppMode.PRAYER_SESSION);
+  };
+
+  const handlePrayerComplete = () => {
+    setCurrentMode(AppMode.DASHBOARD);
+  };
+
 
   const handleOpenSettings = () => {
     console.log('Dashboard: open settings → SETTINGS');
@@ -521,6 +548,8 @@ function App() {
       AppMode.RETURN_PORTAL,
       AppMode.MEDITATION_SETUP,
       AppMode.PRAYER_SETUP,
+      AppMode.PRAYER_GUIDE,
+      AppMode.PRAYER_SESSION,
     ]);
 
     if (settings.musicOn && ambienceModes.has(currentMode)) {
@@ -779,6 +808,33 @@ function App() {
           <UniversalLayout showBottomMenu={false}>
             <PrayerSetup
               onBack={() => setCurrentMode(AppMode.DASHBOARD)}
+              onContinue={handlePrayerPathContinue}
+              theme={theme}
+            />
+          </UniversalLayout>
+        );
+
+      case AppMode.PRAYER_GUIDE:
+        return (
+          <UniversalLayout showBottomMenu={false}>
+            <PrayerGuide
+              prayerPathId={prayerPathId}
+              onBack={() => setCurrentMode(AppMode.PRAYER_SETUP)}
+              onStartPrayer={handlePrayerStart}
+              onChangePath={() => setCurrentMode(AppMode.PRAYER_SETUP)}
+              theme={theme}
+            />
+          </UniversalLayout>
+        );
+
+      case AppMode.PRAYER_SESSION:
+        return (
+          <UniversalLayout showBottomMenu={false}>
+            <PrayerSession
+              prayerPathId={prayerPathId}
+              onBack={() => setCurrentMode(AppMode.PRAYER_GUIDE)}
+              onComplete={handlePrayerComplete}
+              onChangePath={() => setCurrentMode(AppMode.PRAYER_SETUP)}
               theme={theme}
             />
           </UniversalLayout>

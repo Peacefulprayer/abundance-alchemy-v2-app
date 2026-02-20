@@ -71,7 +71,11 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
       case AppMode.MEDITATION_SETUP:
         return ['MEDITATION_SETUP', 'HOME'];
       case AppMode.PRAYER_SETUP:
-        return ['MEDITATION_SETUP', 'HOME'];
+        return ['PRAYER_SETUP', 'HOME'];
+      case AppMode.PRAYER_GUIDE:
+        return ['PRAYER_GUIDE', 'PRAYER_SETUP', 'HOME'];
+      case AppMode.PRAYER_SESSION:
+        return ['PRAYER_SESSION', 'PRAYER_GUIDE', 'HOME'];
       case AppMode.PRACTICE: {
         if (practiceType === PracticeType.MEDITATION) return ['MEDITATION_PRACTICE', 'HOME'];
         if (practiceType === PracticeType.MORNING_IAM) return ['IAM_PRACTICE', 'HOME'];
