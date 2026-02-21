@@ -83,6 +83,22 @@ function App() {
   const [practiceConfig, setPracticeConfig] = useState<PracticeSessionConfig | null>(null);
   const [soundscapes, setSoundscapes] = useState<Soundscape[]>([]);
   const [userAudioFile, setUserAudioFile] = useState<File | null>(null);
+  const [prayerSoundscapeId, setPrayerSoundscapeId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('abundance_prayer_soundscape_id') || 'default';
+    } catch {
+      return 'default';
+    }
+  });
+  const [prayerVolume, setPrayerVolume] = useState<number>(() => {
+    try {
+      const raw = localStorage.getItem('abundance_prayer_volume');
+      const parsed = raw ? Number(raw) : NaN;
+      return Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 45;
+    } catch {
+      return 45;
+    }
+  });
   const [prayerPathId, setPrayerPathId] = useState<PrayerPathId | null>(() => {
     try {
       const value = localStorage.getItem('abundance_prayer_path');
@@ -493,6 +509,26 @@ function App() {
     setCurrentMode(AppMode.DASHBOARD);
   };
 
+  const handlePrayerSoundscapeChange = (id: string) => {
+    const nextId = id || 'default';
+    setPrayerSoundscapeId(nextId);
+    try {
+      localStorage.setItem('abundance_prayer_soundscape_id', nextId);
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  const handlePrayerVolumeChange = (volume: number) => {
+    const nextVolume = Math.max(0, Math.min(100, volume));
+    setPrayerVolume(nextVolume);
+    try {
+      localStorage.setItem('abundance_prayer_volume', String(nextVolume));
+    } catch {
+      // ignore storage errors
+    }
+  };
+
 
   const handleOpenSettings = () => {
     console.log('Dashboard: open settings → SETTINGS');
@@ -518,13 +554,25 @@ function App() {
   };
 
 
-  // Get active soundscape based on current practice type or default
+  const isPrayerMode =
+    currentMode === AppMode.PRAYER_SETUP ||
+    currentMode === AppMode.PRAYER_GUIDE ||
+    currentMode === AppMode.PRAYER_SESSION;
+
+  // Get active soundscape based on current mode/practice type or default
   const getActiveSoundscape = (): Soundscape => {
     if (practiceConfig?.soundscape) {
       if (typeof practiceConfig.soundscape === 'string') {
         return soundscapes.find(s => s.id === practiceConfig.soundscape) || defaultSoundscape;
       }
       return practiceConfig.soundscape;
+    }
+    if (isPrayerMode) {
+      return (
+        soundscapes.find((s) => s.id === prayerSoundscapeId) ||
+        soundscapes.find((s) => s.id === settings.meditationSoundscapeId) ||
+        defaultSoundscape
+      );
     }
     return soundscapes.find(s => s.id === settings.soundscapeId) || defaultSoundscape;
   };
@@ -553,14 +601,19 @@ function App() {
     ]);
 
     if (settings.musicOn && ambienceModes.has(currentMode)) {
-      playAmbience(getActiveSoundscape(), settings.ambienceVolume);
+      const volume = isPrayerMode ? prayerVolume : settings.ambienceVolume;
+      playAmbience(getActiveSoundscape(), volume);
     } else {
       stopAmbience();
     }
   }, [
     currentMode,
+    isPrayerMode,
+    prayerSoundscapeId,
+    prayerVolume,
     settings.musicOn,
     settings.ambienceVolume,
+    settings.meditationSoundscapeId,
     settings.soundscapeId,
     soundscapes,
   ]);
@@ -809,6 +862,11 @@ function App() {
             <PrayerSetup
               onBack={() => setCurrentMode(AppMode.DASHBOARD)}
               onContinue={handlePrayerPathContinue}
+              availableSoundscapes={soundscapes}
+              selectedSoundscapeId={prayerSoundscapeId}
+              prayerVolume={prayerVolume}
+              onChangeSoundscape={handlePrayerSoundscapeChange}
+              onChangePrayerVolume={handlePrayerVolumeChange}
               theme={theme}
             />
           </UniversalLayout>

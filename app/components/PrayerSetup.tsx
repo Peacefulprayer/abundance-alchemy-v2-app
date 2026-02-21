@@ -3,14 +3,29 @@ import { HandHeart, ChevronRight } from 'lucide-react';
 import { buttonSoundService } from '../services/buttonSoundService';
 import { PRAYER_PATHS } from './prayerContent';
 import type { PrayerPathId } from './prayerContent';
+import type { Soundscape } from '../types';
 
 interface PrayerSetupProps {
   onBack: () => void;
   onContinue: (pathId: PrayerPathId) => void;
+  availableSoundscapes: Soundscape[];
+  selectedSoundscapeId: string;
+  prayerVolume: number;
+  onChangeSoundscape: (id: string) => void;
+  onChangePrayerVolume: (volume: number) => void;
   theme: 'light' | 'dark';
 }
 
-export const PrayerSetup: React.FC<PrayerSetupProps> = ({ onBack, onContinue, theme }) => {
+export const PrayerSetup: React.FC<PrayerSetupProps> = ({
+  onBack,
+  onContinue,
+  availableSoundscapes,
+  selectedSoundscapeId,
+  prayerVolume,
+  onChangeSoundscape,
+  onChangePrayerVolume,
+  theme,
+}) => {
   const [selectedPathId, setSelectedPathId] = useState<PrayerPathId | ''>(() => {
     try {
       const value = localStorage.getItem('abundance_prayer_path') || '';
@@ -24,6 +39,14 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({ onBack, onContinue, th
   const selectedPath = useMemo(
     () => PRAYER_PATHS.find((item) => item.id === selectedPathId) || null,
     [selectedPathId]
+  );
+  const prayerTracks = useMemo(
+    () =>
+      (availableSoundscapes || []).filter((s) => {
+        const cat = String(s.category || '').toUpperCase();
+        return !['MORNING_IAM', 'EVENING_ILOVE'].includes(cat);
+      }),
+    [availableSoundscapes]
   );
 
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
@@ -105,6 +128,51 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({ onBack, onContinue, th
           <p>1. Pre-prayer cultural or religious selection</p>
           <p>2. Tailored prayer instructions screen</p>
           <p>3. Guided prayer session screen</p>
+        </div>
+      </div>
+
+      <div className={`rounded-2xl border p-4 mb-4 ${cardBg}`}>
+        <div className="text-xs uppercase tracking-wide opacity-80 mb-3">Prayer Ambience</div>
+        <div className="space-y-3">
+          <div>
+            <label className={`text-xs block mb-1 ${subTextColor}`}>Prayer Sound</label>
+            <select
+              value={selectedSoundscapeId}
+              onChange={(e) => {
+                buttonSoundService.play('click');
+                onChangeSoundscape(e.target.value);
+              }}
+              className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                theme === 'light'
+                  ? 'border-slate-300 bg-white text-slate-900'
+                  : 'border-slate-700 bg-slate-900 text-slate-100'
+              }`}
+            >
+              {prayerTracks.length === 0 ? (
+                <option value="">Default Prayer Ambience</option>
+              ) : (
+                prayerTracks.map((track) => (
+                  <option key={track.id} value={track.id}>
+                    {track.label}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={`text-xs ${subTextColor}`}>Prayer Volume</label>
+              <span className="text-xs text-amber-400 font-bold">{prayerVolume}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={prayerVolume}
+              onChange={(e) => onChangePrayerVolume(Number(e.target.value))}
+              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+            />
+          </div>
         </div>
       </div>
 
