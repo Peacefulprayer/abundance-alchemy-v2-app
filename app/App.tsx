@@ -535,6 +535,12 @@ function App() {
     setCurrentMode(AppMode.SETTINGS);
   };
 
+  const handlePreviewSoundscape = (id: string) => {
+    const track = soundscapes.find((s) => s.id === id);
+    if (!track) return;
+    playAmbience(track, settings.ambienceVolume);
+  };
+
 
   const handleSignOut = () => {
     console.log('Dashboard: sign out');
@@ -762,6 +768,7 @@ function App() {
             <Settings
               settings={settings}
               onChangeSettings={handleSettingsChange}
+              onPreviewSoundscape={handlePreviewSoundscape}
               onChangeFocus={handleChangeFocus}
               onBack={handleSettingsBack}
               onSignOut={handleSignOut}

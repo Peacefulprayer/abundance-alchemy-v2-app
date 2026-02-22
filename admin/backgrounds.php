@@ -31,6 +31,29 @@ $slots = [
 ];
 
 $msg = '';
+$slotType = '';
+$enumValues = [];
+$missingSlotValues = [];
+
+try {
+    $colStmt = $pdo->query("SHOW COLUMNS FROM backgrounds LIKE 'slot'");
+    $slotColumn = $colStmt ? $colStmt->fetch(PDO::FETCH_ASSOC) : null;
+    if ($slotColumn && isset($slotColumn['Type'])) {
+        $slotType = (string)$slotColumn['Type'];
+        if (stripos($slotType, 'enum(') === 0) {
+            if (preg_match_all("/'([^']+)'/", $slotType, $matches)) {
+                $enumValues = $matches[1] ?? [];
+            }
+            foreach (array_keys($slots) as $slotKey) {
+                if (!in_array($slotKey, $enumValues, true)) {
+                    $missingSlotValues[] = $slotKey;
+                }
+            }
+        }
+    }
+} catch (Throwable $e) {
+    // Non-fatal: admin page should still render.
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (function_exists('aa_require_valid_csrf')) {
@@ -40,47 +63,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $slot = $_POST['slot'] ?? '';
     if (!isset($slots[$slot])) {
         $msg = 'Invalid slot selected.';
+    } elseif (!empty($missingSlotValues) && in_array($slot, $missingSlotValues, true)) {
+        $msg = 'Database schema for backgrounds.slot does not allow this slot yet. Update the slot column schema first.';
     } elseif (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
         $msg = 'Please choose an image to upload.';
     } else {
-        $file = $_FILES['image'];
+        try {
+            $file = $_FILES['image'];
 
-        // Basic validation
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        $mime = null;
+            // Basic validation
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            $mime = null;
 
-        if (class_exists('finfo')) {
-            $finfo = new finfo(FILEINFO_MIME_TYPE);
-            $mime  = $finfo->file($file['tmp_name']);
-        } elseif (function_exists('mime_content_type')) {
-            $mime = mime_content_type($file['tmp_name']);
-        }
-
-        if ($mime === null || !in_array($mime, $allowedTypes, true)) {
-            $msg = 'Invalid image type. Use JPG, PNG, or WEBP.';
-        } else {
-            $ext       = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-            $safeBase  = preg_replace('/[^a-zA-Z0-9_\-]/', '_', pathinfo($file['name'], PATHINFO_FILENAME));
-            $fileName  = $slot . '_' . time() . '_' . $safeBase . '.' . $ext;
-            $targetFs  = $uploadDirFs . $fileName;
-            $targetUrl = $uploadDirUrl . $fileName;
-
-            if (move_uploaded_file($file['tmp_name'], $targetFs)) {
-                // Insert or update this slot
-                $stmt = $pdo->prepare("
-                    INSERT INTO backgrounds (slot, image_url, is_active)
-                    VALUES (:slot, :image_url, 1)
-                    ON DUPLICATE KEY UPDATE image_url = VALUES(image_url), is_active = 1
-                ");
-                $stmt->execute([
-                    ':slot'      => $slot,
-                    ':image_url' => $targetUrl,
-                ]);
-
-                $msg = 'Background updated for ' . $slots[$slot] . '.';
-            } else {
-                $msg = 'Failed to save uploaded file.';
+            if (class_exists('finfo')) {
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $mime  = $finfo->file($file['tmp_name']);
+            } elseif (function_exists('mime_content_type')) {
+                $mime = mime_content_type($file['tmp_name']);
             }
+
+            if ($mime === null || !in_array($mime, $allowedTypes, true)) {
+                $msg = 'Invalid image type. Use JPG, PNG, or WEBP.';
+            } else {
+                $ext       = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                $safeBase  = preg_replace('/[^a-zA-Z0-9_\-]/', '_', pathinfo($file['name'], PATHINFO_FILENAME));
+                $fileName  = $slot . '_' . time() . '_' . $safeBase . '.' . $ext;
+                $targetFs  = $uploadDirFs . $fileName;
+                $targetUrl = $uploadDirUrl . $fileName;
+
+                if (move_uploaded_file($file['tmp_name'], $targetFs)) {
+                    // Insert or update this slot
+                    $stmt = $pdo->prepare("
+                        INSERT INTO backgrounds (slot, image_url, is_active)
+                        VALUES (:slot, :image_url, 1)
+                        ON DUPLICATE KEY UPDATE image_url = VALUES(image_url), is_active = 1
+                    ");
+                    $stmt->execute([
+                        ':slot'      => $slot,
+                        ':image_url' => $targetUrl,
+                    ]);
+
+                    $msg = 'Background updated for ' . $slots[$slot] . '.';
+                } else {
+                    $msg = 'Failed to save uploaded file.';
+                }
+            }
+        } catch (Throwable $e) {
+            $msg = 'Upload failed. Check backgrounds table slot schema and server write permissions.';
         }
     }
 }
@@ -122,6 +151,17 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
 
     <?php if ($msg): ?>
         <div class="alert alert-info"><?= htmlspecialchars($msg) ?></div>
+    <?php endif; ?>
+    <?php if (!empty($missingSlotValues)): ?>
+        <div class="alert alert-warning">
+            <strong>Slot Schema Update Needed:</strong>
+            <div class="small mt-1">
+                The <code>backgrounds.slot</code> column currently does not allow:
+                <code><?= htmlspecialchars(implode(', ', $missingSlotValues)) ?></code>
+            </div>
+            <div class="small mt-2">Recommended SQL:</div>
+            <pre class="mb-0"><code>ALTER TABLE backgrounds MODIFY slot VARCHAR(64) NOT NULL;</code></pre>
+        </div>
     <?php endif; ?>
 
     <div class="row">

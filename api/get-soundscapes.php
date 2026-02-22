@@ -66,7 +66,8 @@ try {
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Format response - FIXED URL CONSTRUCTION
+    // Format response - normalize URL paths safely
+    $appBasePath = '/abundance-alchemy';
     foreach ($rows as &$row) {
         // Add formatted duration
         if ($row['duration_seconds']) {
@@ -77,22 +78,31 @@ try {
             $row['duration_formatted'] = null;
         }
         
-        // FIXED: Build correct audio URL
-        $url = $row['url'];
-        
-        // Remove any leading slash
-        $url = ltrim($url, '/');
-        
-        // Check what we have and build correct URL
-        if (strpos($url, 'http') === 0) {
-            // Already full URL
-            $row['audio_url'] = $url;
-        } elseif (strpos($url, 'assets/audio/') === 0) {
-            // Already has correct prefix
-            $row['audio_url'] = 'https://abundantthought.com/abundance-alchemy/' . $url;
+        // Build correct audio URL
+        $rawUrl = trim((string)($row['url'] ?? ''));
+        if ($rawUrl === '') {
+            $row['audio_url'] = null;
+        } elseif (preg_match('#^https?://#i', $rawUrl)) {
+            $row['audio_url'] = $rawUrl;
         } else {
-            // Just filename, add prefix
-            $row['audio_url'] = 'https://abundantthought.com/abundance-alchemy/assets/audio/' . $url;
+            $normalized = str_replace('\\', '/', ltrim($rawUrl, '/'));
+
+            if (strpos($normalized, 'abundance-alchemy/') === 0) {
+                // Already rooted at app base.
+                $row['audio_url'] = '/' . $normalized;
+            } elseif (strpos($normalized, 'assets/') === 0 || strpos($normalized, 'admin/') === 0) {
+                // Relative path inside app.
+                $row['audio_url'] = $appBasePath . '/' . $normalized;
+            } elseif (strpos($normalized, 'uploads/') === 0 || strpos($normalized, 'user_uploads/') === 0) {
+                // Legacy upload folders.
+                $row['audio_url'] = $appBasePath . '/admin/' . $normalized;
+            } elseif (strpos($normalized, '/') === false) {
+                // Plain filename only.
+                $row['audio_url'] = $appBasePath . '/assets/audio/' . $normalized;
+            } else {
+                // Unknown relative path; keep it under app base.
+                $row['audio_url'] = $appBasePath . '/' . $normalized;
+            }
         }
         
         // Add user upload flag

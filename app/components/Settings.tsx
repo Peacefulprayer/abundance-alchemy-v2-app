@@ -6,6 +6,7 @@ import { buttonSoundService } from '../services/buttonSoundService';
 interface SettingsProps {
   settings: AppSettings;
   onChangeSettings: (settings: AppSettings) => void;
+  onPreviewSoundscape?: (id: string) => void;
   onChangeFocus: () => void;
   onBack: () => void;
   onSignOut: () => void;
@@ -19,6 +20,7 @@ interface SettingsProps {
 export const Settings: React.FC<SettingsProps> = ({
   settings,
   onChangeSettings,
+  onPreviewSoundscape,
   onChangeFocus,
   onBack,
   onSignOut,
@@ -84,6 +86,9 @@ export const Settings: React.FC<SettingsProps> = ({
   const updateSpecificSoundscape = (key: keyof AppSettings, id: string) => {
     buttonSoundService.play('click');
     onChangeSettings({ ...settings, [key]: id });
+    if (id && onPreviewSoundscape) {
+      onPreviewSoundscape(id);
+    }
   };
 
   // Reminder Handlers
