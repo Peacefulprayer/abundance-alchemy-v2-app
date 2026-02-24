@@ -5,6 +5,10 @@ import { Soundscape } from '../types';
 import { getAudioContext, unlockAudio as unlockToneAudio } from './buttonTone';
 
 let masterVolume = 1;
+const TRACK_SWITCH_FADE_OUT_MS = 320;
+const TRACK_SWITCH_FADE_IN_MS = 900;
+const SAME_TRACK_VOLUME_RAMP_MS = 450;
+const STOP_FADE_MS = 900;
 
 function playTone(frequency: number, durationMs: number, volume = 0.25) {
   const ctx = getAudioContext();
@@ -90,7 +94,7 @@ class AudioService {
     // Case 1: Already playing this track
     if (this.currentSoundscapeId === soundscape.id && this.isAmbiencePlaying) {
       // Just ensure volume is correct (in case it was ducked)
-      this.fadeVolume(this.baseVolume, 1000); 
+      this.fadeVolume(this.baseVolume, SAME_TRACK_VOLUME_RAMP_MS);
       if (this.ambience.paused) this.ambience.play().catch(e => console.warn('Resume failed', e));
       return;
     }
@@ -101,7 +105,7 @@ class AudioService {
 
     // Fade out old if playing
     if (!this.ambience.paused) {
-      await this.fadeVolume(0, 800);
+      await this.fadeVolume(0, TRACK_SWITCH_FADE_OUT_MS);
     }
 
     this.ambience.src = soundscape.url;
@@ -109,7 +113,7 @@ class AudioService {
 
     try {
       await this.ambience.play();
-      this.fadeVolume(this.baseVolume, 2000); // 2s fade in
+      this.fadeVolume(this.baseVolume, TRACK_SWITCH_FADE_IN_MS);
     } catch (error) {
       console.warn('AudioService: Autoplay prevented or load failed', error);
     }
@@ -118,7 +122,7 @@ class AudioService {
   /**
    * Stops ambience with a fade out.
    */
-  public async stopAmbience(duration = 1500) {
+  public async stopAmbience(duration = STOP_FADE_MS) {
     if (!this.isAmbiencePlaying) return;
 
     this.isAmbiencePlaying = false;
@@ -233,7 +237,7 @@ class AudioService {
 
 // Export singleton instance + standalone helper for App.tsx compatibility
 export const audioService = AudioService.getInstance();
-export const stopAmbience = () => audioService.stopAmbience();
+export const stopAmbience = (duration?: number) => audioService.stopAmbience(duration);
 export const playAmbience = (s: Soundscape, v?: number) => audioService.playAmbience(s, v);
 export const playNarration = (url: string) => audioService.playNarration(url);
 export const unlockAudio = () => unlockToneAudio();

@@ -1,14 +1,15 @@
 <?php
 include_once 'config.php';
-$data = json_decode(file_get_contents("php://input"));
+$data = json_decode(file_get_contents("php://input"), true);
 
-if (!empty($data->text) && !empty($data->type)) {
+if (is_array($data) && !empty($data['text']) && !empty($data['type'])) {
     $userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
-    $type = strtoupper(trim((string)$data->type));
+    $type = strtoupper(trim((string)$data['type']));
     $allowedTypes = ['MORNING_IAM', 'EVENING_ILOVE'];
-    $text = trim((string)$data->text);
+    $text = trim((string)$data['text']);
 
     if ($userId > 0 && $text !== '' && in_array($type, $allowedTypes, true)) {
+        api_require_csrf();
         $query = "INSERT INTO user_affirmations (user_id, text, type, created_at) VALUES (:uid, :text, :type, NOW())";
         $insert = $conn->prepare($query);
         

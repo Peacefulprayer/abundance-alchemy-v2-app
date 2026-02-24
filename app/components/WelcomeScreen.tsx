@@ -24,7 +24,7 @@ const titleCardClasses =
 
 // UNIVERSAL CONTENT CARD CLASSES
 const bodyCardClasses =
-  'backdrop-blur-md rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-xl space-y-3 md:space-y-4 bg-slate-900/30';
+  'backdrop-blur-md rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-xl space-y-3 md:space-y-4 bg-slate-900/10';
 
 const footerCardClasses =
   'backdrop-blur-md rounded-2xl border border-amber-500/20 p-3 w-full max-w-[280px] shadow-xl bg-slate-900/20';
@@ -135,12 +135,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
         <div className={`${bodyCardClasses} mb-6 md:mb-8`}>
           <div className="text-center space-y-2 md:space-y-3">
-            <p className="text-sm md:text-base text-slate-200 font-light">
+            <p className="text-sm md:text-base text-slate-200 font-extralight">
               We Are Honored To Be Here
               <br />
               With You Now
             </p>
-            <div className="space-y-1 md:space-y-1.5 text-slate-300 text-xs md:text-sm">
+            <div className="space-y-1 md:space-y-1.5 text-slate-300 text-xs md:text-sm font-light">
               <p>Pausing A Moment</p>
               <p>Breathing In The Divine</p>
               <p>We Let Go And Allow</p>
@@ -154,7 +154,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
         <div className="w-full max-w-[280px] space-y-3 md:space-y-4">
           <div className="text-center">
-            <div className="text-[11px] md:text-[12px] tracking-[0.15em] md:tracking-[0.2em] uppercase text-amber-500 mb-1 md:mb-2">
+            <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-black/60 border border-white/25 text-[11px] md:text-[12px] tracking-[0.15em] md:tracking-[0.2em] uppercase text-white mb-1 md:mb-2 shadow-[0_0_14px_rgba(0,0,0,0.45)]">
               WE ARE PRAYING NOW
             </div>
             <div className="w-full h-1 md:h-1.5 rounded-full bg-slate-800 overflow-hidden">

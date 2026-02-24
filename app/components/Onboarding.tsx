@@ -104,6 +104,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
   const [name, setName] = useState(initialName || '');
   const [selectedFocus, setSelectedFocus] = useState<string>('');
   const [cycleType, setCycleType] = useState<CycleType>(CycleType.DAILY);
+  const visibleStepOrder = [1, 3, 4, 5];
 
   useEffect(() => {
     if (initialName && !name) setName(initialName);
@@ -116,6 +117,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
 
   const selectedFocusLabel = selectedFocusObj?.label || '';
   const displayName = name.trim() || '___';
+  const visibleStep = Math.max(1, visibleStepOrder.indexOf(step) + 1);
+  const totalVisibleSteps = visibleStepOrder.length;
 
   const next = () => {
     buttonSoundService.play();
@@ -177,7 +180,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
             <Sparkles className="text-amber-400" size={16} />
             <h2 className="text-sm md:text-base font-bold text-amber-400">Welcome</h2>
           </div>
-          <div className="text-[10px] text-slate-400">Step {step} / 5</div>
+          <div className="text-[10px] text-slate-400">Step {visibleStep} / {totalVisibleSteps}</div>
         </div>
 
         <div className="space-y-4 max-h-[55vh] overflow-y-auto custom-scrollbar pr-1 text-slate-100">
@@ -388,10 +391,10 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
       </div>
 
       <div className="flex justify-center space-x-2">
-        {Array.from({ length: 5 }).map((_, i) => {
+        {Array.from({ length: totalVisibleSteps }).map((_, i) => {
           const index = i + 1;
-          const isActive = index === step;
-          const isCompleted = index < step;
+          const isActive = index === visibleStep;
+          const isCompleted = index < visibleStep;
           return (
             <div
               key={index}

@@ -60,11 +60,22 @@ export enum CycleType {
 
 export type ReminderMode = 'INTERVAL' | 'SPECIFIC_TIMES';
 
+export type ReminderPractice = 'MORNING_IAM' | 'EVENING_ILOVE' | 'MEDITATION' | 'PRAYER';
+
+export interface ReminderPracticeSchedule {
+  enabled: boolean;
+  time: string; // HH:MM (24h)
+}
+
 export interface RemindersSettings {
   enabled: boolean;
   mode: ReminderMode;
   intervalMinutes: number;
   specificTimes: string[]; // e.g. ['08:00','20:00']
+  timezone: string; // IANA zone, e.g. America/New_York
+  snoozeMinutes: 15 | 30 | 60;
+  notificationPermission: NotificationPermission | 'unsupported';
+  practiceTimes: Record<ReminderPractice, ReminderPracticeSchedule>;
 }
 
 export interface AppSettings {

@@ -202,12 +202,12 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         </div>
 
         {/* BODY CARD - USING UNIVERSAL CLASSES */}
-        <div className={`${contentCardClasses} mb-6 md:mb-8`}>
+        <div className={`${contentCardClasses} mb-3 md:mb-4`}>
           <div className="text-center space-y-2">
-            <p className="text-slate-300 text-sm">Transformational Change</p>
-            <p className="text-slate-300 text-sm">Always Begins with Us</p>
-            <p className="text-slate-300 text-sm">Conscious Reality Shifting</p>
-            <p className="text-slate-300 text-sm">The Power Of Your I Am</p>
+            <p className="text-slate-300 text-sm font-extralight">Transformational Change</p>
+            <p className="text-slate-300 text-sm font-extralight">Always Begins with Us</p>
+            <p className="text-slate-300 text-sm font-extralight">Conscious Reality Shifting</p>
+            <p className="text-slate-300 text-sm font-extralight">The Power Of Your I Am</p>
           </div>
         </div>
 
@@ -215,7 +215,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         {!isPreparing ? (
           <button
             onClick={handleStartPreparation}
-            className="mt-4 md:mt-6 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-sm tracking-wider hover:opacity-90 transition-opacity shadow-lg"
+            className="mt-2 md:mt-3 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-sm tracking-wider hover:opacity-90 transition-opacity shadow-lg"
           >
             Enter The Sacred Space
           </button>
@@ -223,7 +223,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           <div className="w-full max-w-xs space-y-4">
             {/* LOADER */}
             <div className="space-y-3">
-              <p className="text-slate-300 text-sm text-center min-h-[40px] flex items-center justify-center">
+              <p className="text-white text-sm text-center min-h-[40px] flex items-center justify-center">
                 {currentMessage}
               </p>
 
@@ -235,7 +235,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
                 />
               </div>
 
-              <p className="text-xs text-slate-400 text-center">{progress}% Prepared</p>
+              <p className="text-xs text-white text-center">{progress}% Prepared</p>
             </div>
 
             {/* "I AM READY" - UNIVERSAL BUTTON STYLE */}
@@ -253,12 +253,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         )}
 
         {/* FOOTER TEXT - MATCH CARD STYLE */}
-        <div className={`${contentCardClasses} mt-6 md:mt-8`}>
+        <div className={`${contentCardClasses} mt-3 md:mt-4`}>
           <div className="text-center space-y-3">
-            <p className="text-xs text-slate-300">
-              Based on the book "I Am Practice" by Michael Soaries.
-            </p>
-
             <p className="text-xs text-slate-300 leading-relaxed">
               By continuing you agree to be a part of
               <br />
@@ -271,6 +267,24 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
               <a href="/privacy-policy" className="text-amber-400 hover:text-amber-300 underline">
                 View our privacy policy here.
               </a>
+            </p>
+
+            <p className="text-[10px] md:text-xs text-slate-300 whitespace-nowrap">
+              © 2024 Abundant Thought - Michael Soaries
+            </p>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Unless otherwise indicated
+              <br />
+              all images and music clips
+              <br />
+              used under Pexels.com Free Use License.
+            </p>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Based on the book "I Am Practice"
+              <br />
+              by Michael Soaries.
             </p>
           </div>
         </div>

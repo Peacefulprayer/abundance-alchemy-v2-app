@@ -1,7 +1,7 @@
 // App.tsx - PHASE 1: All screens wired with complete flow
 // New User: PreSplash → Splash → Welcome → Naming → Auth → Onboarding → Tutorial → Dashboard
 // Returning User: PreSplash → Splash → Welcome → Return Portal → Dashboard
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   AppMode,
   UserAccount,
@@ -13,6 +13,7 @@ import {
   Affirmation,
   GratitudeLog,
   CycleType,
+  ReminderPractice,
 } from './types';
 import UniversalLayout from './components/UniversalLayout';
 import { SplashScreen } from './components/SplashScreen/SplashScreen';
@@ -41,8 +42,131 @@ import type { PrayerPathId } from './components/prayerContent';
 // UPDATED IMPORT: Use 'api' from the unified service
 import { api } from './services/api';
 
-// Default app settings
-const DEFAULT_SETTINGS: AppSettings = {
+const REMINDER_LAST_FIRED_KEY = 'abundance_reminder_last_fired';
+const REMINDER_SNOOZE_KEY = 'abundance_reminder_snooze';
+
+const REMINDER_ORDER: ReminderPractice[] = [
+  'MORNING_IAM',
+  'EVENING_ILOVE',
+  'MEDITATION',
+  'PRAYER',
+];
+
+const REMINDER_META: Record<ReminderPractice, { title: string; body: string }> = {
+  MORNING_IAM: {
+    title: 'I Am Practice',
+    body: 'Center yourself and begin your I Am practice now.',
+  },
+  EVENING_ILOVE: {
+    title: 'I Love Practice',
+    body: 'Close your day with your I Love practice.',
+  },
+  MEDITATION: {
+    title: 'Meditation',
+    body: 'Take a quiet moment and begin meditation.',
+  },
+  PRAYER: {
+    title: 'Omba (Prayer)',
+    body: 'Pause and enter your prayer practice.',
+  },
+};
+
+const detectTimezone = (): string => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+};
+
+const getNotificationPermissionSnapshot = (): NotificationPermission | 'unsupported' => {
+  if (typeof window === 'undefined' || typeof Notification === 'undefined') {
+    return 'unsupported';
+  }
+  return Notification.permission;
+};
+
+const requestNotificationPermission = async (): Promise<NotificationPermission | 'unsupported'> => {
+  if (typeof window === 'undefined' || typeof Notification === 'undefined') {
+    return 'unsupported';
+  }
+
+  if (Notification.permission === 'granted' || Notification.permission === 'denied') {
+    return Notification.permission;
+  }
+
+  try {
+    return await Notification.requestPermission();
+  } catch {
+    return Notification.permission;
+  }
+};
+
+const parseStoredRecord = (key: string): Record<string, any> => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return {};
+    return parsed;
+  } catch {
+    return {};
+  }
+};
+
+const writeStoredRecord = (key: string, value: Record<string, any>) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const getClockInTimezone = (timezone: string): { dateKey: string; hhmm: string } => {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+
+    const parts = formatter.formatToParts(new Date());
+    const map: Record<string, string> = {};
+    for (const part of parts) {
+      if (part.type !== 'literal') {
+        map[part.type] = part.value;
+      }
+    }
+    const year = map.year || '0000';
+    const month = map.month || '00';
+    const day = map.day || '00';
+    const hour = map.hour || '00';
+    const minute = map.minute || '00';
+
+    return {
+      dateKey: `${year}-${month}-${day}`,
+      hhmm: `${hour}:${minute}`,
+    };
+  } catch {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hour = String(now.getHours()).padStart(2, '0');
+    const minute = String(now.getMinutes()).padStart(2, '0');
+
+    return {
+      dateKey: `${year}-${month}-${day}`,
+      hhmm: `${hour}:${minute}`,
+    };
+  }
+};
+
+const createDefaultSettings = (): AppSettings => ({
   theme: 'light',
   soundEffectsOn: true,
   musicOn: true,
@@ -54,12 +178,114 @@ const DEFAULT_SETTINGS: AppSettings = {
   voiceId: 'default',
   reminders: {
     enabled: false,
-    mode: 'INTERVAL',
-    intervalMinutes: 60,
-    specificTimes: ['08:00', '20:00'],
+    mode: 'SPECIFIC_TIMES',
+    intervalMinutes: 60, // legacy fallback
+    specificTimes: ['08:00', '20:00'], // legacy fallback
+    timezone: detectTimezone(),
+    snoozeMinutes: 15,
+    notificationPermission: getNotificationPermissionSnapshot(),
+    practiceTimes: {
+      MORNING_IAM: { enabled: true, time: '07:00' },
+      EVENING_ILOVE: { enabled: true, time: '20:30' },
+      MEDITATION: { enabled: false, time: '12:30' },
+      PRAYER: { enabled: false, time: '06:30' },
+    },
   },
+});
+
+const sanitizeTime = (value: unknown, fallback: string): string => {
+  if (typeof value !== 'string') return fallback;
+  return /^\d{2}:\d{2}$/.test(value) ? value : fallback;
 };
 
+const normalizeSettings = (raw: any): AppSettings => {
+  const base = createDefaultSettings();
+  if (!raw || typeof raw !== 'object') return base;
+
+  const reminderRaw = raw.reminders && typeof raw.reminders === 'object' ? raw.reminders : {};
+  const practiceRaw = reminderRaw.practiceTimes && typeof reminderRaw.practiceTimes === 'object'
+    ? reminderRaw.practiceTimes
+    : {};
+
+  const basePractice = base.reminders.practiceTimes;
+  const mergedPractice = {
+    MORNING_IAM: {
+      enabled:
+        typeof practiceRaw.MORNING_IAM?.enabled === 'boolean'
+          ? practiceRaw.MORNING_IAM.enabled
+          : basePractice.MORNING_IAM.enabled,
+      time: sanitizeTime(practiceRaw.MORNING_IAM?.time, basePractice.MORNING_IAM.time),
+    },
+    EVENING_ILOVE: {
+      enabled:
+        typeof practiceRaw.EVENING_ILOVE?.enabled === 'boolean'
+          ? practiceRaw.EVENING_ILOVE.enabled
+          : basePractice.EVENING_ILOVE.enabled,
+      time: sanitizeTime(practiceRaw.EVENING_ILOVE?.time, basePractice.EVENING_ILOVE.time),
+    },
+    MEDITATION: {
+      enabled:
+        typeof practiceRaw.MEDITATION?.enabled === 'boolean'
+          ? practiceRaw.MEDITATION.enabled
+          : basePractice.MEDITATION.enabled,
+      time: sanitizeTime(practiceRaw.MEDITATION?.time, basePractice.MEDITATION.time),
+    },
+    PRAYER: {
+      enabled:
+        typeof practiceRaw.PRAYER?.enabled === 'boolean'
+          ? practiceRaw.PRAYER.enabled
+          : basePractice.PRAYER.enabled,
+      time: sanitizeTime(practiceRaw.PRAYER?.time, basePractice.PRAYER.time),
+    },
+  };
+
+  const snoozeRaw = Number(reminderRaw.snoozeMinutes);
+  const snoozeMinutes = snoozeRaw === 30 || snoozeRaw === 60 ? snoozeRaw : 15;
+  const permissionNow = getNotificationPermissionSnapshot();
+  const storedPermission = reminderRaw.notificationPermission;
+  const normalizedPermission =
+    permissionNow === 'unsupported'
+      ? 'unsupported'
+      : storedPermission === 'granted' || storedPermission === 'denied' || storedPermission === 'default'
+      ? storedPermission
+      : permissionNow;
+
+  return {
+    ...base,
+    ...raw,
+    reminders: {
+      ...base.reminders,
+      ...reminderRaw,
+      mode:
+        reminderRaw.mode === 'INTERVAL' || reminderRaw.mode === 'SPECIFIC_TIMES'
+          ? reminderRaw.mode
+          : base.reminders.mode,
+      intervalMinutes: Number.isFinite(Number(reminderRaw.intervalMinutes))
+        ? Number(reminderRaw.intervalMinutes)
+        : base.reminders.intervalMinutes,
+      specificTimes: Array.isArray(reminderRaw.specificTimes)
+        ? reminderRaw.specificTimes.filter((v: unknown): v is string => typeof v === 'string')
+        : base.reminders.specificTimes,
+      timezone:
+        typeof reminderRaw.timezone === 'string' && reminderRaw.timezone.trim()
+          ? reminderRaw.timezone
+          : detectTimezone(),
+      snoozeMinutes,
+      notificationPermission: normalizedPermission,
+      practiceTimes: mergedPractice,
+    },
+  };
+};
+
+const loadStoredSettings = (): AppSettings => {
+  try {
+    const raw = localStorage.getItem('abundance_settings');
+    if (!raw) return createDefaultSettings();
+    return normalizeSettings(JSON.parse(raw));
+  } catch {
+    return createDefaultSettings();
+  }
+};
 
 function App() {
   // START WITH PRE_SPLASH (not SPLASH)
@@ -79,10 +305,11 @@ function App() {
 
 
   // ✅ Phase 1: Additional state for missing screens
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<AppSettings>(() => loadStoredSettings());
   const [practiceConfig, setPracticeConfig] = useState<PracticeSessionConfig | null>(null);
   const [soundscapes, setSoundscapes] = useState<Soundscape[]>([]);
   const [userAudioFile, setUserAudioFile] = useState<File | null>(null);
+  const [activeReminder, setActiveReminder] = useState<ReminderPractice | null>(null);
   const [prayerSoundscapeId, setPrayerSoundscapeId] = useState<string>(() => {
     try {
       return localStorage.getItem('abundance_prayer_soundscape_id') || 'default';
@@ -249,6 +476,130 @@ function App() {
     setTheme(settings.theme);
   }, [settings.theme]);
 
+  // Keep stored notification permission synced with browser state.
+  useEffect(() => {
+    const permission = getNotificationPermissionSnapshot();
+    setSettings((prev) => {
+      if (prev.reminders.notificationPermission === permission) return prev;
+      const next = {
+        ...prev,
+        reminders: {
+          ...prev.reminders,
+          notificationPermission: permission,
+        },
+      };
+      try {
+        localStorage.setItem('abundance_settings', JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  }, []);
+
+  const handleRequestReminderPermission = async () => {
+    const permission = await requestNotificationPermission();
+    setSettings((prev) => {
+      if (prev.reminders.notificationPermission === permission) return prev;
+      const next = {
+        ...prev,
+        reminders: {
+          ...prev.reminders,
+          notificationPermission: permission,
+        },
+      };
+      try {
+        localStorage.setItem('abundance_settings', JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  };
+
+  const triggerReminder = (practice: ReminderPractice) => {
+    const reminderMeta = REMINDER_META[practice];
+    setActiveReminder((current) => current ?? practice);
+
+    if (settings.reminders.notificationPermission !== 'granted') return;
+    if (typeof Notification === 'undefined') return;
+
+    try {
+      const notification = new Notification(`Abundance Alchemy: ${reminderMeta.title}`, {
+        body: reminderMeta.body,
+        tag: `aa-reminder-${practice}`,
+      });
+      notification.onclick = () => {
+        window.focus();
+        setActiveReminder(practice);
+        notification.close();
+      };
+    } catch {
+      // silently fail and rely on in-app reminder card
+    }
+  };
+
+  useEffect(() => {
+    if (!settings.reminders.enabled || !user) return;
+
+    const runReminderCheck = () => {
+      const nowMs = Date.now();
+      const snoozeMap = parseStoredRecord(REMINDER_SNOOZE_KEY);
+      let changedSnooze = false;
+
+      // Snoozed reminders take priority and fire when their snooze expires.
+      for (const practice of REMINDER_ORDER) {
+        const snoozeUntil = Number(snoozeMap[practice] ?? 0);
+        if (!Number.isFinite(snoozeUntil) || snoozeUntil <= 0) continue;
+        if (snoozeUntil > nowMs) continue;
+
+        delete snoozeMap[practice];
+        changedSnooze = true;
+        triggerReminder(practice);
+        break;
+      }
+
+      if (changedSnooze) {
+        writeStoredRecord(REMINDER_SNOOZE_KEY, snoozeMap);
+        return;
+      }
+
+      const { dateKey, hhmm } = getClockInTimezone(settings.reminders.timezone);
+      const lastFired = parseStoredRecord(REMINDER_LAST_FIRED_KEY);
+      let changedLastFired = false;
+
+      for (const practice of REMINDER_ORDER) {
+        const schedule = settings.reminders.practiceTimes[practice];
+        if (!schedule?.enabled) continue;
+        if (schedule.time !== hhmm) continue;
+
+        const snoozeUntil = Number(snoozeMap[practice] ?? 0);
+        if (Number.isFinite(snoozeUntil) && snoozeUntil > nowMs) continue;
+
+        const fireKey = `${dateKey}|${schedule.time}`;
+        if (lastFired[practice] === fireKey) continue;
+
+        lastFired[practice] = fireKey;
+        changedLastFired = true;
+        triggerReminder(practice);
+      }
+
+      if (changedLastFired) {
+        writeStoredRecord(REMINDER_LAST_FIRED_KEY, lastFired);
+      }
+    };
+
+    runReminderCheck();
+    const intervalId = window.setInterval(runReminderCheck, 20000);
+    return () => window.clearInterval(intervalId);
+  }, [
+    settings.reminders.enabled,
+    settings.reminders.practiceTimes,
+    settings.reminders.timezone,
+    settings.reminders.notificationPermission,
+    user?.email,
+  ]);
+
 
   // PreSplash → SplashScreen
   const handlePreSplashComplete = () => {
@@ -385,8 +736,15 @@ function App() {
 
   // ✅ Settings handlers
   const handleSettingsChange = (newSettings: AppSettings) => {
-    setSettings(newSettings);
-    localStorage.setItem('abundance_settings', JSON.stringify(newSettings));
+    const normalized = normalizeSettings(newSettings);
+    const becameEnabled = !settings.reminders.enabled && normalized.reminders.enabled;
+    setSettings(normalized);
+    localStorage.setItem('abundance_settings', JSON.stringify(normalized));
+
+    // Ask only when user intentionally enables reminders.
+    if (becameEnabled) {
+      handleRequestReminderPermission();
+    }
   };
 
 
@@ -467,6 +825,7 @@ function App() {
   const handleResetAndStartOver = () => {
     localStorage.clear();
     setUser(null);
+    setActiveReminder(null);
     setAuthChecked(true);
     setPracticeConfig(null);
     setCurrentMode(AppMode.PRE_SPLASH);
@@ -489,6 +848,37 @@ function App() {
     setPracticeConfig(config);
     setCurrentMode(AppMode.PRACTICE);
   };
+
+  const handleReminderSnooze = (practice: ReminderPractice, minutes: 15 | 30 | 60) => {
+    const snoozeMap = parseStoredRecord(REMINDER_SNOOZE_KEY);
+    snoozeMap[practice] = Date.now() + minutes * 60 * 1000;
+    writeStoredRecord(REMINDER_SNOOZE_KEY, snoozeMap);
+    setActiveReminder(null);
+  };
+
+  const handleReminderStart = (practice: ReminderPractice) => {
+    setActiveReminder(null);
+    if (!user) {
+      setCurrentMode(AppMode.AUTH);
+      return;
+    }
+
+    if (practice === 'MORNING_IAM') {
+      handleStartPractice(PracticeType.MORNING_IAM, 5);
+      return;
+    }
+    if (practice === 'EVENING_ILOVE') {
+      handleStartPractice(PracticeType.EVENING_ILOVE, 5);
+      return;
+    }
+    if (practice === 'MEDITATION') {
+      setCurrentMode(AppMode.MEDITATION_SETUP);
+      return;
+    }
+    setCurrentMode(AppMode.PRAYER_SETUP);
+  };
+
+  const activeReminderMeta = activeReminder ? REMINDER_META[activeReminder] : null;
 
 
   const handleOpenMeditation = () => {
@@ -547,7 +937,10 @@ function App() {
     api.logout().catch(() => {});
     localStorage.removeItem('abundance_auth');
     localStorage.removeItem('abundance_user');
+    localStorage.removeItem(REMINDER_LAST_FIRED_KEY);
+    localStorage.removeItem(REMINDER_SNOOZE_KEY);
     setUser(null);
+    setActiveReminder(null);
     setAuthChecked(true);
     setCurrentMode(AppMode.AUTH);
   };
@@ -564,6 +957,7 @@ function App() {
     currentMode === AppMode.PRAYER_SETUP ||
     currentMode === AppMode.PRAYER_GUIDE ||
     currentMode === AppMode.PRAYER_SESSION;
+  const wasPrayerModeRef = useRef(isPrayerMode);
 
   // Get active soundscape based on current mode/practice type or default
   const getActiveSoundscape = (): Soundscape => {
@@ -582,6 +976,14 @@ function App() {
     }
     return soundscapes.find(s => s.id === settings.soundscapeId) || defaultSoundscape;
   };
+
+  // Safety guard: on prayer exit, force-stop current ambience once before next mode track starts.
+  useEffect(() => {
+    if (wasPrayerModeRef.current && !isPrayerMode) {
+      stopAmbience(180);
+    }
+    wasPrayerModeRef.current = isPrayerMode;
+  }, [isPrayerMode]);
 
   // Keep ambient music synced with app-level settings.
   useEffect(() => {
@@ -768,6 +1170,7 @@ function App() {
             <Settings
               settings={settings}
               onChangeSettings={handleSettingsChange}
+              onRequestReminderPermission={handleRequestReminderPermission}
               onPreviewSoundscape={handlePreviewSoundscape}
               onChangeFocus={handleChangeFocus}
               onBack={handleSettingsBack}
@@ -978,6 +1381,47 @@ function App() {
       >
         {renderScreen()}
       </Layout>
+
+      {activeReminder && activeReminderMeta && (
+        <div className="fixed inset-x-4 bottom-24 z-[120] mx-auto w-full max-w-md rounded-2xl border border-amber-400/40 bg-slate-950/95 p-4 shadow-2xl backdrop-blur">
+          <p className="text-[11px] uppercase tracking-wide text-amber-300">Reminder</p>
+          <h3 className="mt-1 text-base font-semibold text-white">{activeReminderMeta.title}</h3>
+          <p className="mt-1 text-xs text-slate-300">{activeReminderMeta.body}</p>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              onClick={() => handleReminderStart(activeReminder)}
+              className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90"
+            >
+              Start Now
+            </button>
+            <button
+              onClick={() => handleReminderSnooze(activeReminder, 15)}
+              className="rounded-lg border border-slate-500 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-800"
+            >
+              Snooze 15m
+            </button>
+            <button
+              onClick={() => handleReminderSnooze(activeReminder, 30)}
+              className="rounded-lg border border-slate-500 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-800"
+            >
+              Snooze 30m
+            </button>
+            <button
+              onClick={() => handleReminderSnooze(activeReminder, 60)}
+              className="rounded-lg border border-slate-500 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-800"
+            >
+              Snooze 60m
+            </button>
+            <button
+              onClick={() => setActiveReminder(null)}
+              className="rounded-lg border border-transparent px-2 py-1.5 text-xs text-slate-400 hover:text-slate-200"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

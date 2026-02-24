@@ -3,6 +3,13 @@
 
 $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
 $cookieParams = session_get_cookie_params();
+$apiSessionName = 'AA_API_SESSID';
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_name($apiSessionName);
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.use_strict_mode', '1');
+}
 
 session_set_cookie_params([
     'lifetime' => 0,

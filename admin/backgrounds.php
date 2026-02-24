@@ -10,25 +10,77 @@ if (!is_dir($uploadDirFs)) {
     mkdir($uploadDirFs, 0755, true);
 }
 
-// Map DB slots to nice labels for admin UI
-$slots = [
-    'SPLASH'         => 'Splash Intro',
-    'SPLASH_WELCOME' => 'Splash Welcome (welcome.mp3)',
-    'AUTH'           => 'Login / Register',
-    'HOME'           => 'Dashboard / Home',
-    'WELCOME'             => 'Welcome',
-    'IAM_SETUP'           => 'Morning "I Am" – Setup',
-    'IAM_PRACTICE'        => 'Morning "I Am" – Practice',
-    'ILOVE_SETUP'         => 'Evening "I Love" – Setup',
-    'ILOVE_PRACTICE'      => 'Evening "I Love" – Practice',
-    'MEDITATION_SETUP'    => 'Meditation – Setup',
-    'MEDITATION_PRACTICE' => 'Meditation – Session',
-    'PRAYER_SETUP'        => 'Prayer (Omba) – Setup',
-    'PRAYER_GUIDE'        => 'Prayer (Omba) – Guide',
-    'PRAYER_SESSION'      => 'Prayer (Omba) – Session',
-    'SETTINGS'            => 'Settings Screen',
-    'PROGRESS'            => 'Progress / Journey Overview',
+// Section defaults: used when a screen override is not set.
+$sectionSlots = [
+    'SECTION_ENTRY'        => 'Section Default: Entry Flow (Splash/Auth/Onboarding)',
+    'SECTION_CORE'         => 'Section Default: Core App (Dashboard/Library/Settings/Profile/Stats)',
+    'SECTION_AFFIRM_IAM'   => 'Section Default: Morning "I Am" Flow',
+    'SECTION_AFFIRM_ILOVE' => 'Section Default: Evening "I Love" Flow',
+    'SECTION_MEDITATION'   => 'Section Default: Meditation Flow',
+    'SECTION_PRAYER'       => 'Section Default: Prayer (Omba) Flow',
 ];
+
+// Global fallback used if no screen or section background exists.
+$globalSlots = [
+    'HOME' => 'Global Fallback (App Wide)',
+];
+
+// Screen overrides: these win over section defaults when assigned.
+$screenSlots = [
+    'PRE_SPLASH'           => 'Pre-Splash',
+    'SPLASH'               => 'Splash Intro',
+    'SPLASH_WELCOME'       => 'Splash Welcome (welcome.mp3)',
+    'WELCOME'              => 'Welcome',
+    'NAMING_CEREMONY'      => 'Sacred Naming Ceremony',
+    'AUTH'                 => 'Login / Register',
+    'RETURN_PORTAL'        => 'Return Portal',
+    'ONBOARDING'           => 'Onboarding',
+    'TUTORIAL'             => 'Tutorial',
+    'DASHBOARD'            => 'Dashboard',
+    'LIBRARY'              => 'Library (Maktaba)',
+    'IAM_SETUP'            => 'Morning "I Am" – Setup',
+    'IAM_PRACTICE'         => 'Morning "I Am" – Practice',
+    'ILOVE_SETUP'          => 'Evening "I Love" – Setup',
+    'ILOVE_PRACTICE'       => 'Evening "I Love" – Practice',
+    'MEDITATION_SETUP'     => 'Meditation – Setup',
+    'MEDITATION_PRACTICE'  => 'Meditation – Session',
+    'PRAYER_SETUP'         => 'Prayer (Omba) – Setup',
+    'PRAYER_GUIDE'         => 'Prayer (Omba) – Guide',
+    'PRAYER_SESSION'       => 'Prayer (Omba) – Session',
+    'SETTINGS'             => 'Settings',
+    'PROFILE'              => 'Profile',
+    'STATS'                => 'Stats',
+    'PROGRESS'             => 'Progress / Journey Overview',
+];
+
+$screenFallbackSection = [
+    'PRE_SPLASH'          => 'SECTION_ENTRY',
+    'SPLASH'              => 'SECTION_ENTRY',
+    'SPLASH_WELCOME'      => 'SECTION_ENTRY',
+    'WELCOME'             => 'SECTION_ENTRY',
+    'NAMING_CEREMONY'     => 'SECTION_ENTRY',
+    'AUTH'                => 'SECTION_ENTRY',
+    'RETURN_PORTAL'       => 'SECTION_ENTRY',
+    'ONBOARDING'          => 'SECTION_ENTRY',
+    'TUTORIAL'            => 'SECTION_ENTRY',
+    'DASHBOARD'           => 'SECTION_CORE',
+    'LIBRARY'             => 'SECTION_CORE',
+    'SETTINGS'            => 'SECTION_CORE',
+    'PROFILE'             => 'SECTION_CORE',
+    'STATS'               => 'SECTION_CORE',
+    'PROGRESS'            => 'SECTION_CORE',
+    'IAM_SETUP'           => 'SECTION_AFFIRM_IAM',
+    'IAM_PRACTICE'        => 'SECTION_AFFIRM_IAM',
+    'ILOVE_SETUP'         => 'SECTION_AFFIRM_ILOVE',
+    'ILOVE_PRACTICE'      => 'SECTION_AFFIRM_ILOVE',
+    'MEDITATION_SETUP'    => 'SECTION_MEDITATION',
+    'MEDITATION_PRACTICE' => 'SECTION_MEDITATION',
+    'PRAYER_SETUP'        => 'SECTION_PRAYER',
+    'PRAYER_GUIDE'        => 'SECTION_PRAYER',
+    'PRAYER_SESSION'      => 'SECTION_PRAYER',
+];
+
+$slots = $sectionSlots + $globalSlots + $screenSlots;
 
 $msg = '';
 $slotType = '';
@@ -144,9 +196,9 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
 <?php include __DIR__ . '/header.php'; ?>
 
 <div class="container mt-4">
-    <h1 class="h4 mb-3">Screen Backgrounds</h1>
+    <h1 class="h4 mb-3">Backgrounds</h1>
     <p class="text-muted mb-4">
-        Upload and assign background images for different parts of the Abundance Alchemy app.
+        Background order is: <strong>screen override</strong> → <strong>section default</strong> → <strong>global fallback (HOME)</strong>.
     </p>
 
     <?php if ($msg): ?>
@@ -164,9 +216,49 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
         </div>
     <?php endif; ?>
 
+    <h2 class="h5 mt-4 mb-3">1) Section Defaults</h2>
+    <p class="text-muted small mb-3">Use these to set one background for an entire app section.</p>
     <div class="row">
-        <?php foreach ($slots as $key => $label): ?>
-            <div class="col-md-6 mb-4">
+        <?php foreach ($sectionSlots as $key => $label): ?>
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><?= htmlspecialchars($label) ?></h5>
+                        <p class="card-text">
+                            Slot key: <code><?= htmlspecialchars($key) ?></code>
+                        </p>
+                        <p class="small text-muted">Used when screen-specific background is not assigned.</p>
+
+                        <?php if (!empty($current[$key])): ?>
+                            <div class="mb-3">
+                                <img src="<?= htmlspecialchars($current[$key]) ?>"
+                                     alt="<?= htmlspecialchars($label) ?> background"
+                                     class="bg-thumb">
+                            </div>
+                        <?php else: ?>
+                            <p class="text-muted">No background set yet.</p>
+                        <?php endif; ?>
+
+                        <form method="post" enctype="multipart/form-data">
+                            <?php if (function_exists('aa_csrf_field')) { aa_csrf_field(); } ?>
+                            <input type="hidden" name="slot" value="<?= htmlspecialchars($key) ?>">
+                            <div class="mb-3">
+                                <label class="form-label">Upload new image</label>
+                                <input type="file" name="image" class="form-control" accept="image/*" required>
+                            </div>
+                            <button class="btn btn-primary btn-sm">Save Background</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <h2 class="h5 mt-4 mb-3">2) Global Fallback</h2>
+    <p class="text-muted small mb-3">Used only when neither screen nor section background is assigned.</p>
+    <div class="row">
+        <?php foreach ($globalSlots as $key => $label): ?>
+            <div class="col-md-6 col-lg-4 mb-4">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title"><?= htmlspecialchars($label) ?></h5>
@@ -182,6 +274,52 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
                             </div>
                         <?php else: ?>
                             <p class="text-muted">No background set yet.</p>
+                        <?php endif; ?>
+
+                        <form method="post" enctype="multipart/form-data">
+                            <?php if (function_exists('aa_csrf_field')) { aa_csrf_field(); } ?>
+                            <input type="hidden" name="slot" value="<?= htmlspecialchars($key) ?>">
+                            <div class="mb-3">
+                                <label class="form-label">Upload new image</label>
+                                <input type="file" name="image" class="form-control" accept="image/*" required>
+                            </div>
+                            <button class="btn btn-primary btn-sm">Save Background</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <h2 class="h5 mt-4 mb-3">3) Screen Overrides</h2>
+    <p class="text-muted small mb-3">
+        If a screen override is empty, that screen inherits its section default (and then HOME if needed).
+    </p>
+    <div class="row">
+        <?php foreach ($screenSlots as $key => $label): ?>
+            <?php
+                $inherits = $screenFallbackSection[$key] ?? 'HOME';
+                $inheritsLabel = $slots[$inherits] ?? $inherits;
+            ?>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><?= htmlspecialchars($label) ?></h5>
+                        <p class="card-text">
+                            Slot key: <code><?= htmlspecialchars($key) ?></code>
+                        </p>
+                        <p class="small text-muted">
+                            Inherits: <strong><?= htmlspecialchars($inheritsLabel) ?></strong> when empty.
+                        </p>
+
+                        <?php if (!empty($current[$key])): ?>
+                            <div class="mb-3">
+                                <img src="<?= htmlspecialchars($current[$key]) ?>"
+                                     alt="<?= htmlspecialchars($label) ?> background"
+                                     class="bg-thumb">
+                            </div>
+                        <?php else: ?>
+                            <p class="text-muted">No override set yet.</p>
                         <?php endif; ?>
 
                         <form method="post" enctype="multipart/form-data">

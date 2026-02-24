@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/admin_init.php';
 require_once '../db.php';
 if (!isset($_SESSION['admin_id'])) {
     header("Location: login.php");
@@ -25,6 +25,8 @@ if (!$user) {
 $msg = '';
 // Handle update
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    aa_require_valid_csrf();
+
     $name = $_POST['name'] ?? '';
     $email = $_POST['email'] ?? '';
     $level = intval($_POST['level'] ?? 1);
@@ -65,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h4>Edit User</h4>
     <?php if ($msg): ?><div class="alert alert-success"><?=$msg?></div><?php endif; ?>
     <form method="post">
+        <?php aa_csrf_field(); ?>
         <div class="mb-3">
             <label>Name:</label>
             <input type="text" name="name" class="form-control" required value="<?=htmlspecialchars($user['name'])?>">

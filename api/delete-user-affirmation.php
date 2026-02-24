@@ -11,6 +11,8 @@ if ($userId <= 0) {
     exit();
 }
 
+api_require_csrf();
+
 if ($id <= 0) {
     http_response_code(400);
     echo json_encode(['message' => 'Invalid affirmation id']);
@@ -33,11 +35,8 @@ try {
         'deleted' => $stmt->rowCount() > 0,
     ]);
 } catch (Throwable $e) {
+    error_log('[api/delete-user-affirmation.php] Delete failed: ' . $e->getMessage());
     http_response_code(500);
-    if (defined('DEBUG_MODE') && DEBUG_MODE) {
-        echo json_encode(['message' => 'Delete failed', 'error' => $e->getMessage()]);
-    } else {
-        echo json_encode(['message' => 'Delete failed']);
-    }
+    echo json_encode(['message' => 'Delete failed']);
 }
 ?>

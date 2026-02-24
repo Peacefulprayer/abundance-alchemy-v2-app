@@ -20,7 +20,7 @@ const titleCardClasses =
 
 // UNIVERSAL CONTENT CARD CLASSES
 const contentCardClasses =
-  'backdrop-blur-lg rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-2xl space-y-4 md:space-y-6 bg-slate-900/40';
+  'backdrop-blur-lg rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-2xl space-y-4 md:space-y-6 bg-slate-900/30';
 
 export const Auth: React.FC<AuthProps> = ({
   onRegister,
@@ -139,7 +139,11 @@ export const Auth: React.FC<AuthProps> = ({
   const inputBg = theme === 'light' ? 'bg-white border-slate-300' : 'bg-slate-900/50 border-slate-700';
 
   return (
-    <SacredBackground theme={theme} backgroundType="default">
+    <SacredBackground
+      theme={theme}
+      backgroundType="AUTH"
+      fallbackBackgroundType="SECTION_ENTRY"
+    >
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 space-y-4 md:space-y-5 overflow-y-auto">
         <div className="mt-8 md:mt-12 mb-4 md:mb-6">
           <BreathingOrb size={80} breathingSpeed={4000} />
@@ -167,15 +171,19 @@ export const Auth: React.FC<AuthProps> = ({
 
           <div className="text-center space-y-2">
             <h2 className={`text-base md:text-lg font-bold ${textColor}`}>
-              {mode === 'login' ? 'Welcome Back' : 'Namaste Initiate'}
+              {mode === 'login' ? 'Welcome Back' : 'Greetings and Namaste!'}
             </h2>
 
             {mode === 'login' ? (
               <p className={`text-xs md:text-sm ${subTextColor}`}>Continue your transformation</p>
             ) : (
               <div className="space-y-1">
-                <p className={`text-sm md:text-sm font-medium ${textColor}`}>Create Your Account Now</p>
-                <p className={`text-xs ${subTextColor}`}>Your Practice Awaits</p>
+                <p className={`text-sm md:text-sm font-medium ${textColor}`}>Initiate Your Account Now</p>
+                <p className={`text-xs ${subTextColor}`}>
+                  So Let It Be Written.
+                  <br />
+                  So Let It Be Down.
+                </p>
               </div>
             )}
           </div>

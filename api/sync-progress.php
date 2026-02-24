@@ -5,10 +5,13 @@ $data = json_decode(file_get_contents("php://input"));
 $userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 
 if ($userId > 0 && $data) {
+    api_require_csrf();
     // Convert array to JSON string for storage if multiple, or just take the first string
     $focusArea = '';
     if (isset($data->focusAreas)) {
         $focusArea = is_array($data->focusAreas) ? implode(", ", $data->focusAreas) : (string)$data->focusAreas;
+    } elseif (isset($data->focusArea)) {
+        $focusArea = (string)$data->focusArea;
     }
 
     $streak = isset($data->streak) ? (int)$data->streak : 0;

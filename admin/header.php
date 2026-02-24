@@ -13,7 +13,10 @@
         <a class="btn btn-outline-secondary btn-sm me-2" href="soundscapes.php">Soundscapes</a>
         <a class="btn btn-outline-secondary btn-sm me-2" href="backgrounds.php">Backgrounds</a>
         <span class="fw-bold ms-3"><?=htmlspecialchars($_SESSION['admin_name'])?></span>
-        (<a href="logout.php">Logout</a>)
+        <form method="post" action="logout.php" style="display:inline">
+          <?php aa_csrf_field(); ?>
+          (<button type="submit" style="border:0;background:none;padding:0;text-decoration:underline;color:#0d6efd;cursor:pointer;">Logout</button>)
+        </form>
       </div>
     </div>
 </nav>

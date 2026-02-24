@@ -19,6 +19,14 @@ type RandomAffirmationResponse = { text?: string };
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy-api';
+const CSRF_EXEMPT_ENDPOINTS = new Set([
+  'login.php',
+  'register.php',
+  'request-password-reset.php',
+  'csrf-token.php',
+]);
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+let csrfTokenCache: string | null = null;
 
 const STORAGE_KEYS = {
   AUTH: 'abundance_auth',
@@ -28,6 +36,7 @@ const STORAGE_KEYS = {
 export const clearAuth = () => {
   localStorage.removeItem(STORAGE_KEYS.AUTH);
   localStorage.removeItem(STORAGE_KEYS.USER);
+  csrfTokenCache = null;
   window.dispatchEvent(new Event('auth:logout'));
 };
 
@@ -46,9 +55,33 @@ type ClientConfig = Omit<RequestInit, 'body' | 'method' | 'headers'> & {
   headers?: HeadersInit;
 };
 
+const getEndpointName = (endpoint: string): string =>
+  endpoint.split('?')[0].split('/').pop() || endpoint;
+
+const fetchCsrfToken = async (force = false): Promise<string> => {
+  if (!force && csrfTokenCache) return csrfTokenCache;
+
+  const response = await fetch(`${API_BASE_URL}/csrf-token.php`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await response.json().catch(() => ({}));
+  const token = typeof data?.token === 'string' ? data.token : '';
+  if (!response.ok || !token) {
+    throw new ApiError('Failed to initialize CSRF token', response.status || 500);
+  }
+
+  csrfTokenCache = token;
+  return token;
+};
+
 async function client<T>(endpoint: string, config: ClientConfig = {}): Promise<T> {
   const { body, method, headers: customHeaders, ...rest } = config;
-  const headers: HeadersInit = { ...(customHeaders || {}) };
+  const headers = new Headers(customHeaders || {});
+  const resolvedMethod = method ?? (body !== undefined ? 'POST' : 'GET');
+  const upperMethod = resolvedMethod.toUpperCase();
+  const endpointName = getEndpointName(endpoint);
+  const needsCsrf = MUTATING_METHODS.has(upperMethod) && !CSRF_EXEMPT_ENDPOINTS.has(endpointName);
 
   let finalBody: BodyInit | undefined = undefined;
   if (body !== undefined) {
@@ -56,22 +89,50 @@ async function client<T>(endpoint: string, config: ClientConfig = {}): Promise<T
       finalBody = body;
     } else {
       finalBody = JSON.stringify(body);
-      if (!('Content-Type' in (headers as any))) {
-        (headers as any)['Content-Type'] = 'application/json';
+      if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
       }
     }
+  }
+
+  if (needsCsrf && !headers.has('X-CSRF-Token')) {
+    const csrfToken = await fetchCsrfToken();
+    headers.set('X-CSRF-Token', csrfToken);
   }
 
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
   const url = `${API_BASE_URL}/${cleanEndpoint}`;
 
-  const response = await fetch(url, {
-    method: method ?? (body !== undefined ? 'POST' : 'GET'),
+  let response = await fetch(url, {
+    method: resolvedMethod,
     headers,
     body: finalBody,
     credentials: 'include',
     ...rest,
   });
+
+  // Session may rotate; refresh token and retry once on CSRF failure.
+  if (response.status === 403 && needsCsrf) {
+    const raw403 = await response.clone().text();
+    let parsed403: any = null;
+    try {
+      parsed403 = raw403 ? JSON.parse(raw403) : null;
+    } catch {
+      parsed403 = null;
+    }
+
+    if ((parsed403?.message || '') === 'Invalid CSRF token') {
+      const refreshed = await fetchCsrfToken(true);
+      headers.set('X-CSRF-Token', refreshed);
+      response = await fetch(url, {
+        method: resolvedMethod,
+        headers,
+        body: finalBody,
+        credentials: 'include',
+        ...rest,
+      });
+    }
+  }
 
   const raw = await response.text();
   let data: any = null;
@@ -134,18 +195,17 @@ export const api = {
     }));
   },
 
-  addUserAffirmation: (email: string, text: string, type: PracticeType) =>
-    client<AddAffirmationResponse>('add-user-affirmation.php', { body: { email, text, type } }),
+  addUserAffirmation: (_email: string, text: string, type: PracticeType) =>
+    client<AddAffirmationResponse>('add-user-affirmation.php', { body: { text, type } }),
 
   removeUserAffirmation: (id: string) =>
     client<DeleteAffirmationResponse>('delete-user-affirmation.php', { body: { id }, method: 'POST' }),
 
   // CHANGED: upload-audio.php -> user-upload-audio.php to match your user-facing script
-  uploadUserAudio: (file: File, category: string, email: string) => {
+  uploadUserAudio: (file: File, category: string, _email: string) => {
     const formData = new FormData();
     formData.append('audio_file', file);
     formData.append('category', category);
-    formData.append('email', email);
     return client<{ url: string }>('user-upload-audio.php', { body: formData });
   },
 

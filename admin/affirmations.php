@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/admin_init.php';
 require_once '../db.php';
 if (!isset($_SESSION['admin_id'])) {
     header("Location: login.php");
@@ -49,6 +49,8 @@ if ($type_filter === 'MORNING_IAM') {
 
 // Single and bulk add, checks for duplicates
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    aa_require_valid_csrf();
+
     // Single add
     if (isset($_POST['mode']) && $_POST['mode'] === 'single' && !empty($_POST['text']) && !empty($_POST['type']) && !empty($_POST['category'])) {
         $single_type = normalize_type((string)$_POST['type'], $valid_types);
@@ -320,6 +322,7 @@ $default_form_category = $category_filter !== '' ? $category_filter : 'General';
 
     <!-- Single add -->
     <form method="post" class="mb-3 row g-2">
+        <?php aa_csrf_field(); ?>
         <input type="hidden" name="mode" value="single">
         <div class="col">
             <input type="text" name="text" class="form-control" placeholder="Affirmation Text" required>
@@ -344,6 +347,7 @@ $default_form_category = $category_filter !== '' ? $category_filter : 'General';
 
     <!-- Bulk multiline paste -->
     <form method="post" class="mb-3 row g-2">
+        <?php aa_csrf_field(); ?>
         <input type="hidden" name="mode" value="bulk_text">
         <div class="col-6">
             <textarea name="bulk_affirmations" class="form-control" rows="5" placeholder="Paste multiple affirmations (one per line)"></textarea>
@@ -368,6 +372,7 @@ $default_form_category = $category_filter !== '' ? $category_filter : 'General';
 
     <!-- Bulk CSV/txt upload -->
     <form method="post" class="mb-3 row g-2" enctype="multipart/form-data">
+        <?php aa_csrf_field(); ?>
         <input type="hidden" name="mode" value="bulk_csv">
         <div class="col">
             <input type="file" name="csv_file" accept=".csv,.txt" class="form-control" required>
@@ -392,6 +397,7 @@ $default_form_category = $category_filter !== '' ? $category_filter : 'General';
 
     <!-- Bulk actions: activate/deactivate, export -->
     <form method="post">
+        <?php aa_csrf_field(); ?>
         <div class="mb-2">
             <input type="hidden" name="mode" value="">
             <select name="set_active" class="form-select d-inline w-auto">
@@ -424,6 +430,7 @@ $default_form_category = $category_filter !== '' ? $category_filter : 'General';
                     <td>
                         <button type="button" class="btn btn-sm btn-info" onclick="toggleEdit(<?=$a['id']?>)">Edit</button>
                         <form method="post" style="display:inline">
+                            <?php aa_csrf_field(); ?>
                             <input type="hidden" name="del_id" value="<?=$a['id']?>">
                             <button class="btn btn-sm btn-danger" onclick="return confirm('Delete affirmation?')">Delete</button>
                         </form>
@@ -431,6 +438,7 @@ $default_form_category = $category_filter !== '' ? $category_filter : 'General';
                 </tr>
                 <tr class="edit-row" id="edit<?=$a['id']?>" style="display:none;">
                     <form method="post">
+                        <?php aa_csrf_field(); ?>
                         <input type="hidden" name="mode" value="edit_row">
                         <input type="hidden" name="id" value="<?=$a['id']?>">
                         <td></td>

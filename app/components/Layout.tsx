@@ -32,6 +32,19 @@ function normalizeImageUrl(url: string): string | undefined {
 
 export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, children }) => {
   const { backgrounds } = useBackgrounds();
+  const isPreSplashMode = mode === AppMode.PRE_SPLASH;
+  const isSplashMode = mode === AppMode.SPLASH;
+  const forceBlackBackdrop = isPreSplashMode || isSplashMode;
+  const isEntryFlowMode =
+    mode === AppMode.PRE_SPLASH ||
+    mode === AppMode.SPLASH ||
+    mode === AppMode.WELCOME ||
+    mode === AppMode.NAMING_CEREMONY ||
+    mode === AppMode.AUTH ||
+    mode === AppMode.RETURN_PORTAL ||
+    mode === AppMode.ONBOARDING ||
+    mode === AppMode.TUTORIAL;
+  const useGlobalBackgroundLayer = isEntryFlowMode;
 
   const isBottomNavMode =
     mode === AppMode.DASHBOARD ||
@@ -40,7 +53,7 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
     mode === AppMode.STATS ||
     mode === AppMode.SETTINGS;
 
-  const slotCandidates: BackgroundSlot[] = useMemo(() => {
+  const screenSlotCandidates: BackgroundSlot[] = useMemo(() => {
     switch (mode) {
       case AppMode.PRE_SPLASH:
         return ['PRE_SPLASH', 'SPLASH'];
@@ -59,33 +72,67 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
       case AppMode.TUTORIAL:
         return ['TUTORIAL', 'WELCOME'];
       case AppMode.DASHBOARD:
-        return ['DASHBOARD', 'HOME'];
+        return ['DASHBOARD'];
       case AppMode.LIBRARY:
-        return ['LIBRARY', 'HOME'];
+        return ['LIBRARY'];
       case AppMode.SETTINGS:
-        return ['SETTINGS', 'HOME'];
+        return ['SETTINGS'];
       case AppMode.PROFILE:
         return ['PROFILE', 'PROGRESS'];
       case AppMode.STATS:
         return ['STATS', 'PROGRESS'];
       case AppMode.MEDITATION_SETUP:
-        return ['MEDITATION_SETUP', 'HOME'];
+        return ['MEDITATION_SETUP'];
       case AppMode.PRAYER_SETUP:
-        return ['PRAYER_SETUP', 'HOME'];
+        return ['PRAYER_SETUP'];
       case AppMode.PRAYER_GUIDE:
-        return ['PRAYER_GUIDE', 'PRAYER_SETUP', 'HOME'];
+        return ['PRAYER_GUIDE', 'PRAYER_SETUP'];
       case AppMode.PRAYER_SESSION:
-        return ['PRAYER_SESSION', 'PRAYER_GUIDE', 'HOME'];
+        return ['PRAYER_SESSION', 'PRAYER_GUIDE'];
       case AppMode.PRACTICE: {
-        if (practiceType === PracticeType.MEDITATION) return ['MEDITATION_PRACTICE', 'HOME'];
-        if (practiceType === PracticeType.MORNING_IAM) return ['IAM_PRACTICE', 'HOME'];
-        if (practiceType === PracticeType.EVENING_ILOVE) return ['ILOVE_PRACTICE', 'HOME'];
-        return ['HOME'];
+        if (practiceType === PracticeType.MEDITATION) return ['MEDITATION_PRACTICE'];
+        if (practiceType === PracticeType.MORNING_IAM) return ['IAM_PRACTICE'];
+        if (practiceType === PracticeType.EVENING_ILOVE) return ['ILOVE_PRACTICE'];
+        return [];
       }
       default:
-        return ['HOME'];
+        return [];
     }
   }, [mode, practiceType]);
+
+  const sectionSlot: BackgroundSlot = useMemo(() => {
+    switch (mode) {
+      case AppMode.PRE_SPLASH:
+      case AppMode.SPLASH:
+      case AppMode.WELCOME:
+      case AppMode.NAMING_CEREMONY:
+      case AppMode.AUTH:
+      case AppMode.RETURN_PORTAL:
+      case AppMode.ONBOARDING:
+      case AppMode.TUTORIAL:
+        return 'SECTION_ENTRY';
+      case AppMode.MEDITATION_SETUP:
+        return 'SECTION_MEDITATION';
+      case AppMode.PRAYER_SETUP:
+      case AppMode.PRAYER_GUIDE:
+      case AppMode.PRAYER_SESSION:
+        return 'SECTION_PRAYER';
+      case AppMode.PRACTICE:
+        if (practiceType === PracticeType.MEDITATION) return 'SECTION_MEDITATION';
+        if (practiceType === PracticeType.MORNING_IAM) return 'SECTION_AFFIRM_IAM';
+        if (practiceType === PracticeType.EVENING_ILOVE) return 'SECTION_AFFIRM_ILOVE';
+        return 'SECTION_CORE';
+      default:
+        return 'SECTION_CORE';
+    }
+  }, [mode, practiceType]);
+
+  const slotCandidates: BackgroundSlot[] = useMemo(() => {
+    const candidates = [...screenSlotCandidates, sectionSlot, 'HOME'];
+    return candidates.filter(
+      (slot, index) => candidates.indexOf(slot) === index
+    ) as BackgroundSlot[];
+  }, [screenSlotCandidates, sectionSlot]);
 
   const slot: BackgroundSlot | null = useMemo(() => {
     for (const candidate of slotCandidates) {
@@ -96,60 +143,112 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
   }, [backgrounds, slotCandidates]);
 
   const bgEntry = slot ? backgrounds?.[slot] : undefined;
-  const bgImageUrl = bgEntry?.imageUrl ? normalizeImageUrl(bgEntry.imageUrl) : '';
+  const bgImageUrl = forceBlackBackdrop
+    ? ''
+    : (bgEntry?.imageUrl ? normalizeImageUrl(bgEntry.imageUrl) : '');
 
-  const baseBg =
-    theme === 'light'
-      ? 'bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900'
-      : 'bg-gradient-to-br from-slate-900 via-slate-950 to-black text-slate-100';
+  const baseBg = forceBlackBackdrop
+    ? 'bg-black'
+    : (
+      theme === 'light'
+        ? 'bg-gradient-to-br from-slate-50 to-slate-100'
+        : 'bg-gradient-to-br from-slate-900 via-slate-950 to-black'
+    );
+  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
 
   return (
-    <div className={`min-h-screen w-full ${baseBg}`}>
-      {/* Background image layer */}
-      <div className="fixed inset-0 -z-10">
-        {bgImageUrl ? (
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `url("${bgImageUrl}")`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }}
-          />
-        ) : null}
+    <div className={`relative min-h-screen w-full ${textColor} ${useGlobalBackgroundLayer ? '' : baseBg}`}>
+      {/* Full-bleed background for entry flow screens */}
+      {useGlobalBackgroundLayer ? (
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          {!bgImageUrl ? <div className={`absolute inset-0 ${baseBg}`} /> : null}
+          {bgImageUrl ? (
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url("${bgImageUrl}")`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            />
+          ) : null}
 
-        {/* Readability overlay (keeps “glass” looking like glass) */}
-        <div
-          className={`absolute inset-0 ${
-            theme === 'light'
-              ? 'bg-white/60'
-              : 'bg-gradient-to-b from-black/55 via-black/45 to-black/65'
-          }`}
-        />
+          {!forceBlackBackdrop ? (
+            <>
+              {/* Readability overlay (keeps “glass” looking like glass) */}
+              <div
+                className={`absolute inset-0 ${
+                  theme === 'light'
+                    ? 'bg-white/60'
+                    : 'bg-gradient-to-b from-black/55 via-black/45 to-black/65'
+                }`}
+              />
 
-        {/* Subtle ethereal texture */}
-        <div
-          className={`absolute inset-0 ${
-            theme === 'light'
-              ? 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.08),transparent_55%)]'
-              : 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.10),transparent_55%)]'
-          }`}
-        />
-      </div>
+              {/* Subtle ethereal texture */}
+              <div
+                className={`absolute inset-0 ${
+                  theme === 'light'
+                    ? 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.08),transparent_55%)]'
+                    : 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.10),transparent_55%)]'
+                }`}
+              />
+            </>
+          ) : null}
+        </div>
+      ) : null}
 
       {/* App viewport */}
       <div
         className={[
-          'relative mx-auto min-h-screen w-full',
+          'relative z-10 mx-auto min-h-screen w-full',
           // Responsive container: tighter on mobile, roomier on desktop
           'max-w-[420px] md:max-w-[520px]',
           // Floating device feel on desktop
           'shadow-2xl shadow-black/40',
-          isBottomNavMode ? 'pb-24' : 'pb-0'
+          isBottomNavMode ? 'pb-24' : 'pb-0',
+          // Core app screens render their assigned background inside this stage.
+          useGlobalBackgroundLayer
+            ? ''
+            : 'overflow-hidden md:my-4 md:min-h-[calc(100vh-2rem)] md:rounded-[28px] md:border md:border-white/10'
         ].join(' ')}
       >
-        {children}
+        {/* Stage-only background for core screens (prevents duplicate full-page image) */}
+        {!useGlobalBackgroundLayer ? (
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            {!bgImageUrl ? <div className={`absolute inset-0 ${baseBg}`} /> : null}
+            {bgImageUrl ? (
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage: `url("${bgImageUrl}")`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              />
+            ) : null}
+
+            <div
+              className={`absolute inset-0 ${
+                theme === 'light'
+                  ? 'bg-white/60'
+                  : 'bg-gradient-to-b from-black/55 via-black/45 to-black/65'
+              }`}
+            />
+            <div
+              className={`absolute inset-0 ${
+                theme === 'light'
+                  ? 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.08),transparent_55%)]'
+                  : 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.10),transparent_55%)]'
+              }`}
+            />
+          </div>
+        ) : null}
+
+        <div className="relative z-10">
+          {children}
+        </div>
       </div>
     </div>
   );

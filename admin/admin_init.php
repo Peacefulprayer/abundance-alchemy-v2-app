@@ -1,22 +1,54 @@
 <?php
-// Admin initialization: secure session + CSRF helpers.
+// Admin initialization: isolated secure session + CSRF helpers.
 
-// Configure secure session cookie settings before starting session
-$secure       = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+$secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
 $cookieParams = session_get_cookie_params();
-
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path'     => $cookieParams['path'],
-    'domain'   => $cookieParams['domain'],
-    'secure'   => $secure,
-    'httponly' => true,
-    'samesite' => 'Strict',
-]);
+$adminSessionName = 'AA_ADMIN_SESSID';
+$adminSessionLifetime = 60 * 60 * 12; // 12 hours (sliding inactivity timeout)
+$adminCookiePath = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? '/'), '/');
+if ($adminCookiePath === '') {
+    $adminCookiePath = '/';
+}
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
+    // Keep admin session isolated from API/web app sessions.
+    session_name($adminSessionName);
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.gc_maxlifetime', (string)$adminSessionLifetime);
+
+    session_set_cookie_params([
+        'lifetime' => $adminSessionLifetime,
+        'path'     => $adminCookiePath,
+        'domain'   => $cookieParams['domain'],
+        'secure'   => $secure,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+
     session_start();
 }
+
+// Sliding inactivity timeout.
+$lastActivity = isset($_SESSION['admin_last_activity']) ? (int)$_SESSION['admin_last_activity'] : 0;
+if ($lastActivity > 0 && (time() - $lastActivity) > $adminSessionLifetime) {
+    $_SESSION = [];
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(
+            session_name(),
+            '',
+            time() - 42000,
+            $params['path'],
+            $params['domain'],
+            $params['secure'],
+            $params['httponly']
+        );
+    }
+    session_destroy();
+    session_start();
+}
+$_SESSION['admin_last_activity'] = time();
 
 // Ensure CSRF token exists for this session
 if (empty($_SESSION['csrf_token'])) {

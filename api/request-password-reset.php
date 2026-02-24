@@ -5,6 +5,12 @@
 include_once 'config.php';                       // $conn, CORS & JSON headers
 require_once __DIR__ . '/../password-reset-helpers.php'; // $pdo in that file, but helpers accept any PDO
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(["message" => "Method not allowed"]);
+    exit();
+}
+
 $raw  = file_get_contents("php://input");
 $data = json_decode($raw, true);
 
@@ -34,10 +40,7 @@ try {
     // Same message as before, but now actually sends an email if possible.
     echo json_encode(["message" => "Reset link sent"]);
 } catch (PDOException $e) {
+    error_log('[api/request-password-reset.php] Reset request failed: ' . $e->getMessage());
     http_response_code(500);
-    if (defined('DEBUG_MODE') && DEBUG_MODE) {
-        echo json_encode(["message" => "Error: " . $e->getMessage()]);
-    } else {
-        echo json_encode(["message" => "Error"]);
-    }
+    echo json_encode(["message" => "Error"]);
 }

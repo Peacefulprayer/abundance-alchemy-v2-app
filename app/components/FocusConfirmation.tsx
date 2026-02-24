@@ -3,6 +3,7 @@ import React from 'react';
 import { FocusChoice } from '../types';
 import { buttonSoundService } from '../services/buttonSoundService';
 import { Check } from 'lucide-react';
+import BreathingOrb from './BreathingOrb';
 
 interface FocusConfirmationProps {
   focus: FocusChoice;
@@ -25,14 +26,13 @@ export const FocusConfirmation: React.FC<FocusConfirmationProps> = ({
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6">
       <div className="max-w-md w-full space-y-8">
-        {/* Celebration Animation */}
+        {/* Sacred Orb */}
         <div className="flex justify-center">
           <div className="relative">
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 flex items-center justify-center animate-pulse">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400/40 to-cyan-400/40 flex items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-emerald-400 flex items-center justify-center">
-                  <Check className="w-8 h-8 text-white" />
-                </div>
+            <BreathingOrb size={100} breathingSpeed={4000} />
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/85 shadow-lg">
+                <Check className="h-5 w-5 text-white" />
               </div>
             </div>
             {/* Floating particles */}

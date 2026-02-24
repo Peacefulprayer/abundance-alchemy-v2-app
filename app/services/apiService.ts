@@ -1,6 +1,33 @@
 // Always point explicitly at the app's API directory
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy-api';
 const ENABLE_BACKEND = true;
+const CSRF_EXEMPT_ENDPOINTS = new Set([
+  'login.php',
+  'register.php',
+  'request-password-reset.php',
+  'csrf-token.php',
+]);
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+let csrfTokenCache: string | null = null;
+
+const endpointNameFromUrl = (resource: string): string =>
+  resource.split('?')[0].split('/').pop() || resource;
+
+const fetchCsrfToken = async (force = false): Promise<string> => {
+  if (!force && csrfTokenCache) return csrfTokenCache;
+
+  const response = await fetch(`${API_BASE}/csrf-token.php`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await response.json().catch(() => ({}));
+  const token = typeof data?.token === 'string' ? data.token : '';
+  if (!response.ok || !token) {
+    throw new Error('Failed to initialize CSRF token');
+  }
+  csrfTokenCache = token;
+  return token;
+};
 
 // Generic fetch helper with timeout + abort support
 const fetchWithTimeout = async (resource: string, options: RequestInit = {}) => {
@@ -8,12 +35,44 @@ const fetchWithTimeout = async (resource: string, options: RequestInit = {}) => 
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
+  const requestMethod = (options.method || 'GET').toUpperCase();
+  const endpointName = endpointNameFromUrl(resource);
+  const needsCsrf = MUTATING_METHODS.has(requestMethod) && !CSRF_EXEMPT_ENDPOINTS.has(endpointName);
+  const headers = new Headers(options.headers || {});
+
+  if (needsCsrf && !headers.has('X-CSRF-Token')) {
+    const token = await fetchCsrfToken();
+    headers.set('X-CSRF-Token', token);
+  }
+
   try {
-  const response = await fetch(resource, {
-    credentials: 'include',
-    ...options,
-    signal: controller.signal,
-  });
+    let response = await fetch(resource, {
+      credentials: 'include',
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+
+    if (response.status === 403 && needsCsrf) {
+      const raw403 = await response.clone().text();
+      let parsed403: any = null;
+      try {
+        parsed403 = raw403 ? JSON.parse(raw403) : null;
+      } catch {
+        parsed403 = null;
+      }
+      if ((parsed403?.message || '') === 'Invalid CSRF token') {
+        const refreshed = await fetchCsrfToken(true);
+        headers.set('X-CSRF-Token', refreshed);
+        response = await fetch(resource, {
+          credentials: 'include',
+          ...options,
+          headers,
+          signal: controller.signal,
+        });
+      }
+    }
+
     clearTimeout(id);
     return response;
   } catch (error) {
@@ -25,6 +84,12 @@ const fetchWithTimeout = async (resource: string, options: RequestInit = {}) => 
 // ---------- Dynamic backgrounds ----------
 
 export type BackgroundSlot =
+  | 'SECTION_ENTRY'
+  | 'SECTION_CORE'
+  | 'SECTION_AFFIRM_IAM'
+  | 'SECTION_AFFIRM_ILOVE'
+  | 'SECTION_MEDITATION'
+  | 'SECTION_PRAYER'
   | 'PRE_SPLASH'
   | 'SPLASH'
   | 'SPLASH_WELCOME'
@@ -249,7 +314,7 @@ export const apiService = {
   },
 
   // User-created affirmations
-  async getUserAffirmations(email: string): Promise<any[]> {
+  async getUserAffirmations(_email: string): Promise<any[]> {
     if (!ENABLE_BACKEND) return [];
     try {
       const response = await fetchWithTimeout(`${API_BASE}/get-user-affirmations.php`);
@@ -268,13 +333,13 @@ export const apiService = {
     }
   },
 
-  async addUserAffirmation(email: string, text: string, type: any): Promise<string | null> {
+  async addUserAffirmation(_email: string, text: string, type: any): Promise<string | null> {
     if (!ENABLE_BACKEND) return Date.now().toString();
     try {
       const response = await fetchWithTimeout(`${API_BASE}/add-user-affirmation.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, text, type }),
+        body: JSON.stringify({ text, type }),
       });
       const data = await response.json();
       return data.success ? data.id.toString() : null;
@@ -360,19 +425,17 @@ export const apiService = {
     }
   },
 
-  // Upload a custom audio file for the user - UPDATED TO NEW ENDPOINT
-  async uploadUserAudio(file: File, category?: string, email?: string): Promise<{ success: boolean; filename?: string; audio_url?: string }> {
-    if (!ENABLE_BACKEND || !email) return { success: false };
+  // Upload a custom audio file for the authenticated user.
+  async uploadUserAudio(file: File, category?: string): Promise<{ success: boolean; filename?: string; audio_url?: string }> {
+    if (!ENABLE_BACKEND) return { success: false };
     
     try {
       const formData = new FormData();
       formData.append('audioFile', file);
-      formData.append('email', email);
       if (category) formData.append('category', category);
       formData.append('purpose', 'meditation'); // Default purpose
       
-      // Use the NEW endpoint
-      const response = await fetch(`${API_BASE}/user-upload-audio.php`, {
+      const response = await fetchWithTimeout(`${API_BASE}/user-upload-audio.php`, {
         method: 'POST',
         body: formData,
       });

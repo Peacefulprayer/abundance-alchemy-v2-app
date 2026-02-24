@@ -1,6 +1,6 @@
 <?php
 // /admin/users.php
-session_start();
+require_once __DIR__ . '/admin_init.php';
 require_once '../db.php'; // provides $pdo (PDO)
 
 // --- Auth gate (same as other admin pages)
@@ -58,6 +58,8 @@ $hasSSCreatedAt = hasCol($soundCols, 'created_at');
 $flash = ['success'=>null,'error'=>null];
 
 if ($_SERVER['REQUEST_METHOD']==='POST') {
+    aa_require_valid_csrf();
+
     // Bulk Welcome toggle (if column exists)
     if ($hasWelcome && isset($_POST['bulk_action']) && $_POST['bulk_action']==='welcome' && !empty($_POST['selected'])) {
         $value = isset($_POST['value']) && $_POST['value']=='1' ? 1 : 0;
@@ -457,6 +459,7 @@ if (!$detailUser) {
             <div class="card-body">
               <div class="mini-label mb-2">Send Email</div>
               <form method="post" class="row g-2">
+                <?php aa_csrf_field(); ?>
                 <input type="hidden" name="send_email_to" value="<?= h($detailUser['email'] ?? '') ?>">
                 <div class="col-12 col-md-12">
                   <input type="text" name="email_subject" class="form-control form-control-sm" placeholder="Subject">
@@ -481,6 +484,7 @@ if (!$detailUser) {
             <div class="card-body">
               <div class="mini-label mb-2 text-danger">Danger Zone</div>
               <form method="post" onsubmit="return confirm('Permanently delete this user<?= !empty($detailUser['email']) ? ' (' . h($detailUser['email']) . ')' : '' ?>? This cannot be undone.');">
+                <?php aa_csrf_field(); ?>
                 <input type="hidden" name="delete_user_id" value="<?= (int)$detailUser['id'] ?>">
                 <?php if (!empty($detailUser['email'])): ?>
                   <div class="form-check mb-2">
@@ -641,6 +645,7 @@ if (!$detailUser) {
     </form>
 
     <form method="post" class="card card-compact shadow-sm">
+      <?php aa_csrf_field(); ?>
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <div class="mini-label">Results</div>
@@ -699,6 +704,7 @@ if (!$detailUser) {
                   <td class="d-flex gap-1">
                     <a class="btn btn-sm btn-outline-primary" href="users.php?user=<?= (int)$r['id'] ?>">View</a>
                     <form method="post" onsubmit="return confirm('Permanently delete user #<?= (int)$r['id'] ?>? This cannot be undone.');">
+                      <?php aa_csrf_field(); ?>
                       <input type="hidden" name="delete_user_id" value="<?= (int)$r['id'] ?>">
                       <button class="btn btn-sm btn-outline-danger">Delete</button>
                     </form>

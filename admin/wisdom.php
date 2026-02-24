@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/admin_init.php';
 require_once '../db.php';
 if (!isset($_SESSION['admin_id'])) {
     header("Location: login.php");
@@ -9,6 +9,8 @@ if (!isset($_SESSION['admin_id'])) {
 $msg = '';
 // Single add
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    aa_require_valid_csrf();
+
     if ($_POST['mode'] === 'single' && !empty($_POST['text']) && !empty($_POST['category'])) {
         $stmt = $pdo->prepare("INSERT INTO wisdom (text, category, mood_tag) VALUES (?, ?, ?)");
         $stmt->execute([trim($_POST['text']), $_POST['category'], $_POST['mood_tag'] ?? '']);
@@ -136,6 +138,7 @@ $wis = $pdo->query("SELECT * FROM wisdom ORDER BY category, mood_tag, created_at
 
     <!-- Single add -->
     <form method="post" class="mb-3 row g-2">
+        <?php aa_csrf_field(); ?>
         <input type="hidden" name="mode" value="single">
         <div class="col">
             <input type="text" name="text" class="form-control" placeholder="Wisdom/Quote/Text" required>
@@ -153,6 +156,7 @@ $wis = $pdo->query("SELECT * FROM wisdom ORDER BY category, mood_tag, created_at
 
     <!-- Bulk multiline paste -->
     <form method="post" class="mb-3 row g-2">
+        <?php aa_csrf_field(); ?>
         <input type="hidden" name="mode" value="bulk_text">
         <div class="col-6">
             <textarea name="bulk_wisdom" class="form-control" rows="5" placeholder="Paste multiple wisdoms (one per line)"></textarea>
@@ -170,6 +174,7 @@ $wis = $pdo->query("SELECT * FROM wisdom ORDER BY category, mood_tag, created_at
 
     <!-- Bulk CSV/txt upload -->
     <form method="post" class="mb-3 row g-2" enctype="multipart/form-data">
+        <?php aa_csrf_field(); ?>
         <input type="hidden" name="mode" value="bulk_csv">
         <div class="col">
             <input type="file" name="csv_file" accept=".csv,.txt" class="form-control" required>
@@ -187,6 +192,7 @@ $wis = $pdo->query("SELECT * FROM wisdom ORDER BY category, mood_tag, created_at
 
     <!-- Bulk actions: activate/deactivate, export -->
     <form method="post">
+    <?php aa_csrf_field(); ?>
     <div class="mb-2">
         <input type="hidden" name="mode" value="">
         <select name="set_active" class="form-select d-inline w-auto">
@@ -215,6 +221,7 @@ $wis = $pdo->query("SELECT * FROM wisdom ORDER BY category, mood_tag, created_at
                 <td>
                     <button type="button" class="btn btn-sm btn-info" onclick="toggleEdit(<?=$w['id']?>)">Edit</button>
                     <form method="post" style="display:inline">
+                        <?php aa_csrf_field(); ?>
                         <input type="hidden" name="del_id" value="<?=$w['id']?>">
                         <button class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">Delete</button>
                     </form>
@@ -222,6 +229,7 @@ $wis = $pdo->query("SELECT * FROM wisdom ORDER BY category, mood_tag, created_at
             </tr>
             <tr class="edit-row" id="edit<?=$w['id']?>" style="display:none;">
                 <form method="post">
+                <?php aa_csrf_field(); ?>
                 <input type="hidden" name="mode" value="edit_row">
                 <input type="hidden" name="id" value="<?=$w['id']?>">
                 <td></td>

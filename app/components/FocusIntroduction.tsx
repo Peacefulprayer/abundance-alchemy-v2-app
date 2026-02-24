@@ -1,6 +1,7 @@
 // components/FocusIntroduction.tsx
 import React from 'react';
 import { buttonSoundService } from '../services/buttonSoundService';
+import BreathingOrb from './BreathingOrb';
 
 interface FocusIntroductionProps {
   userName: string;
@@ -21,11 +22,9 @@ export const FocusIntroduction: React.FC<FocusIntroductionProps> = ({
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6">
       <div className="max-w-md w-full space-y-8">
-        {/* Sacred Illustration/Orb Placeholder */}
+        {/* Sacred Orb */}
         <div className="flex justify-center mb-4">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400/40 to-orange-400/40 animate-pulse" />
-          </div>
+          <BreathingOrb size={80} breathingSpeed={4000} />
         </div>
 
         {/* Sacred Message */}

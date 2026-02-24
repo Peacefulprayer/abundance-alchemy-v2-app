@@ -1,6 +1,6 @@
 <?php
 // /admin/soundscapes.php
-session_start();
+require_once __DIR__ . '/admin_init.php';
 require_once '../db.php';
 
 // Use the same admin check as other admin pages
@@ -9,9 +9,35 @@ if (!isset($_SESSION['admin_id'])) {
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    aa_require_valid_csrf();
+}
+
 $success = $success ?? null;
 $error   = $error ?? null;
 $editTrack = null;
+
+// Handle row actions (state changes) via CSRF-protected POST only.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['id'])) {
+    $action = trim((string)$_POST['action']);
+    $id = (int)$_POST['id'];
+
+    if ($id > 0) {
+        if ($action === 'toggle_active') {
+            $stmt = $pdo->prepare("UPDATE soundscapes SET is_active = NOT is_active WHERE id = ?");
+            $stmt->execute([$id]);
+        } elseif ($action === 'toggle_public') {
+            $stmt = $pdo->prepare("UPDATE soundscapes SET is_public = NOT is_public WHERE id = ?");
+            $stmt->execute([$id]);
+        } elseif ($action === 'delete') {
+            $stmt = $pdo->prepare("DELETE FROM soundscapes WHERE id = ?");
+            $stmt->execute([$id]);
+        }
+    }
+
+    header("Location: soundscapes.php");
+    exit();
+}
 
 // Handle Upload NEW track
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['audio_file']) && empty($_POST['edit_id'])) {
@@ -149,33 +175,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_id']) && empty($
     }
 }
 
-// Handle Delete
-if (isset($_GET['delete'])) {
-    $id = (int) $_GET['delete'];
-    $stmt = $pdo->prepare("DELETE FROM soundscapes WHERE id = ?");
-    $stmt->execute([$id]);
-    header("Location: soundscapes.php");
-    exit();
-}
-
-// Toggle Active/Inactive
-if (isset($_GET['toggle'])) {
-    $id = (int) $_GET['toggle'];
-    $stmt = $pdo->prepare("UPDATE soundscapes SET is_active = NOT is_active WHERE id = ?");
-    $stmt->execute([$id]);
-    header("Location: soundscapes.php");
-    exit();
-}
-
-// Toggle Public/Private
-if (isset($_GET['toggle_public'])) {
-    $id = (int) $_GET['toggle_public'];
-    $stmt = $pdo->prepare("UPDATE soundscapes SET is_public = NOT is_public WHERE id = ?");
-    $stmt->execute([$id]);
-    header("Location: soundscapes.php");
-    exit();
-}
-
 // Load track for editing (if any)
 if (isset($_GET['edit'])) {
     $editId = (int) $_GET['edit'];
@@ -241,6 +240,7 @@ $tracks = $pdo->query("
             <?php if(isset($error)) echo "<div class='alert alert-danger'>".htmlspecialchars($error)."</div>"; ?>
             
             <form method="POST" enctype="multipart/form-data">
+                <?php aa_csrf_field(); ?>
                 <?php if(isset($editTrack)): ?>
                     <input type="hidden" name="edit_id" value="<?= (int)$editTrack['id'] ?>">
                 <?php endif; ?>
@@ -539,18 +539,33 @@ $tracks = $pdo->query("
                                     <a href="?edit=<?= (int)$t['id'] ?>" class="btn btn-outline-primary">
                                         Edit
                                     </a>
-                                    <a href="?toggle=<?= (int)$t['id'] ?>" class="btn btn-outline-<?= $t['is_active'] ? 'warning' : 'success' ?>"
-                                       onclick="return confirm('Toggle active status?')">
-                                        <?= $t['is_active'] ? 'Deactivate' : 'Activate' ?>
-                                    </a>
-                                    <a href="?toggle_public=<?= (int)$t['id'] ?>" class="btn btn-outline-<?= $t['is_public'] ? 'warning' : 'info' ?>"
-                                       onclick="return confirm('Toggle public visibility?')">
-                                        <?= $t['is_public'] ? 'Make Private' : 'Make Public' ?>
-                                    </a>
-                                    <a href="?delete=<?= (int)$t['id'] ?>" class="btn btn-outline-danger"
-                                       onclick="return confirm('Delete this track permanently?')">
-                                        Delete
-                                    </a>
+                                    <form method="post" class="d-inline">
+                                        <?php aa_csrf_field(); ?>
+                                        <input type="hidden" name="action" value="toggle_active">
+                                        <input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
+                                        <button type="submit" class="btn btn-outline-<?= $t['is_active'] ? 'warning' : 'success' ?>"
+                                           onclick="return confirm('Toggle active status?')">
+                                            <?= $t['is_active'] ? 'Deactivate' : 'Activate' ?>
+                                        </button>
+                                    </form>
+                                    <form method="post" class="d-inline">
+                                        <?php aa_csrf_field(); ?>
+                                        <input type="hidden" name="action" value="toggle_public">
+                                        <input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
+                                        <button type="submit" class="btn btn-outline-<?= $t['is_public'] ? 'warning' : 'info' ?>"
+                                           onclick="return confirm('Toggle public visibility?')">
+                                            <?= $t['is_public'] ? 'Make Private' : 'Make Public' ?>
+                                        </button>
+                                    </form>
+                                    <form method="post" class="d-inline">
+                                        <?php aa_csrf_field(); ?>
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
+                                        <button type="submit" class="btn btn-outline-danger"
+                                           onclick="return confirm('Delete this track permanently?')">
+                                            Delete
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

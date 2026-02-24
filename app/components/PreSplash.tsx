@@ -38,11 +38,7 @@ export const PreSplash = ({ onContinue, theme }: PreSplashProps) => {
 
   return (
     <div
-      className={`min-h-screen flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto ${
-        theme === 'dark'
-          ? 'bg-gradient-to-b from-slate-950 to-black'
-          : 'bg-gradient-to-b from-amber-50 to-white'
-      }`}
+      className="min-h-screen flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto bg-black"
     >
       {/* UNIVERSAL ORB - 80PX SIZE */}
       <div className="mt-8 md:mt-12 mb-4 md:mb-6">
@@ -97,10 +93,14 @@ export const PreSplash = ({ onContinue, theme }: PreSplashProps) => {
         </div>
       </div>
 
+      <p className="text-[10px] md:text-[11px] text-white italic tracking-[0.02em] text-center mb-2">
+        Rūaḥ ʾĔlōhīm stirs over ṯōhū wāḇōhū: movement begins.
+      </p>
+
       {/* UNIVERSAL BUTTON */}
       <button
         onClick={handleContinue}
-        className="mt-4 md:mt-6 px-4 py-1.5 md:px-5 md:py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-xs md:text-sm tracking-wider hover:opacity-90 transition-opacity shadow-lg"
+        className="mt-2 md:mt-4 px-4 py-1.5 md:px-5 md:py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-xs md:text-sm tracking-wider hover:opacity-90 transition-opacity shadow-lg"
       >
         Enter When Ready
       </button>

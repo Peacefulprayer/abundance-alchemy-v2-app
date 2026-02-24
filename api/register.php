@@ -28,6 +28,12 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit();
 }
 
+if (strlen($password) < 8) {
+    http_response_code(400);
+    echo json_encode(["message" => "Password must be at least 8 characters"]);
+    exit();
+}
+
 try {
     // Check if email already exists
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = ?");
@@ -116,7 +122,7 @@ try {
     ]);
 
 } catch (PDOException $e) {
+    error_log('[api/register.php] Registration failed: ' . $e->getMessage());
     http_response_code(500);
-    // You can hide the error in production if you want
-    echo json_encode(["message" => "Database error: " . $e->getMessage()]);
+    echo json_encode(["message" => "Database error"]);
 }

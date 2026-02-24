@@ -17,11 +17,12 @@ export const audioManager = {
   
   previewSoundscape: (soundscape: any) => {
     console.log('Previewing:', soundscape);
-    const url = typeof soundscape === 'string' ? soundscape : soundscape?.url;
-    if (url) {
-      const preview = new Audio(url);
-      preview.volume = 0.5;
-      preview.play().catch(() => {});
+    if (typeof soundscape === 'string') {
+      startAmbience(soundscape, 50);
+      return;
+    }
+    if (soundscape?.url) {
+      startAmbience(soundscape, 50);
     }
   },
   

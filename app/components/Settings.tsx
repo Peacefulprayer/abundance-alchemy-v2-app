@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { AppSettings, Soundscape } from '../types';
-import { ArrowLeft, Sun, Moon, Volume2, Bell, Music, RefreshCw, LogOut, Palette, Clock, Upload } from 'lucide-react';
+import { AppSettings, ReminderPractice, Soundscape } from '../types';
+import { ArrowLeft, Sun, Moon, Volume2, Music, RefreshCw, LogOut, Palette, Clock, Upload } from 'lucide-react';
 import { buttonSoundService } from '../services/buttonSoundService';
 
 interface SettingsProps {
   settings: AppSettings;
   onChangeSettings: (settings: AppSettings) => void;
+  onRequestReminderPermission?: () => void;
   onPreviewSoundscape?: (id: string) => void;
   onChangeFocus: () => void;
   onBack: () => void;
@@ -20,6 +21,7 @@ interface SettingsProps {
 export const Settings: React.FC<SettingsProps> = ({
   settings,
   onChangeSettings,
+  onRequestReminderPermission,
   onPreviewSoundscape,
   onChangeFocus,
   onBack,
@@ -37,6 +39,12 @@ export const Settings: React.FC<SettingsProps> = ({
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-400';
   const cardBg = theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/70 border-slate-700';
   const inputBg = theme === 'light' ? 'bg-slate-50 border-slate-300' : 'bg-slate-800 border-slate-600';
+  const reminderRows: Array<{ id: ReminderPractice; label: string }> = [
+    { id: 'MORNING_IAM', label: 'I Am' },
+    { id: 'EVENING_ILOVE', label: 'I Love' },
+    { id: 'MEDITATION', label: 'Meditation' },
+    { id: 'PRAYER', label: 'Omba (Prayer)' },
+  ];
 
   // Helper to safely check category
   const normalize = (cat: string | undefined) => (cat || '').toUpperCase();
@@ -100,19 +108,46 @@ export const Settings: React.FC<SettingsProps> = ({
     });
   };
 
-  const updateReminderMode = (mode: 'INTERVAL' | 'SPECIFIC_TIMES') => {
+  const updatePracticeReminder = (
+    practice: ReminderPractice,
+    patch: Partial<{ enabled: boolean; time: string }>
+  ) => {
     buttonSoundService.play('click');
+    const current = settings.reminders.practiceTimes[practice];
     onChangeSettings({ 
       ...settings, 
-      reminders: { ...settings.reminders, mode } 
+      reminders: {
+        ...settings.reminders,
+        practiceTimes: {
+          ...settings.reminders.practiceTimes,
+          [practice]: {
+            ...current,
+            ...patch,
+          },
+        },
+      },
     });
   };
 
-  const updateInterval = (minutes: number) => {
+  const updateSnoozeMinutes = (minutes: 15 | 30 | 60) => {
     buttonSoundService.play('click');
     onChangeSettings({ 
       ...settings, 
-      reminders: { ...settings.reminders, intervalMinutes: minutes } 
+      reminders: { ...settings.reminders, snoozeMinutes: minutes } 
+    });
+  };
+
+  const applyDeviceTimezone = () => {
+    buttonSoundService.play('click');
+    let timezone = settings.reminders.timezone;
+    try {
+      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || timezone;
+    } catch {
+      // keep current timezone
+    }
+    onChangeSettings({
+      ...settings,
+      reminders: { ...settings.reminders, timezone },
     });
   };
 
@@ -334,12 +369,12 @@ export const Settings: React.FC<SettingsProps> = ({
           </div>
         </div>
 
-        {/* Daily Reminders */}
+        {/* Practice Reminders */}
         <div className={`rounded-2xl p-4 border shadow-lg ${cardBg}`}>
           <div className="flex items-center justify_between mb-4">
             <h3 className="text-sm font-bold flex items-center space-x-2">
               <Clock size={16} className="text-amber-500" />
-              <span>Daily Reminder</span>
+              <span>Practice Reminders</span>
             </h3>
             <button
               onClick={toggleReminders}
@@ -351,63 +386,93 @@ export const Settings: React.FC<SettingsProps> = ({
 
           {settings.reminders.enabled && (
             <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-              <div className="flex p-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700">
-                <button
-                  onClick={() => updateReminderMode('INTERVAL')}
-                  className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                    settings.reminders.mode === 'INTERVAL'
-                      ? 'bg-white text-amber-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  Interval
-                </button>
-                <button
-                  onClick={() => updateReminderMode('SPECIFIC_TIMES')}
-                  className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                    settings.reminders.mode === 'SPECIFIC_TIMES'
-                      ? 'bg-white text-amber-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  Specific Time
-                </button>
+              <div className="rounded-xl border border-slate-600/40 p-3">
+                <p className={`text-[11px] font-semibold uppercase tracking-wide ${subTextColor}`}>
+                  Timezone
+                </p>
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <p className="text-xs text-amber-400 break-all">{settings.reminders.timezone}</p>
+                  <button
+                    onClick={applyDeviceTimezone}
+                    className="rounded-md border border-slate-500 px-2.5 py-1 text-[11px] text-slate-200 hover:bg-slate-800"
+                  >
+                    Use Device
+                  </button>
+                </div>
               </div>
 
-              {settings.reminders.mode === 'INTERVAL' ? (
+              <div className="space-y-2">
+                <p className={`text-xs ${subTextColor}`}>Set time of day for each practice:</p>
                 <div className="space-y-2">
-                  <p className={`text-xs ${subTextColor}`}>Remind me to practice every:</p>
-                  <div className="flex space-x-2">
-                    {[30, 60, 120].map((min) => (
-                      <button
-                        key={min}
-                        onClick={() => updateInterval(min)}
-                        className={`flex-1 py-2 px-3 rounded-lg border text-xs font-bold transition-all ${
-                          settings.reminders.intervalMinutes === min
-                            ? 'bg-amber-500 text-white border-amber-600'
-                            : `${theme === 'light' ? 'bg-slate-50 border-slate-300' : 'bg-slate-800 border-slate-600'} ${subTextColor}`
-                        }`}
-                      >
-                        {min}m
-                      </button>
-                    ))}
-                  </div>
+                  {reminderRows.map((row) => {
+                    const rowSetting = settings.reminders.practiceTimes[row.id];
+                    return (
+                      <div key={row.id} className="flex items-center gap-2 rounded-lg border border-slate-600/40 p-2">
+                        <button
+                          onClick={() => updatePracticeReminder(row.id, { enabled: !rowSetting.enabled })}
+                          className={`h-5 w-9 rounded-full transition-colors ${rowSetting.enabled ? 'bg-amber-500' : 'bg-slate-600'} relative shrink-0`}
+                        >
+                          <div className={`absolute top-0.5 ${rowSetting.enabled ? 'right-0.5' : 'left-0.5'} h-4 w-4 rounded-full bg-white transition-all`} />
+                        </button>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold">{row.label}</p>
+                        </div>
+                        <input
+                          type="time"
+                          value={rowSetting.time}
+                          onChange={(e) => updatePracticeReminder(row.id, { time: e.target.value })}
+                          disabled={!rowSetting.enabled}
+                          className={`rounded-md border px-2 py-1 text-xs ${rowSetting.enabled ? inputBg : 'bg-slate-800/60 border-slate-700 text-slate-500'}`}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  <p className={`text-xs ${subTextColor}`}>Set a specific time (e.g. 08:00):</p>
-                  <input
-                    type="time"
-                    className={`w-full px-3 py-2 rounded-lg border text-sm ${
-                      theme === 'light' 
-                        ? 'bg-slate-50 border-slate-300' 
-                        : 'bg-slate-800 border-slate-600'
-                    }`}
-                    defaultValue={settings.reminders.specificTimes[0]}
-                  />
-                  <p className="text-[10px] text-slate-500 italic">Push notifications require browser permission.</p>
+              </div>
+
+              <div className="space-y-2">
+                <p className={`text-xs ${subTextColor}`}>Default snooze:</p>
+                <div className="flex gap-2">
+                  {[15, 30, 60].map((minutes) => (
+                    <button
+                      key={minutes}
+                      onClick={() => updateSnoozeMinutes(minutes as 15 | 30 | 60)}
+                      className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition-all ${
+                        settings.reminders.snoozeMinutes === minutes
+                          ? 'border-amber-600 bg-amber-500 text-white'
+                          : `${theme === 'light' ? 'bg-slate-50 border-slate-300' : 'bg-slate-800 border-slate-600'} ${subTextColor}`
+                      }`}
+                    >
+                      {minutes}m
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
+
+              <div className="rounded-xl border border-slate-600/40 p-3">
+                <p className={`text-[11px] font-semibold uppercase tracking-wide ${subTextColor}`}>Notification permission</p>
+                <p className="mt-1 text-xs text-slate-300">
+                  {settings.reminders.notificationPermission === 'granted' && 'Allowed'}
+                  {settings.reminders.notificationPermission === 'default' && 'Not requested yet'}
+                  {settings.reminders.notificationPermission === 'denied' && 'Blocked in browser/device settings'}
+                  {settings.reminders.notificationPermission === 'unsupported' && 'Not supported on this device/browser'}
+                </p>
+                {settings.reminders.notificationPermission !== 'granted' &&
+                  settings.reminders.notificationPermission !== 'unsupported' && (
+                    <button
+                      onClick={() => {
+                        buttonSoundService.play('click');
+                        onRequestReminderPermission?.();
+                      }}
+                      className="mt-2 rounded-md border border-amber-500/50 px-2.5 py-1 text-[11px] text-amber-300 hover:bg-amber-500/10"
+                    >
+                      Request Permission
+                    </button>
+                  )}
+                <p className="mt-2 text-[10px] text-slate-500 italic">
+                  Reminders are timezone-aware and use your local schedule for each practice.
+                </p>
+              </div>
             </div>
           )}
         </div>

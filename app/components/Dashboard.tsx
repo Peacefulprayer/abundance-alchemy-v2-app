@@ -14,7 +14,6 @@ import {
   Trophy,
   ExternalLink,
   Book,
-  Settings as SettingsIcon,
   Clock,
   Music,
   LogOut,
@@ -171,9 +170,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       ? 'bg-slate-100 hover:bg-amber-100 border-slate-200'
       : 'bg-slate-800/60 hover:bg-slate-700/60 border-white/5';
   
-  const glassBg =
-    theme === 'light' ? 'bg-white/60' : 'bg-slate-900/60';
-
   const getAvatarMood = () => {
     if (mode === PracticeType.MORNING_IAM) return 'active';
     return 'calm';
@@ -184,13 +180,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     : activeSoundscape.label;
 
   return (
-    <div
-      className={`h-full w-full overflow-y-auto pb-24 ${
-        theme === 'light'
-          ? 'bg-gradient-to-br from-slate-50 to-amber-50/30'
-          : 'bg-gradient-to-br from-slate-900 via-slate-900 to-black'
-      }`}
-    >
+    <div className="h-full w-full overflow-y-auto pb-24">
       {/* Header Section */}
       <div className="relative pt-4 px-4 pb-2">
         <div className="flex justify-between items-start">
@@ -219,16 +209,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <User size={20} />
               </button>
             ) : null}
-            <button
-              onClick={onOpenSettings}
-              className={`p-2 rounded-full transition-colors ${
-                theme === 'light'
-                  ? 'bg-white/50 hover:bg-white text-slate-600'
-                  : 'bg-slate-800/50 hover:bg-slate-800 text-slate-400'
-              }`}
-            >
-              <SettingsIcon size={20} />
-            </button>
           </div>
         </div>
 
@@ -243,11 +223,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
             <SparklesIcon size={40} className="text-amber-500" />
           </div>
-          <div className="flex items-start space-x-4 relative z-10">
-            <div className="flex-shrink-0 mt-1">
-              <AlchemistAvatar size="sm" mood={getAvatarMood()} speaking={false} />
+          <div className="relative z-10 flex flex-col items-center justify-start text-center gap-3 pt-1">
+            <div className="flex-shrink-0">
+              <AlchemistAvatar size="sm" mood={getAvatarMood()} speaking={false} className="mx-auto" />
             </div>
-            <div>
+            <div className="w-full">
               <p
                 className={`text-sm italic leading-relaxed font-medium ${
                   theme === 'light' ? 'text-slate-700' : 'text-slate-200'
