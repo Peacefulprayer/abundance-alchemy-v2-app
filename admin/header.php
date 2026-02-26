@@ -12,6 +12,7 @@
         <a class="btn btn-outline-secondary btn-sm" href="push.php">Push Notif.</a>
         <a class="btn btn-outline-secondary btn-sm me-2" href="soundscapes.php">Soundscapes</a>
         <a class="btn btn-outline-secondary btn-sm me-2" href="backgrounds.php">Backgrounds</a>
+        <a class="btn btn-outline-secondary btn-sm me-2" href="credits.php">Credits</a>
         <span class="fw-bold ms-3"><?=htmlspecialchars($_SESSION['admin_name'])?></span>
         <form method="post" action="logout.php" style="display:inline">
           <?php aa_csrf_field(); ?>

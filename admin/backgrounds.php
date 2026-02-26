@@ -86,6 +86,7 @@ $msg = '';
 $slotType = '';
 $enumValues = [];
 $missingSlotValues = [];
+$hasCreatorNameColumn = false;
 
 try {
     $colStmt = $pdo->query("SHOW COLUMNS FROM backgrounds LIKE 'slot'");
@@ -103,6 +104,9 @@ try {
             }
         }
     }
+
+    $creatorColStmt = $pdo->query("SHOW COLUMNS FROM backgrounds LIKE 'creator_name'");
+    $hasCreatorNameColumn = $creatorColStmt ? (bool)$creatorColStmt->fetch(PDO::FETCH_ASSOC) : false;
 } catch (Throwable $e) {
     // Non-fatal: admin page should still render.
 }
@@ -113,6 +117,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $slot = $_POST['slot'] ?? '';
+    $creatorName = trim((string)($_POST['creator_name'] ?? ''));
+    if (strlen($creatorName) > 255) {
+        $creatorName = substr($creatorName, 0, 255);
+    }
+
     if (!isset($slots[$slot])) {
         $msg = 'Invalid slot selected.';
     } elseif (!empty($missingSlotValues) && in_array($slot, $missingSlotValues, true)) {
@@ -145,15 +154,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if (move_uploaded_file($file['tmp_name'], $targetFs)) {
                     // Insert or update this slot
-                    $stmt = $pdo->prepare("
-                        INSERT INTO backgrounds (slot, image_url, is_active)
-                        VALUES (:slot, :image_url, 1)
-                        ON DUPLICATE KEY UPDATE image_url = VALUES(image_url), is_active = 1
-                    ");
-                    $stmt->execute([
-                        ':slot'      => $slot,
-                        ':image_url' => $targetUrl,
-                    ]);
+                    if ($hasCreatorNameColumn) {
+                        $stmt = $pdo->prepare("
+                            INSERT INTO backgrounds (slot, image_url, creator_name, is_active)
+                            VALUES (:slot, :image_url, :creator_name, 1)
+                            ON DUPLICATE KEY UPDATE
+                                image_url = VALUES(image_url),
+                                creator_name = VALUES(creator_name),
+                                is_active = 1
+                        ");
+                        $stmt->execute([
+                            ':slot'         => $slot,
+                            ':image_url'    => $targetUrl,
+                            ':creator_name' => $creatorName,
+                        ]);
+                    } else {
+                        $stmt = $pdo->prepare("
+                            INSERT INTO backgrounds (slot, image_url, is_active)
+                            VALUES (:slot, :image_url, 1)
+                            ON DUPLICATE KEY UPDATE image_url = VALUES(image_url), is_active = 1
+                        ");
+                        $stmt->execute([
+                            ':slot'      => $slot,
+                            ':image_url' => $targetUrl,
+                        ]);
+                    }
 
                     $msg = 'Background updated for ' . $slots[$slot] . '.';
                 } else {
@@ -167,11 +192,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch current backgrounds
-$stmt = $pdo->query("SELECT slot, image_url FROM backgrounds WHERE is_active = 1");
+$stmt = $pdo->query(
+    $hasCreatorNameColumn
+        ? "SELECT slot, image_url, creator_name FROM backgrounds WHERE is_active = 1"
+        : "SELECT slot, image_url FROM backgrounds WHERE is_active = 1"
+);
 $current = [];
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-    $current[$row['slot']] = $row['image_url'];
+    $current[$row['slot']] = [
+        'image_url' => (string)($row['image_url'] ?? ''),
+        'creator_name' => $hasCreatorNameColumn ? (string)($row['creator_name'] ?? '') : '',
+    ];
 }
+
+$getSlotImage = static function(array $items, string $slot): string {
+    return (string)($items[$slot]['image_url'] ?? '');
+};
+$getSlotCreator = static function(array $items, string $slot): string {
+    return (string)($items[$slot]['creator_name'] ?? '');
+};
 ?>
 <!DOCTYPE html>
 <html>
@@ -198,7 +237,7 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
 <div class="container mt-4">
     <h1 class="h4 mb-3">Backgrounds</h1>
     <p class="text-muted mb-4">
-        Background order is: <strong>screen override</strong> → <strong>section default</strong> → <strong>global fallback (HOME)</strong>.
+        Resolve order is: <strong>Screen Image</strong> → <strong>Section Image</strong> → <strong>App Fallback Image (HOME)</strong>. Color/overlay layers are handled in the app theme.
     </p>
 
     <?php if ($msg): ?>
@@ -215,11 +254,23 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
             <pre class="mb-0"><code>ALTER TABLE backgrounds MODIFY slot VARCHAR(64) NOT NULL;</code></pre>
         </div>
     <?php endif; ?>
+    <?php if (!$hasCreatorNameColumn): ?>
+        <div class="alert alert-warning">
+            <strong>Image Credit Schema Update Needed:</strong>
+            <div class="small mt-1">Add a creator column so image credits can be saved per slot.</div>
+            <div class="small mt-2">Recommended SQL:</div>
+            <pre class="mb-0"><code>ALTER TABLE backgrounds ADD COLUMN creator_name VARCHAR(255) NULL AFTER image_url;</code></pre>
+        </div>
+    <?php endif; ?>
 
     <h2 class="h5 mt-4 mb-3">1) Section Defaults</h2>
     <p class="text-muted small mb-3">Use these to set one background for an entire app section.</p>
     <div class="row">
         <?php foreach ($sectionSlots as $key => $label): ?>
+            <?php
+                $imageUrl = $getSlotImage($current, $key);
+                $creatorName = $getSlotCreator($current, $key);
+            ?>
             <div class="col-md-6 col-lg-4 mb-4">
                 <div class="card">
                     <div class="card-body">
@@ -229,12 +280,15 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
                         </p>
                         <p class="small text-muted">Used when screen-specific background is not assigned.</p>
 
-                        <?php if (!empty($current[$key])): ?>
+                        <?php if ($imageUrl !== ''): ?>
                             <div class="mb-3">
-                                <img src="<?= htmlspecialchars($current[$key]) ?>"
+                                <img src="<?= htmlspecialchars($imageUrl) ?>"
                                      alt="<?= htmlspecialchars($label) ?> background"
                                      class="bg-thumb">
                             </div>
+                            <?php if ($creatorName !== ''): ?>
+                                <p class="small text-muted mb-3">Creator: <?= htmlspecialchars($creatorName) ?></p>
+                            <?php endif; ?>
                         <?php else: ?>
                             <p class="text-muted">No background set yet.</p>
                         <?php endif; ?>
@@ -245,6 +299,20 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
                             <div class="mb-3">
                                 <label class="form-label">Upload new image</label>
                                 <input type="file" name="image" class="form-control" accept="image/*" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Image creator (optional)</label>
+                                <input
+                                    type="text"
+                                    name="creator_name"
+                                    class="form-control"
+                                    maxlength="255"
+                                    value="<?= htmlspecialchars($creatorName) ?>"
+                                    <?= $hasCreatorNameColumn ? '' : 'disabled' ?>
+                                >
+                                <?php if (!$hasCreatorNameColumn): ?>
+                                    <div class="form-text text-warning">Enable <code>creator_name</code> column to save credits.</div>
+                                <?php endif; ?>
                             </div>
                             <button class="btn btn-primary btn-sm">Save Background</button>
                         </form>
@@ -258,6 +326,10 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
     <p class="text-muted small mb-3">Used only when neither screen nor section background is assigned.</p>
     <div class="row">
         <?php foreach ($globalSlots as $key => $label): ?>
+            <?php
+                $imageUrl = $getSlotImage($current, $key);
+                $creatorName = $getSlotCreator($current, $key);
+            ?>
             <div class="col-md-6 col-lg-4 mb-4">
                 <div class="card">
                     <div class="card-body">
@@ -266,12 +338,15 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
                             Slot key: <code><?= htmlspecialchars($key) ?></code>
                         </p>
 
-                        <?php if (!empty($current[$key])): ?>
+                        <?php if ($imageUrl !== ''): ?>
                             <div class="mb-3">
-                                <img src="<?= htmlspecialchars($current[$key]) ?>"
+                                <img src="<?= htmlspecialchars($imageUrl) ?>"
                                      alt="<?= htmlspecialchars($label) ?> background"
                                      class="bg-thumb">
                             </div>
+                            <?php if ($creatorName !== ''): ?>
+                                <p class="small text-muted mb-3">Creator: <?= htmlspecialchars($creatorName) ?></p>
+                            <?php endif; ?>
                         <?php else: ?>
                             <p class="text-muted">No background set yet.</p>
                         <?php endif; ?>
@@ -282,6 +357,20 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
                             <div class="mb-3">
                                 <label class="form-label">Upload new image</label>
                                 <input type="file" name="image" class="form-control" accept="image/*" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Image creator (optional)</label>
+                                <input
+                                    type="text"
+                                    name="creator_name"
+                                    class="form-control"
+                                    maxlength="255"
+                                    value="<?= htmlspecialchars($creatorName) ?>"
+                                    <?= $hasCreatorNameColumn ? '' : 'disabled' ?>
+                                >
+                                <?php if (!$hasCreatorNameColumn): ?>
+                                    <div class="form-text text-warning">Enable <code>creator_name</code> column to save credits.</div>
+                                <?php endif; ?>
                             </div>
                             <button class="btn btn-primary btn-sm">Save Background</button>
                         </form>
@@ -300,6 +389,8 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
             <?php
                 $inherits = $screenFallbackSection[$key] ?? 'HOME';
                 $inheritsLabel = $slots[$inherits] ?? $inherits;
+                $imageUrl = $getSlotImage($current, $key);
+                $creatorName = $getSlotCreator($current, $key);
             ?>
             <div class="col-md-6 mb-4">
                 <div class="card">
@@ -312,12 +403,15 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
                             Inherits: <strong><?= htmlspecialchars($inheritsLabel) ?></strong> when empty.
                         </p>
 
-                        <?php if (!empty($current[$key])): ?>
+                        <?php if ($imageUrl !== ''): ?>
                             <div class="mb-3">
-                                <img src="<?= htmlspecialchars($current[$key]) ?>"
+                                <img src="<?= htmlspecialchars($imageUrl) ?>"
                                      alt="<?= htmlspecialchars($label) ?> background"
                                      class="bg-thumb">
                             </div>
+                            <?php if ($creatorName !== ''): ?>
+                                <p class="small text-muted mb-3">Creator: <?= htmlspecialchars($creatorName) ?></p>
+                            <?php endif; ?>
                         <?php else: ?>
                             <p class="text-muted">No override set yet.</p>
                         <?php endif; ?>
@@ -328,6 +422,20 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
                             <div class="mb-3">
                                 <label class="form-label">Upload new image</label>
                                 <input type="file" name="image" class="form-control" accept="image/*" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Image creator (optional)</label>
+                                <input
+                                    type="text"
+                                    name="creator_name"
+                                    class="form-control"
+                                    maxlength="255"
+                                    value="<?= htmlspecialchars($creatorName) ?>"
+                                    <?= $hasCreatorNameColumn ? '' : 'disabled' ?>
+                                >
+                                <?php if (!$hasCreatorNameColumn): ?>
+                                    <div class="form-text text-warning">Enable <code>creator_name</code> column to save credits.</div>
+                                <?php endif; ?>
                             </div>
                             <button class="btn btn-primary btn-sm">Save Background</button>
                         </form>

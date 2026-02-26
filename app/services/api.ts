@@ -1,6 +1,6 @@
 import { Affirmation, Soundscape, PracticeType } from '../types';
 
-export type BackgroundMap = Record<string, { imageUrl: string }>;
+export type BackgroundMap = Record<string, { imageUrl: string; creatorName?: string }>;
 
 export type MeUser = {
   id: number;

@@ -118,6 +118,7 @@ export type BackgroundSlot =
 
 export interface BackgroundEntry {
   imageUrl: string;
+  creatorName?: string;
 }
 
 export type BackgroundConfig = Partial<Record<BackgroundSlot, BackgroundEntry>>;
