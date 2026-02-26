@@ -1,13 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { HandHeart, ChevronRight } from 'lucide-react';
 import { buttonSoundService } from '../services/buttonSoundService';
 import { PRAYER_PATHS } from './prayerContent';
 import type { PrayerPathId } from './prayerContent';
-import type { Soundscape } from '../types';
+import type { PrayerProfile, Soundscape } from '../types';
 
 interface PrayerSetupProps {
   onBack: () => void;
-  onContinue: (pathId: PrayerPathId) => void;
+  onContinue: (pathId: PrayerPathId, profile: PrayerProfile) => void;
+  initialProfile: PrayerProfile;
   availableSoundscapes: Soundscape[];
   selectedSoundscapeId: string;
   prayerVolume: number;
@@ -19,6 +20,7 @@ interface PrayerSetupProps {
 export const PrayerSetup: React.FC<PrayerSetupProps> = ({
   onBack,
   onContinue,
+  initialProfile,
   availableSoundscapes,
   selectedSoundscapeId,
   prayerVolume,
@@ -34,7 +36,12 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
       return '';
     }
   });
+  const [profile, setProfile] = useState<PrayerProfile>(initialProfile);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setProfile(initialProfile);
+  }, [initialProfile]);
 
   const selectedPath = useMemo(
     () => PRAYER_PATHS.find((item) => item.id === selectedPathId) || null,
@@ -51,18 +58,47 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
 
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
-  const cardBg = theme === 'light' ? 'bg-white/85 border-slate-200' : 'bg-slate-900/70 border-slate-700';
+  const cardBg =
+    theme === 'light'
+      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200'
+      : 'bg-gradient-to-br from-slate-900/75 to-slate-950/75 border-slate-700';
+
+  const intentOptions: Array<{ value: PrayerProfile['intent']; label: string }> = [
+    { value: 'guidance', label: 'Guidance' },
+    { value: 'gratitude', label: 'Gratitude' },
+    { value: 'healing', label: 'Healing' },
+    { value: 'protection', label: 'Protection' },
+    { value: 'provision', label: 'Provision' },
+    { value: 'forgiveness', label: 'Forgiveness' },
+  ];
+  const toneOptions: Array<{ value: PrayerProfile['tone']; label: string }> = [
+    { value: 'gentle', label: 'Gentle' },
+    { value: 'contemplative', label: 'Contemplative' },
+    { value: 'joyful', label: 'Joyful' },
+    { value: 'bold', label: 'Bold' },
+  ];
+  const languageOptions: Array<{ value: PrayerProfile['language']; label: string }> = [
+    { value: 'english', label: 'English' },
+    { value: 'swahili', label: 'Swahili' },
+    { value: 'bilingual', label: 'Bilingual (EN + SW)' },
+  ];
+  const styleOptions: Array<{ value: PrayerProfile['style']; label: string }> = [
+    { value: 'short', label: 'Short' },
+    { value: 'standard', label: 'Standard' },
+    { value: 'extended', label: 'Extended' },
+  ];
 
   const handleSavePath = () => {
     if (!selectedPathId) return;
     try {
       localStorage.setItem('abundance_prayer_path', selectedPathId);
+      localStorage.setItem('abundance_prayer_profile', JSON.stringify(profile));
     } catch {
       // ignore storage errors
     }
     setSaved(true);
     setTimeout(() => setSaved(false), 1800);
-    onContinue(selectedPathId);
+    onContinue(selectedPathId, profile);
   };
 
   return (
@@ -87,7 +123,7 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
           <h2 className="text-lg font-bold">Prayer Setup</h2>
         </div>
         <p className={`text-sm ${subTextColor}`}>
-          Select your prayer path first. In the next phase, this will control prayer instructions and guided prayer text.
+          Select your prayer path and profile. Your preferences will be saved and reused for your next prayer session.
         </p>
       </div>
 
@@ -123,11 +159,91 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
       </div>
 
       <div className={`rounded-2xl border p-4 mb-4 ${cardBg}`}>
-        <div className="text-xs uppercase tracking-wide opacity-80 mb-2">Phase 2 Preview</div>
-        <div className={`text-sm ${subTextColor} space-y-1`}>
-          <p>1. Pre-prayer cultural or religious selection</p>
-          <p>2. Tailored prayer instructions screen</p>
-          <p>3. Guided prayer session screen</p>
+        <div className="text-xs uppercase tracking-wide opacity-80 mb-3">Prayer Profile</div>
+        <div className="grid grid-cols-1 gap-3">
+          <div>
+            <label className={`text-xs block mb-1 ${subTextColor}`}>Intent</label>
+            <select
+              value={profile.intent}
+              onChange={(e) =>
+                setProfile((prev) => ({ ...prev, intent: e.target.value as PrayerProfile['intent'] }))
+              }
+              className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                theme === 'light'
+                  ? 'border-slate-300 bg-white text-slate-900'
+                  : 'border-slate-700 bg-slate-900 text-slate-100'
+              }`}
+            >
+              {intentOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={`text-xs block mb-1 ${subTextColor}`}>Tone</label>
+            <select
+              value={profile.tone}
+              onChange={(e) =>
+                setProfile((prev) => ({ ...prev, tone: e.target.value as PrayerProfile['tone'] }))
+              }
+              className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                theme === 'light'
+                  ? 'border-slate-300 bg-white text-slate-900'
+                  : 'border-slate-700 bg-slate-900 text-slate-100'
+              }`}
+            >
+              {toneOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={`text-xs block mb-1 ${subTextColor}`}>Language</label>
+            <select
+              value={profile.language}
+              onChange={(e) =>
+                setProfile((prev) => ({ ...prev, language: e.target.value as PrayerProfile['language'] }))
+              }
+              className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                theme === 'light'
+                  ? 'border-slate-300 bg-white text-slate-900'
+                  : 'border-slate-700 bg-slate-900 text-slate-100'
+              }`}
+            >
+              {languageOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={`text-xs block mb-1 ${subTextColor}`}>Style</label>
+            <select
+              value={profile.style}
+              onChange={(e) =>
+                setProfile((prev) => ({ ...prev, style: e.target.value as PrayerProfile['style'] }))
+              }
+              className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                theme === 'light'
+                  ? 'border-slate-300 bg-white text-slate-900'
+                  : 'border-slate-700 bg-slate-900 text-slate-100'
+              }`}
+            >
+              {styleOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -186,8 +302,8 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
 
       <div className={`text-center text-xs mt-3 ${saved ? 'text-emerald-400' : subTextColor}`}>
         {saved
-          ? `Saved: ${selectedPath?.label || 'Prayer Path'}`
-          : 'Your choice will be used in the next prayer flow screens.'}
+          ? `Saved: ${selectedPath?.label || 'Prayer Path'} | ${profile.intent} | ${profile.tone}`
+          : 'Your path and profile will be used in the prayer guide and session.'}
       </div>
     </div>
   );

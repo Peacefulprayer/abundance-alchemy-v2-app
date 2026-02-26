@@ -62,6 +62,27 @@ export type ReminderMode = 'INTERVAL' | 'SPECIFIC_TIMES';
 
 export type ReminderPractice = 'MORNING_IAM' | 'EVENING_ILOVE' | 'MEDITATION' | 'PRAYER';
 
+export type PrayerIntent =
+  | 'gratitude'
+  | 'guidance'
+  | 'healing'
+  | 'protection'
+  | 'provision'
+  | 'forgiveness';
+
+export type PrayerTone = 'gentle' | 'bold' | 'contemplative' | 'joyful';
+
+export type PrayerLanguage = 'english' | 'swahili' | 'bilingual';
+
+export type PrayerStyle = 'short' | 'standard' | 'extended';
+
+export interface PrayerProfile {
+  intent: PrayerIntent;
+  tone: PrayerTone;
+  language: PrayerLanguage;
+  style: PrayerStyle;
+}
+
 export interface ReminderPracticeSchedule {
   enabled: boolean;
   time: string; // HH:MM (24h)

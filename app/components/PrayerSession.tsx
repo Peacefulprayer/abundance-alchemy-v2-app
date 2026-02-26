@@ -3,9 +3,11 @@ import { RotateCcw, CheckCircle2 } from 'lucide-react';
 import { buttonSoundService } from '../services/buttonSoundService';
 import { getPrayerPathById, PRAYER_TEXTS } from './prayerContent';
 import type { PrayerPathId } from './prayerContent';
+import type { PrayerProfile } from '../types';
 
 interface PrayerSessionProps {
   prayerPathId: PrayerPathId | null;
+  prayerProfile: PrayerProfile;
   onBack: () => void;
   onComplete: () => void;
   onChangePath: () => void;
@@ -14,6 +16,7 @@ interface PrayerSessionProps {
 
 export const PrayerSession: React.FC<PrayerSessionProps> = ({
   prayerPathId,
+  prayerProfile,
   onBack,
   onComplete,
   onChangePath,
@@ -22,7 +25,15 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
   const [index, setIndex] = useState(0);
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
-  const cardBg = theme === 'light' ? 'bg-white/90 border-slate-200' : 'bg-slate-900/75 border-slate-700';
+  const cardBg =
+    theme === 'light'
+      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200'
+      : 'bg-gradient-to-br from-slate-900/75 to-slate-950/75 border-slate-700';
+  const formatToken = (value: string) =>
+    value
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
 
   const path = useMemo(() => (prayerPathId ? getPrayerPathById(prayerPathId) : null), [prayerPathId]);
   const prayers = prayerPathId ? PRAYER_TEXTS[prayerPathId] || [] : [];
@@ -77,6 +88,21 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
       </div>
 
       <div className={`rounded-2xl border p-4 mb-4 ${cardBg}`}>
+        <div className="text-xs uppercase tracking-wide opacity-80 mb-3">Prayer Profile</div>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs">
+            Intent: <span className="font-semibold">{formatToken(prayerProfile.intent)}</span>
+          </div>
+          <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs">
+            Tone: <span className="font-semibold">{formatToken(prayerProfile.tone)}</span>
+          </div>
+          <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs">
+            Language: <span className="font-semibold">{formatToken(prayerProfile.language)}</span>
+          </div>
+          <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs">
+            Style: <span className="font-semibold">{formatToken(prayerProfile.style)}</span>
+          </div>
+        </div>
         <p className={`text-sm ${subTextColor}`}>
           Phase 2 ships with curated prayer text for each path. In a later phase we can add optional AI-assisted personalization with guardrails.
         </p>

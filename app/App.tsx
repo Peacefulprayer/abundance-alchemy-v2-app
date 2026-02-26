@@ -14,6 +14,7 @@ import {
   GratitudeLog,
   CycleType,
   ReminderPractice,
+  PrayerProfile,
 } from './types';
 import UniversalLayout from './components/UniversalLayout';
 import { SplashScreen } from './components/SplashScreen/SplashScreen';
@@ -33,6 +34,7 @@ import { PrayerSetup } from './components/PrayerSetup';
 import { PrayerGuide } from './components/PrayerGuide';
 import { PrayerSession } from './components/PrayerSession';
 import { Stats } from './components/Stats';
+import { Profile } from './components/Profile';
 import { Layout } from './components/Layout';
 import { BottomNav } from './components/BottomNav';
 import { playAmbience, stopAmbience } from './services/audioService';
@@ -44,6 +46,7 @@ import { api } from './services/api';
 
 const REMINDER_LAST_FIRED_KEY = 'abundance_reminder_last_fired';
 const REMINDER_SNOOZE_KEY = 'abundance_reminder_snooze';
+const PRAYER_PROFILE_STORAGE_KEY = 'abundance_prayer_profile';
 
 const REMINDER_ORDER: ReminderPractice[] = [
   'MORNING_IAM',
@@ -287,10 +290,59 @@ const loadStoredSettings = (): AppSettings => {
   }
 };
 
+const DEFAULT_PRAYER_PROFILE: PrayerProfile = {
+  intent: 'guidance',
+  tone: 'gentle',
+  language: 'english',
+  style: 'standard',
+};
+
+const normalizePrayerProfile = (raw: any): PrayerProfile => {
+  const next = { ...DEFAULT_PRAYER_PROFILE };
+  if (!raw || typeof raw !== 'object') return next;
+
+  if (
+    raw.intent === 'gratitude' ||
+    raw.intent === 'guidance' ||
+    raw.intent === 'healing' ||
+    raw.intent === 'protection' ||
+    raw.intent === 'provision' ||
+    raw.intent === 'forgiveness'
+  ) {
+    next.intent = raw.intent;
+  }
+  if (
+    raw.tone === 'gentle' ||
+    raw.tone === 'bold' ||
+    raw.tone === 'contemplative' ||
+    raw.tone === 'joyful'
+  ) {
+    next.tone = raw.tone;
+  }
+  if (raw.language === 'english' || raw.language === 'swahili' || raw.language === 'bilingual') {
+    next.language = raw.language;
+  }
+  if (raw.style === 'short' || raw.style === 'standard' || raw.style === 'extended') {
+    next.style = raw.style;
+  }
+
+  return next;
+};
+
+const loadStoredPrayerProfile = (): PrayerProfile => {
+  try {
+    const raw = localStorage.getItem(PRAYER_PROFILE_STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_PRAYER_PROFILE };
+    return normalizePrayerProfile(JSON.parse(raw));
+  } catch {
+    return { ...DEFAULT_PRAYER_PROFILE };
+  }
+};
+
 function App() {
   // START WITH PRE_SPLASH (not SPLASH)
   const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.PRE_SPLASH);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => loadStoredSettings().theme);
 
 
   // Dashboard expects UserProfile
@@ -306,6 +358,7 @@ function App() {
 
   // ✅ Phase 1: Additional state for missing screens
   const [settings, setSettings] = useState<AppSettings>(() => loadStoredSettings());
+  const [sessionAmbienceUnlocked, setSessionAmbienceUnlocked] = useState(false);
   const [practiceConfig, setPracticeConfig] = useState<PracticeSessionConfig | null>(null);
   const [soundscapes, setSoundscapes] = useState<Soundscape[]>([]);
   const [userAudioFile, setUserAudioFile] = useState<File | null>(null);
@@ -337,6 +390,7 @@ function App() {
       return null;
     }
   });
+  const [prayerProfile, setPrayerProfile] = useState<PrayerProfile>(() => loadStoredPrayerProfile());
 
 
   const API_BASE =
@@ -738,6 +792,13 @@ function App() {
   const handleSettingsChange = (newSettings: AppSettings) => {
     const normalized = normalizeSettings(newSettings);
     const becameEnabled = !settings.reminders.enabled && normalized.reminders.enabled;
+    const baseAmbienceChanged = normalized.soundscapeId !== settings.soundscapeId;
+
+    if (baseAmbienceChanged) {
+      // Keep default ambience stable until user explicitly changes it in this session.
+      setSessionAmbienceUnlocked(true);
+    }
+
     setSettings(normalized);
     localStorage.setItem('abundance_settings', JSON.stringify(normalized));
 
@@ -826,6 +887,8 @@ function App() {
     localStorage.clear();
     setUser(null);
     setActiveReminder(null);
+    setSessionAmbienceUnlocked(false);
+    setPrayerProfile({ ...DEFAULT_PRAYER_PROFILE });
     setAuthChecked(true);
     setPracticeConfig(null);
     setCurrentMode(AppMode.PRE_SPLASH);
@@ -886,8 +949,14 @@ function App() {
     setCurrentMode(AppMode.MEDITATION_SETUP);
   };
 
-  const handlePrayerPathContinue = (pathId: PrayerPathId) => {
+  const handlePrayerPathContinue = (pathId: PrayerPathId, profile: PrayerProfile) => {
     setPrayerPathId(pathId);
+    setPrayerProfile(profile);
+    try {
+      localStorage.setItem(PRAYER_PROFILE_STORAGE_KEY, JSON.stringify(profile));
+    } catch {
+      // ignore storage errors
+    }
     setCurrentMode(AppMode.PRAYER_GUIDE);
   };
 
@@ -941,6 +1010,7 @@ function App() {
     localStorage.removeItem(REMINDER_SNOOZE_KEY);
     setUser(null);
     setActiveReminder(null);
+    setSessionAmbienceUnlocked(false);
     setAuthChecked(true);
     setCurrentMode(AppMode.AUTH);
   };
@@ -973,6 +1043,9 @@ function App() {
         soundscapes.find((s) => s.id === settings.meditationSoundscapeId) ||
         defaultSoundscape
       );
+    }
+    if (!sessionAmbienceUnlocked) {
+      return defaultSoundscape;
     }
     return soundscapes.find(s => s.id === settings.soundscapeId) || defaultSoundscape;
   };
@@ -1023,6 +1096,7 @@ function App() {
     settings.ambienceVolume,
     settings.meditationSoundscapeId,
     settings.soundscapeId,
+    sessionAmbienceUnlocked,
     soundscapes,
   ]);
 
@@ -1208,17 +1282,11 @@ function App() {
         return (
           <UniversalLayout showBottomMenu={true}>
             {user ? (
-              <div className="min-h-screen">
-                <Stats user={user} />
-                <div className="mt-4 flex justify-center">
-                  <button
-                    onClick={() => setCurrentMode(AppMode.DASHBOARD)}
-                    className="px-4 py-2 rounded-lg bg-amber-500 text-black hover:opacity-90"
-                  >
-                    Back to Dashboard
-                  </button>
-                </div>
-              </div>
+              <Stats
+                user={user}
+                theme={theme}
+                onBack={() => setCurrentMode(AppMode.DASHBOARD)}
+              />
             ) : (
               <div className="min-h-screen flex items-center justify-center">
                 <button
@@ -1236,18 +1304,22 @@ function App() {
       case AppMode.PROFILE:
         return (
           <UniversalLayout showBottomMenu={true}>
-            <div className="min-h-screen flex flex-col items-center justify-center text-center">
-              <h2 className="text-xl font-bold mb-2">Profile</h2>
-              <p className="text-sm text-slate-300 mb-4">
-                Profile details will live here.
-              </p>
-              <button
-                onClick={() => setCurrentMode(AppMode.DASHBOARD)}
-                className="px-4 py-2 rounded-lg bg-amber-500 text-black hover:opacity-90"
-              >
-                Back to Dashboard
-              </button>
-            </div>
+            {user ? (
+              <Profile
+                user={user}
+                theme={theme}
+                onBack={() => setCurrentMode(AppMode.DASHBOARD)}
+              />
+            ) : (
+              <div className="min-h-screen flex items-center justify-center">
+                <button
+                  onClick={() => setCurrentMode(AppMode.AUTH)}
+                  className="px-4 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90"
+                >
+                  Continue to Sign In
+                </button>
+              </div>
+            )}
             <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
         );
@@ -1272,6 +1344,7 @@ function App() {
             <PrayerSetup
               onBack={() => setCurrentMode(AppMode.DASHBOARD)}
               onContinue={handlePrayerPathContinue}
+              initialProfile={prayerProfile}
               availableSoundscapes={soundscapes}
               selectedSoundscapeId={prayerSoundscapeId}
               prayerVolume={prayerVolume}
@@ -1287,6 +1360,7 @@ function App() {
           <UniversalLayout showBottomMenu={false}>
             <PrayerGuide
               prayerPathId={prayerPathId}
+              prayerProfile={prayerProfile}
               onBack={() => setCurrentMode(AppMode.PRAYER_SETUP)}
               onStartPrayer={handlePrayerStart}
               onChangePath={() => setCurrentMode(AppMode.PRAYER_SETUP)}
@@ -1300,6 +1374,7 @@ function App() {
           <UniversalLayout showBottomMenu={false}>
             <PrayerSession
               prayerPathId={prayerPathId}
+              prayerProfile={prayerProfile}
               onBack={() => setCurrentMode(AppMode.PRAYER_GUIDE)}
               onComplete={handlePrayerComplete}
               onChangePath={() => setCurrentMode(AppMode.PRAYER_SETUP)}

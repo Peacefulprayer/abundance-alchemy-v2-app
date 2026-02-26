@@ -3,9 +3,11 @@ import { HandHeart, ArrowRight } from 'lucide-react';
 import { buttonSoundService } from '../services/buttonSoundService';
 import { getPrayerPathById, PRAYER_GUIDE_STEPS } from './prayerContent';
 import type { PrayerPathId } from './prayerContent';
+import type { PrayerProfile } from '../types';
 
 interface PrayerGuideProps {
   prayerPathId: PrayerPathId | null;
+  prayerProfile: PrayerProfile;
   onBack: () => void;
   onStartPrayer: () => void;
   onChangePath: () => void;
@@ -14,6 +16,7 @@ interface PrayerGuideProps {
 
 export const PrayerGuide: React.FC<PrayerGuideProps> = ({
   prayerPathId,
+  prayerProfile,
   onBack,
   onStartPrayer,
   onChangePath,
@@ -21,7 +24,15 @@ export const PrayerGuide: React.FC<PrayerGuideProps> = ({
 }) => {
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
-  const cardBg = theme === 'light' ? 'bg-white/85 border-slate-200' : 'bg-slate-900/70 border-slate-700';
+  const cardBg =
+    theme === 'light'
+      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200'
+      : 'bg-gradient-to-br from-slate-900/75 to-slate-950/75 border-slate-700';
+  const formatToken = (value: string) =>
+    value
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
 
   if (!prayerPathId) {
     return (
@@ -66,6 +77,21 @@ export const PrayerGuide: React.FC<PrayerGuideProps> = ({
       </div>
 
       <div className={`rounded-2xl border p-4 mb-4 ${cardBg}`}>
+        <div className="text-xs uppercase tracking-wide opacity-80 mb-3">Prayer Profile</div>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs">
+            Intent: <span className="font-semibold">{formatToken(prayerProfile.intent)}</span>
+          </div>
+          <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs">
+            Tone: <span className="font-semibold">{formatToken(prayerProfile.tone)}</span>
+          </div>
+          <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs">
+            Language: <span className="font-semibold">{formatToken(prayerProfile.language)}</span>
+          </div>
+          <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs">
+            Style: <span className="font-semibold">{formatToken(prayerProfile.style)}</span>
+          </div>
+        </div>
         <div className="text-xs uppercase tracking-wide opacity-80 mb-3">How To Pray In This Flow</div>
         <div className="space-y-2">
           {steps.map((step, index) => (
