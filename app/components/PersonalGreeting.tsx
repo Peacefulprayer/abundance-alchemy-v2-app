@@ -95,8 +95,7 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
   const bodyCard =
     'backdrop-blur-md rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-xl bg-slate-900/40';
 
-  const subText = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
-  const mainText = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
+  const returnText = 'text-white';
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto">
@@ -112,36 +111,33 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
 
       <div className={`${bodyCard} mb-6 md:mb-8`}>
         <div className="text-center space-y-2 md:space-y-3">
-          <p className="text-sm md:text-base text-amber-400 font-medium tracking-wide">
-            Karibu tena.
+          <p className={`text-sm md:text-base font-medium tracking-wide ${returnText}`}>
+            Karibu Tena.
           </p>
 
-          <p className={`text-xs md:text-sm italic ${subText}`}>
-            The Ancestors are proud of your devotion.
+          <p className={`text-xs md:text-sm italic ${returnText}`}>
+            The Ancestors acknowledge your devotion.
           </p>
 
-          <p className={`text-sm md:text-base font-light ${mainText}`}>
-            Welcome back, <span className="text-amber-300">{displayName}</span>.
+          <p className={`text-sm md:text-base font-light ${returnText} pt-1`}>
+            {displayName}, your focus is {focus}
+            {focusSwahili ? ` (${focusSwahili})` : ''}.
           </p>
 
-          <div className={`pt-2 text-xs md:text-sm ${subText} space-y-1`}>
-            <p>
-              Your focus is <span className="text-amber-300 font-medium">{focus}</span>
-              {focusSwahili ? <span className="text-slate-400"> ({focusSwahili})</span> : null}.
-            </p>
-
+          <div className={`pt-2 text-xs md:text-sm ${returnText} space-y-1`}>
             {!complete ? (
               <p>
-                Day <span className="text-slate-200">{dayIndex}</span> of{' '}
-                <span className="text-slate-200">{totalDays}</span>.{' '}
-                <span className="text-slate-400">
+                Day {dayIndex} of {totalDays}.{' '}
+                <span className="text-white/85">
                   {remainingDays} day{remainingDays === 1 ? '' : 's'} remaining.
                 </span>
               </p>
             ) : (
-              <p className="text-slate-300">
-                Your cycle is complete. Would you like to continue in this focus, or choose a new one?
-              </p>
+              <>
+                <p className={returnText}>You have complete your cycle.</p>
+                <p className={returnText}>Would you like to continue this focus,</p>
+                <p className={returnText}>or choose a new one?</p>
+              </>
             )}
           </div>
 

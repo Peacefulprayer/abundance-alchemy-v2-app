@@ -276,7 +276,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     if (config.type === PracticeType.MORNING_IAM)
       return 'from-amber-900 via-slate-900 to-slate-950';
     if (config.type === PracticeType.EVENING_ILOVE)
-      return 'from-indigo-900 via-slate-900 to-slate-950';
+      return 'from-rose-900 via-slate-900 to-slate-950';
     return 'from-emerald-900 via-slate-900 to-slate-950';
   };
 
@@ -293,7 +293,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     return (
       <div className={`h-full flex flex-col items-center justify-center p-8 max-w-md mx-auto bg-gradient-to-br ${getGradient()}`}>
         <div className="text-center space-y-6 animate-in fade-in zoom-in w-full">
-          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-amber-500 to-purple-500 flex items-center justify-center shadow-2xl">
+          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center shadow-2xl">
             <Heart size={40} className="text-white" />
           </div>
 
@@ -312,7 +312,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
           <div className="space-y-3 w-full">
             <button
               onClick={handleComplete}
-              className="w-full bg-gradient-to-r from-amber-600 to-purple-600 hover:from-amber-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all"
+              className="w-full bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all"
             >
               {gratitudeText.trim() ? 'Save & Continue' : 'Continue'}
             </button>
@@ -400,7 +400,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
                 <defs>
                   <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#fbbf24" />
-                    <stop offset="100%" stopColor="#a855f7" />
+                    <stop offset="100%" stopColor="#f43f5e" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -449,7 +449,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
             ) : isMeditation ? (
               <div className="space-y-3">
                 <div
-                  className={`w-8 h-8 mx-auto rounded-full bg-gradient-to-br from-purple-500/30 to-indigo-500/30 ${
+                  className={`w-8 h-8 mx-auto rounded-full bg-gradient-to-br from-amber-500/30 to-emerald-500/30 ${
                     isRunning ? 'animate-pulse' : ''
                   }`}
                 />

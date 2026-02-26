@@ -157,7 +157,7 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
 
   return (
-    <div className={`relative min-h-screen w-full ${textColor} ${useGlobalBackgroundLayer ? '' : baseBg}`}>
+    <div className={`relative min-h-screen w-full overflow-x-hidden ${textColor} ${useGlobalBackgroundLayer ? '' : baseBg}`}>
       {/* Full-bleed background for entry flow screens */}
       {useGlobalBackgroundLayer ? (
         <div className="fixed inset-0 z-0 pointer-events-none">
@@ -203,7 +203,7 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
         className={[
           'relative z-10 mx-auto min-h-screen w-full',
           // Responsive container: tighter on mobile, roomier on desktop
-          'max-w-[420px] md:max-w-[520px]',
+          'max-w-[430px] md:max-w-[560px]',
           // Floating device feel on desktop
           'shadow-2xl shadow-black/40',
           isBottomNavMode ? 'pb-24' : 'pb-0',

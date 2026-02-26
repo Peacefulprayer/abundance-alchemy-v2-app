@@ -4,6 +4,8 @@ import type { UserProfile, FocusArea } from '../types';
 
 interface StatsProps {
   user: UserProfile;
+  theme: 'light' | 'dark';
+  onBack: () => void;
 }
 
 function focusLabel(f: FocusArea | undefined): string {
@@ -11,24 +13,47 @@ function focusLabel(f: FocusArea | undefined): string {
   return typeof f === 'string' ? f : f.label;
 }
 
-export const Stats: React.FC<StatsProps> = ({ user }) => {
+export const Stats: React.FC<StatsProps> = ({ user, theme, onBack }) => {
   const primaryFocus = focusLabel(user.focusAreas?.[0]);
+  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
+  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
+  const cardBg =
+    theme === 'light'
+      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200'
+      : 'bg-gradient-to-br from-slate-900/75 to-slate-950/75 border-slate-700';
+  const statCardBg =
+    theme === 'light'
+      ? 'bg-white/85 border-slate-200'
+      : 'bg-slate-900/65 border-white/10';
 
   return (
-    <div className="p-6 max-w-md mx-auto">
-      <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-5">
-        <h2 className="text-lg font-bold">Stats</h2>
-        <p className="text-sm text-slate-300 mt-2">
+    <div className={`p-4 max-w-md mx-auto pb-24 ${textColor}`}>
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={onBack}
+          className="inline-flex items-center px-3 py-1.5 rounded-full bg-black/60 border border-white/15 text-[11px] text-slate-100 hover:bg-black/80 transition-colors"
+        >
+          <span className="mr-1">←</span>
+          <span className="font-semibold tracking-wide uppercase">Back</span>
+        </button>
+        <span className={`text-[10px] tracking-[0.22em] uppercase ${subTextColor} opacity-90`}>
+          Sacred Stats
+        </span>
+      </div>
+
+      <div className={`rounded-2xl border p-5 shadow-lg ${cardBg}`}>
+        <h2 className="text-lg font-bold">Journey Stats</h2>
+        <p className={`text-sm mt-2 ${subTextColor}`}>
           Primary focus: <span className="font-bold text-amber-300">{primaryFocus}</span>
         </p>
 
         <div className="grid grid-cols-2 gap-3 mt-4">
-          <div className="rounded-xl bg-slate-900/60 border border-white/10 p-4">
-            <div className="text-xs text-slate-400 uppercase tracking-wider">Streak</div>
+          <div className={`rounded-xl border p-4 ${statCardBg}`}>
+            <div className={`text-xs uppercase tracking-wider ${subTextColor}`}>Streak</div>
             <div className="text-2xl font-bold mt-1">{user.streak}</div>
           </div>
-          <div className="rounded-xl bg-slate-900/60 border border-white/10 p-4">
-            <div className="text-xs text-slate-400 uppercase tracking-wider">Completed</div>
+          <div className={`rounded-xl border p-4 ${statCardBg}`}>
+            <div className={`text-xs uppercase tracking-wider ${subTextColor}`}>Completed</div>
             <div className="text-2xl font-bold mt-1">{user.affirmationsCompleted}</div>
           </div>
         </div>

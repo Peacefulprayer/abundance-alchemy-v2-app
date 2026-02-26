@@ -72,11 +72,11 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
       fallbackBackgroundType="WELCOME"
     >
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto">
-        <div className="mt-8 md:mt-12 mb-4 md:mb-6">
+        <div className="mt-4 md:mt-8 mb-3 md:mb-5">
           <BreathingOrb size={80} breathingSpeed={4000} />
         </div>
 
-        <div className={`${titleCardClasses} mb-4 md:mb-6`}>
+        <div className={`${titleCardClasses} mb-3 md:mb-5`}>
           <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
             Abundance Alchemy
           </h1>
@@ -85,7 +85,7 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
         <div
           className={`${getContentCardClasses(theme)} mb-6 md:mb-8 ${
             step === 'prelude'
-              ? 'max-w-[260px] p-2.5 md:p-3 max-h-[520px] md:max-h-[540px] overflow-y-auto backdrop-blur-sm'
+              ? 'max-w-[280px] p-3 md:p-4 backdrop-blur-sm'
               : ''
           }`}
           style={
@@ -311,7 +311,7 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
           })}
         </div>
 
-        <div className="h-6 md:h-4" />
+        <div className="h-2 md:h-3" />
       </div>
     </SacredBackground>
   );

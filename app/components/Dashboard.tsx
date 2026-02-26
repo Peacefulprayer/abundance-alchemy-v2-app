@@ -165,10 +165,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
+  const glassCard =
+    theme === 'light'
+      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200 shadow-sm'
+      : 'bg-gradient-to-br from-slate-900/55 to-slate-950/65 border-slate-700/50';
   const buttonBg =
     theme === 'light'
       ? 'bg-slate-100 hover:bg-amber-100 border-slate-200'
       : 'bg-slate-800/60 hover:bg-slate-700/60 border-white/5';
+  const sectionTitleChip =
+    theme === 'light'
+      ? 'inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-700 shadow-sm'
+      : 'inline-flex items-center rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-200 shadow-sm';
+  const infoCardBg =
+    theme === 'light'
+      ? 'rounded-2xl border border-slate-200 bg-white/85 p-3 shadow-sm'
+      : 'rounded-2xl border border-slate-700/60 bg-slate-900/55 p-3 shadow-sm';
   
   const getAvatarMood = () => {
     if (mode === PracticeType.MORNING_IAM) return 'active';
@@ -180,7 +192,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     : activeSoundscape.label;
 
   return (
-    <div className="h-full w-full overflow-y-auto pb-24">
+    <div className="h-full w-full overflow-y-auto overflow-x-hidden pb-24">
       {/* Header Section */}
       <div className="relative pt-4 px-4 pb-2">
         <div className="flex justify-between items-start">
@@ -214,11 +226,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Wisdom card */}
         <div
-          className={`mt-4 relative p-4 rounded-2xl border backdrop-blur-md shadow-sm overflow-hidden group ${
-            theme === 'light'
-              ? 'bg-white/70 border-white/50'
-              : 'bg-slate-800/40 border-slate-700/30'
-          }`}
+          className={`mt-4 relative p-4 rounded-2xl border backdrop-blur-md overflow-hidden group ${glassCard}`}
         >
           <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
             <SparklesIcon size={40} className="text-amber-500" />
@@ -247,7 +255,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Focus card */}
         <div className="space-y-2">
           <div className="flex justify-between items-end px-1">
-            <h3 className={`text-[10px] font-bold uppercase tracking-widest ${subTextColor}`}>
+            <h3 className={sectionTitleChip}>
               Your {getCyclePeriodLabel(user.cyclePreference)} Focus
             </h3>
             <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">
@@ -260,11 +268,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div
-            className={`p-4 rounded-2xl border transition-all ${
-              theme === 'light'
-                ? 'bg-white border-slate-200 shadow-sm'
-                : 'bg-slate-800/40 border-slate-700/50'
-            }`}
+            className={`p-4 rounded-2xl border transition-all ${glassCard}`}
           >
             <div className="flex justify-between items-start mb-2">
               <h2 className={`text-lg font-bold ${textColor}`}>
@@ -332,7 +336,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Practice mode toggle */}
         <div className="space-y-4">
-          <h3 className={`text-[10px] font-bold uppercase tracking-widest ${subTextColor} px-1`}>
+          <h3 className={sectionTitleChip}>
             Choose Your Practice
           </h3>
 
@@ -365,8 +369,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               className={`flex-1 py-3 rounded-full flex items-center justify-center relative z-10 transition-colors ${
                 mode === PracticeType.EVENING_ILOVE
                   ? theme === 'light'
-                    ? 'text-indigo-900'
-                    : 'text-indigo-100'
+                    ? 'text-rose-900'
+                    : 'text-rose-100'
                   : 'text-slate-400'
               }`}
             >
@@ -379,7 +383,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full shadow-md transition-all duration-500 ease-out ${
                 mode === PracticeType.MORNING_IAM
                   ? 'left-1 bg-gradient-to-r from-amber-400 to-orange-500'
-                  : 'left-[calc(50%+4px)] bg-gradient-to-r from-indigo-500 to-purple-600'
+                  : 'left-[calc(50%+4px)] bg-gradient-to-r from-rose-500 to-red-600'
               }`}
             />
           </div>
@@ -388,7 +392,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className={`rounded-3xl p-4 relative overflow-hidden transition-all duration-700 ${
               mode === PracticeType.MORNING_IAM
                 ? 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/20'
-                : 'bg-gradient-to-br from-indigo-600 to-purple-800 shadow-lg shadow-purple-500/20'
+                : 'bg-gradient-to-br from-rose-600 to-red-700 shadow-lg shadow-rose-500/20'
             }`}
           >
             {/* Background Texture */}
@@ -504,7 +508,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div
             className={`p-1 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 shadow-lg shadow-teal-500/10`}
           >
-            <div className={`rounded-xl p-4 flex items-center justify-between ${theme === 'light' ? 'bg-white' : 'bg-slate-900'}`}>
+            <div className={`rounded-xl p-4 flex items-center justify-between ${theme === 'light' ? 'bg-gradient-to-br from-white/95 to-amber-50/60' : 'bg-gradient-to-br from-slate-900 to-slate-950'}`}>
               <div className="flex items-center space-x-4">
                 <div className="w-10 h-10 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-600 dark:text-teal-400">
                   <Wind size={20} />
@@ -523,8 +527,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 }}
                 className={`w-full py-2 rounded-lg font-bold text-sm transition-all ${
                   theme === 'light'
-                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                    : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                    : 'bg-amber-600 hover:bg-amber-500 text-white'
                 }`}
                 style={{ width: 'auto', paddingLeft: '1rem', paddingRight: '1rem' }}
               >
@@ -535,29 +539,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
         )}
 
         {/* Now Playing */}
-        <div className="flex items-center justify-between py-2 border-t border-slate-700/10">
-          <div className="flex items-center space-x-2 text-[10px] uppercase font-bold tracking-wider text-slate-500">
-            <Music size={12} className="text-amber-500" />
-            <span>Now Playing</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className={`text-xs font-medium truncate max-w-[150px] ${textColor}`}>
-              {currentTrackName}
-            </span>
-            <button
-              onClick={() => {
-                playBell();
-                onOpenSettings();
-              }}
-              className="text-[10px] font-bold text-amber-500 hover:underline"
-            >
-              CHANGE
-            </button>
+        <div className={infoCardBg}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 text-[10px] uppercase font-bold tracking-wider text-slate-500">
+              <Music size={12} className="text-amber-500" />
+              <span>Now Playing</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className={`text-xs font-medium truncate max-w-[150px] ${textColor}`}>
+                {currentTrackName}
+              </span>
+              <button
+                onClick={() => {
+                  playBell();
+                  onOpenSettings();
+                }}
+                className="text-[10px] font-bold text-amber-500 hover:underline"
+              >
+                CHANGE
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Quick Audio Controls */}
-        <div className="py-3 border-t border-slate-700/10 space-y-3">
+        <div className={`${infoCardBg} space-y-3`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Music size={14} className="text-amber-500" />
@@ -604,7 +610,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="text-center space-y-2 pt-4 pb-2 border-t border-slate-700/10">
+        <div className={`${infoCardBg} text-center space-y-2`}>
           <p className={`text-[10px] font-medium opacity-60 ${subTextColor}`}>
             Based on the book "I Am Practice" by
           </p>

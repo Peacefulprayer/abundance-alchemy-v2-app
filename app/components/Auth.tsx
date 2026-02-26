@@ -19,8 +19,10 @@ const titleCardClasses =
   'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
 
 // UNIVERSAL CONTENT CARD CLASSES
-const contentCardClasses =
-  'backdrop-blur-lg rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-2xl space-y-4 md:space-y-6 bg-slate-900/30';
+const getContentCardClasses = (theme: 'light' | 'dark') =>
+  theme === 'light'
+    ? 'backdrop-blur-lg rounded-2xl border border-slate-200 p-4 md:p-6 w-full max-w-[280px] shadow-2xl space-y-4 md:space-y-6 bg-white/88'
+    : 'backdrop-blur-lg rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-2xl space-y-4 md:space-y-6 bg-slate-900/40';
 
 export const Auth: React.FC<AuthProps> = ({
   onRegister,
@@ -135,7 +137,7 @@ export const Auth: React.FC<AuthProps> = ({
 
   // Theme colors
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-400';
+  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
   const inputBg = theme === 'light' ? 'bg-white border-slate-300' : 'bg-slate-900/50 border-slate-700';
 
   return (
@@ -155,7 +157,7 @@ export const Auth: React.FC<AuthProps> = ({
           </h1>
         </div>
 
-        <div className={`${contentCardClasses} mb-6 md:mb-8 relative`}>
+        <div className={`${getContentCardClasses(theme)} mb-6 md:mb-8 relative`}>
           {mode === 'register' && (
             <div className="flex justify-center -mt-1 mb-3 md:mb-4">
               <img

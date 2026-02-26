@@ -243,7 +243,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
               <div className="flex justify-center w-full">
                 <button
                   onClick={handleReadyClick}
-                  className="mt-4 md:mt-6 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-sm tracking-wider hover:opacity-90 transition-opacity shadow-lg animate-[pulse_2s_ease-in-out_infinite] hover:animate-none"
+                  className="mt-4 md:mt-6 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-sm tracking-wider transition-all duration-300 hover:opacity-95 shadow-[0_0_18px_rgba(245,158,11,0.45)] animate-[aaReadyPulse_1700ms_ease-in-out_infinite] hover:animate-none"
                 >
                   I Am Ready For Transformation
                 </button>
@@ -264,7 +264,12 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             </p>
 
             <p className="text-xs text-slate-300">
-              <a href="/privacy-policy" className="text-amber-400 hover:text-amber-300 underline">
+              <a
+                href="/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-amber-400 hover:text-amber-300 underline"
+              >
                 View our privacy policy here.
               </a>
             </p>
@@ -289,6 +294,20 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           </div>
         </div>
       </div>
+      <style>{`
+        @keyframes aaReadyPulse {
+          0%, 100% {
+            transform: scale(1);
+            filter: brightness(1);
+            box-shadow: 0 0 18px rgba(245, 158, 11, 0.45);
+          }
+          50% {
+            transform: scale(1.045);
+            filter: brightness(1.08);
+            box-shadow: 0 0 28px rgba(245, 158, 11, 0.72);
+          }
+        }
+      `}</style>
     </SacredBackground>
   );
 };

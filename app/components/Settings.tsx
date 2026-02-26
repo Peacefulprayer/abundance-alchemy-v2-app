@@ -36,8 +36,11 @@ export const Settings: React.FC<SettingsProps> = ({
   const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-400';
-  const cardBg = theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/70 border-slate-700';
+  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
+  const cardBg =
+    theme === 'light'
+      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200'
+      : 'bg-gradient-to-br from-slate-900/75 to-slate-950/75 border-slate-700';
   const inputBg = theme === 'light' ? 'bg-slate-50 border-slate-300' : 'bg-slate-800 border-slate-600';
   const reminderRows: Array<{ id: ReminderPractice; label: string }> = [
     { id: 'MORNING_IAM', label: 'I Am' },
@@ -189,12 +192,15 @@ export const Settings: React.FC<SettingsProps> = ({
         <h1 className="text-xl font-serif font-bold">Settings</h1>
         <div className="w-16"></div>
       </div>
+      <p className={`text-[10px] tracking-[0.22em] uppercase ${subTextColor} opacity-90 mb-3`}>
+        Personalize Your Sacred Space
+      </p>
 
       <div className="space-y-4">
         {/* Appearance */}
         <div className={`rounded-2xl p-4 border shadow-lg ${cardBg}`}>
           <h3 className="text-sm font-bold mb-4 flex items-center space-x-2">
-            <Palette size={16} className="text-purple-500" />
+            <Palette size={16} className="text-amber-500" />
             <span>Appearance</span>
           </h3>
           
@@ -207,13 +213,13 @@ export const Settings: React.FC<SettingsProps> = ({
             }`}
           >
             <div className="flex items-center space-x-3">
-              {theme === 'light' ? <Sun size={20} className="text-amber-500" /> : <Moon size={20} className="text-indigo-400" />}
+              {theme === 'light' ? <Sun size={20} className="text-amber-500" /> : <Moon size={20} className="text-amber-300" />}
               <div className="text-left">
                 <p className="text-sm font-bold">{theme === 'light' ? 'Day Mode' : 'Night Mode'}</p>
                 <p className={`text-xs ${subTextColor}`}>Tap to switch</p>
               </div>
             </div>
-            <div className={`w-12 h-6 rounded-full transition-colors ${theme === 'dark' ? 'bg-indigo-600' : 'bg-slate-300'} relative`}>
+            <div className={`w-12 h-6 rounded-full transition-colors ${theme === 'dark' ? 'bg-amber-600' : 'bg-slate-300'} relative`}>
               <div className={`absolute top-1 ${theme === 'dark' ? 'right-1' : 'left-1'} w-4 h-4 bg-white rounded-full transition-all`} />
             </div>
           </button>
@@ -239,7 +245,7 @@ export const Settings: React.FC<SettingsProps> = ({
                 max="100"
                 value={settings.ambienceVolume}
                 onChange={(e) => updateVolume(Number(e.target.value))}
-                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
               />
               <p className="text-[10px] text-slate-400 mt-1 italic">Controls volume for ambience and music.</p>
             </div>
@@ -371,7 +377,7 @@ export const Settings: React.FC<SettingsProps> = ({
 
         {/* Practice Reminders */}
         <div className={`rounded-2xl p-4 border shadow-lg ${cardBg}`}>
-          <div className="flex items-center justify_between mb-4">
+          <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold flex items-center space-x-2">
               <Clock size={16} className="text-amber-500" />
               <span>Practice Reminders</span>
@@ -487,10 +493,10 @@ export const Settings: React.FC<SettingsProps> = ({
                 buttonSoundService.play('click');
                 onChangeFocus();
               }}
-              className="w-full flex items-center justify-between p-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-colors"
+              className="w-full flex items-center justify-between p-3 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-colors"
             >
-              <span className="text-sm font-medium text-indigo-400">Change Focus Area</span>
-              <RefreshCw size={16} className="text-indigo-400" />
+              <span className="text-sm font-medium text-amber-400">Change Focus Area</span>
+              <RefreshCw size={16} className="text-amber-400" />
             </button>
 
             <button
@@ -498,10 +504,10 @@ export const Settings: React.FC<SettingsProps> = ({
                 buttonSoundService.play('click');
                 onReplayTutorial();
               }}
-              className="w-full flex items-center justify-between p-3 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 transition-colors"
+              className="w-full flex items-center justify-between p-3 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 border border-slate-500/20 transition-colors"
             >
-              <span className="text-sm font-medium text-purple-400">Replay Tutorial</span>
-              <RefreshCw size={16} className="text-purple-400" />
+              <span className="text-sm font-medium text-slate-300">Replay Tutorial</span>
+              <RefreshCw size={16} className="text-slate-300" />
             </button>
 
             <button

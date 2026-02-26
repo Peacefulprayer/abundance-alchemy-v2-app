@@ -27,7 +27,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export const BottomNav: React.FC<BottomNavProps> = ({ mode, onNavigate }) => {
   return (
-    <nav className="fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-24px)] max-w-[420px] md:max-w-[520px] z-50">
+    <nav className="fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-24px)] max-w-[430px] md:max-w-[560px] z-50">
       <div className="relative w-full rounded-2xl border border-slate-700/40 bg-slate-900/70 backdrop-blur-lg px-2 py-2 shadow-2xl">
         <div className="flex items-end justify-between">
           {NAV_ITEMS.map((item) => {

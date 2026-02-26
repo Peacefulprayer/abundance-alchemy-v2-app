@@ -31,8 +31,8 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-400';
   const cardBg =
     theme === 'light'
-      ? 'bg-white border-slate-200'
-      : 'bg-slate-900/70 border-slate-700';
+      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200'
+      : 'bg-gradient-to-br from-slate-900/75 to-slate-950/75 border-slate-700';
 
   useEffect(() => {
     let mounted = true;
@@ -78,13 +78,12 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
     if (!selectedSound) return;
     
     buttonSoundService.play('confirm');
-   // Line 81-85
-onBegin({
-  type: PracticeType.MEDITATION,
-  duration: duration,  //Changed from selectedDuration
-  soundscape: selectedSound,
-  focusAreas: [],
-});
+    onBegin({
+      type: PracticeType.MEDITATION,
+      duration,
+      soundscape: selectedSound,
+      focusAreas: [],
+    });
   };
 
   return (
@@ -112,7 +111,7 @@ onBegin({
       {/* Duration card */}
       <div className={`rounded-2xl p-5 border shadow-lg mb-5 ${cardBg}`}>
         <div className="flex items-center space-x-3 mb-4">
-          <Clock className="text-indigo-400" size={20} />
+          <Clock className="text-amber-400" size={20} />
           <h2 className="text-lg font-serif">Choose Duration</h2>
         </div>
 
@@ -126,10 +125,10 @@ onBegin({
               }}
               className={`h-11 rounded-xl text-xs font-semibold border transition-all ${
                 duration === d
-                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md scale-105'
+                  ? 'bg-amber-600 text-white border-amber-500 shadow-md scale-105'
                   : theme === 'light'
-                  ? 'bg-transparent border-slate-300 hover:border-indigo-400 hover:bg-indigo-50'
-                  : 'bg-transparent border-slate-600/40 hover:border-indigo-400 hover:bg-indigo-500/10'
+                  ? 'bg-transparent border-slate-300 hover:border-amber-400 hover:bg-amber-50'
+                  : 'bg-transparent border-slate-600/40 hover:border-amber-400 hover:bg-amber-500/10'
               }`}
             >
               {d}m
@@ -149,7 +148,7 @@ onBegin({
 
         {loading ? (
           <div className="flex flex-col items-center justify-center flex-1 space-y-2">
-            <Loader className="animate-spin text-indigo-400" size={24} />
+            <Loader className="animate-spin text-amber-400" size={24} />
             <p className={`text-xs ${subTextColor}`}>Loading tracks...</p>
           </div>
         ) : (
@@ -188,7 +187,7 @@ onBegin({
         <div className="flex items-center justify-center mb-2">
           <div
             className={`w-8 h-8 rounded-full animate-breath ${
-              theme === 'light' ? 'bg-indigo-400/30' : 'bg-indigo-500/30'
+              theme === 'light' ? 'bg-amber-400/30' : 'bg-amber-500/30'
             }`}
           />
         </div>
@@ -200,7 +199,7 @@ onBegin({
         <button
           onClick={handleBegin}
           disabled={!selectedSound || loading}
-          className="w-full py-4 rounded-xl bg-indigo-600 text-white font-bold text-base shadow-lg hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-4 rounded-xl bg-amber-600 text-white font-bold text-base shadow-lg hover:bg-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Begin {duration} Minute Meditation
         </button>

@@ -39,6 +39,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const [isPlaying, setIsPlaying] = useState(true);
   const didFinishRef = useRef(false);
   const finishTimeoutRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   // ✅ Returning/new decision is based ONLY on validated user prop (no localStorage)
   const isReturningUser = !!user;
@@ -54,8 +55,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   }, [isReturningUser, onComplete]);
 
   useEffect(() => {
-    void stopAmbience();
+    // Pause ambient bed while welcome voice narration is playing.
+    void stopAmbience(180);
+
     const audio = new Audio(WELCOME_URL);
+    audio.preload = 'auto';
     audioRef.current = audio;
 
     const timer = setTimeout(() => {
@@ -69,21 +73,29 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
     const tick = (now: number) => {
       if (didFinishRef.current) return;
-      const elapsed = now - start;
-      const pct = Math.min(100, (elapsed / WELCOME_DURATION_MS) * 100);
-      setProgress(pct);
 
-      if (elapsed < WELCOME_DURATION_MS) {
-        requestAnimationFrame(tick);
+      const hasAudioDuration = Number.isFinite(audio.duration) && audio.duration > 0;
+      if (hasAudioDuration) {
+        const pct = Math.min(100, (audio.currentTime / audio.duration) * 100);
+        setProgress(pct);
       } else {
-        proceed();
+        const elapsed = now - start;
+        const pct = Math.min(100, (elapsed / WELCOME_DURATION_MS) * 100);
+        setProgress(pct);
+        if (elapsed >= WELCOME_DURATION_MS) {
+          proceed();
+          return;
+        }
       }
+
+      rafRef.current = requestAnimationFrame(tick);
     };
 
-    requestAnimationFrame(tick);
+    rafRef.current = requestAnimationFrame(tick);
 
     const handleEnded = () => {
       setIsPlaying(false);
+      setProgress(100);
       proceed();
     };
 
@@ -94,6 +106,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       if (finishTimeoutRef.current) {
         window.clearTimeout(finishTimeoutRef.current);
         finishTimeoutRef.current = null;
+      }
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
       if (audioRef.current) {
         audioRef.current.pause();
