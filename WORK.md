@@ -1,6 +1,6 @@
 # Abundance Alchemy Work Log
 
-Last updated: 2026-02-24
+Last updated: 2026-02-27
 
 ## Why this file exists
 This is a checkpoint record so work can resume quickly if a session drops.
@@ -87,3 +87,59 @@ This is a checkpoint record so work can resume quickly if a session drops.
 ## Next likely tasks
 - Continue card/style consistency across Dashboard, Library, Stats, Profile, Settings.
 - Optional: further tighten admin error disclosure (generic UI errors + server logs only).
+
+## Checkpoint: 2026-02-27
+
+### Current stable point
+- Latest UI pass is in place and local build passed.
+- Current modified frontend source files:
+  - `app/components/WelcomeScreen.tsx`
+  - `app/components/PersonalGreeting.tsx`
+  - `app/components/Dashboard.tsx`
+- These changes are not yet committed in git unless committed manually after this checkpoint.
+
+### Latest fixes completed
+
+#### 1) `Welcome.mp3` progress bar
+- Fixed the welcome audio slider so it tracks during playback again instead of only jumping at the end.
+- Added more robust progress handling using:
+  - audio events (`play`, `pause`, `timeupdate`, `loadedmetadata`, `ended`)
+  - a short interval fallback for Safari/timing inconsistencies
+
+#### 2) Returning user greeting card
+- Updated the returning-user card to match requested structure:
+  - title card now says `Abundance Alchemy`
+  - body card is darker
+  - main message text is white and non-bold
+- Current completed-cycle copy now reads:
+  - `Karibu Tena.`
+  - `Welcome Back`
+  - `The Ancestors acknowledge your devotion.`
+  - `{Name}, your focus is:`
+  - `{Focus}.`
+  - `You have completed your cycle.`
+  - `Continue with this focus,`
+  - `or choose a new one?`
+
+#### 3) Dashboard readability
+- Strengthened contrast for:
+  - section title chips
+  - `days left` chip
+- This was specifically to improve readability over mixed/light backgrounds.
+
+### Verified
+- `cd app && npm run build` completed successfully on 2026-02-27.
+
+### If work resumes from here
+- Resume from visual QA of the updated build after deploy.
+- Primary next target:
+  - continue consistency polish across post-dashboard screens (`Library`, `Settings`, `Stats`, `Profile`, `Prayer`, `I Am`, `I Love`, `Meditation`)
+- Secondary target:
+  - if needed, continue Phase 2 prayer work after UI consistency pass
+
+### Deployment reminder
+- For frontend-only changes, rebuild in `app/` and upload the latest `app/dist/*`.
+- If deploying source for reference, the edited source files remain in:
+  - `app/components/WelcomeScreen.tsx`
+  - `app/components/PersonalGreeting.tsx`
+  - `app/components/Dashboard.tsx`

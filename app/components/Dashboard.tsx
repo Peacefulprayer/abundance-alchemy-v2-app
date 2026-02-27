@@ -175,8 +175,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
       : 'bg-slate-800/60 hover:bg-slate-700/60 border-white/5';
   const sectionTitleChip =
     theme === 'light'
-      ? 'inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-700 shadow-sm'
-      : 'inline-flex items-center rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-200 shadow-sm';
+      ? 'inline-flex items-center rounded-full border border-slate-300 bg-white/90 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-800 shadow-[0_2px_8px_rgba(15,23,42,0.15)] backdrop-blur-sm'
+      : 'inline-flex items-center rounded-full border border-white/25 bg-black/60 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-[0_2px_10px_rgba(0,0,0,0.4)] backdrop-blur-sm';
+  const daysLeftChip =
+    theme === 'light'
+      ? 'inline-flex items-center rounded-full border border-amber-300 bg-white/92 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-800 shadow-[0_2px_8px_rgba(15,23,42,0.12)] backdrop-blur-sm'
+      : 'inline-flex items-center rounded-full border border-amber-300/45 bg-black/65 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-200 shadow-[0_2px_10px_rgba(0,0,0,0.45)] backdrop-blur-sm';
   const infoCardBg =
     theme === 'light'
       ? 'rounded-2xl border border-slate-200 bg-white/85 p-3 shadow-sm'
@@ -258,7 +262,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <h3 className={sectionTitleChip}>
               Your {getCyclePeriodLabel(user.cyclePreference)} Focus
             </h3>
-            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">
+            <span className={daysLeftChip}>
               {getDaysRemaining(
                 user.cyclePreference,
                 user.lastPracticeDate

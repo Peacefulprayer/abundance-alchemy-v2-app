@@ -18,11 +18,6 @@ const getFocusLabel = (focus: FocusAreaLike): string => {
   return typeof focus === 'string' ? focus : focus.label || 'General';
 };
 
-const getFocusSwahili = (focus: FocusAreaLike): string => {
-  if (!focus || typeof focus === 'string') return '';
-  return focus.swahili || '';
-};
-
 const cycleDays = (cycle: CycleType): number => {
   if (cycle === CycleType.WEEKLY) return 7;
   if (cycle === CycleType.MONTHLY) return 30;
@@ -57,7 +52,6 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
   }, [user]);
 
   const focus = useMemo(() => getFocusLabel(firstFocus), [firstFocus]);
-  const focusSwahili = useMemo(() => getFocusSwahili(firstFocus), [firstFocus]);
 
   const totalDays = useMemo(() => cycleDays(user.cyclePreference), [user.cyclePreference]);
 
@@ -93,7 +87,7 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
     'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
 
   const bodyCard =
-    'backdrop-blur-md rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-xl bg-slate-900/40';
+    'backdrop-blur-md rounded-2xl border border-amber-500/25 p-4 md:p-6 w-full max-w-[280px] shadow-xl bg-slate-950/70';
 
   const returnText = 'text-white';
 
@@ -105,26 +99,33 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
 
       <div className={`${titleCard} mb-4 md:mb-6`}>
         <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
-          Welcome Back
+          Abundance Alchemy
         </h1>
       </div>
 
       <div className={`${bodyCard} mb-6 md:mb-8`}>
         <div className="text-center space-y-2 md:space-y-3">
-          <p className={`text-sm md:text-base font-medium tracking-wide ${returnText}`}>
+          <p className={`text-sm md:text-base font-normal tracking-wide ${returnText}`}>
             Karibu Tena.
           </p>
 
-          <p className={`text-xs md:text-sm italic ${returnText}`}>
+          <p className={`text-sm md:text-base font-normal tracking-wide ${returnText}`}>
+            Welcome Back
+          </p>
+
+          <p className={`text-[10px] md:text-sm leading-tight whitespace-nowrap ${returnText}`}>
             The Ancestors acknowledge your devotion.
           </p>
 
-          <p className={`text-sm md:text-base font-light ${returnText} pt-1`}>
-            {displayName}, your focus is {focus}
-            {focusSwahili ? ` (${focusSwahili})` : ''}.
+          <p className={`text-sm md:text-base font-normal ${returnText} pt-1`}>
+            {displayName}, your focus is:
           </p>
 
-          <div className={`pt-2 text-xs md:text-sm ${returnText} space-y-1`}>
+          <p className={`text-sm md:text-base font-normal ${returnText}`}>
+            {focus}.
+          </p>
+
+          <div className={`pt-2 text-sm md:text-base font-normal ${returnText} space-y-1`}>
             {!complete ? (
               <p>
                 Day {dayIndex} of {totalDays}.{' '}
@@ -134,8 +135,8 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
               </p>
             ) : (
               <>
-                <p className={returnText}>You have complete your cycle.</p>
-                <p className={returnText}>Would you like to continue this focus,</p>
+                <p className={returnText}>You have completed your cycle.</p>
+                <p className={returnText}>Continue with this focus,</p>
                 <p className={returnText}>or choose a new one?</p>
               </>
             )}

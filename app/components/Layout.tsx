@@ -30,6 +30,17 @@ function normalizeImageUrl(url: string): string | undefined {
   return `${base}${trimmed.replace(/^\/+/, '')}`;
 }
 
+function firstAvailableSlot(
+  candidates: BackgroundSlot[],
+  backgrounds?: Record<string, { imageUrl?: string } | undefined> | null
+): BackgroundSlot | null {
+  for (const candidate of candidates) {
+    const imageUrl = backgrounds?.[candidate]?.imageUrl;
+    if (imageUrl) return candidate;
+  }
+  return candidates[0] || null;
+}
+
 export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, children }) => {
   const { backgrounds } = useBackgrounds();
   const isPreSplashMode = mode === AppMode.PRE_SPLASH;
@@ -127,25 +138,40 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
     }
   }, [mode, practiceType]);
 
-  const slotCandidates: BackgroundSlot[] = useMemo(() => {
-    const candidates = [...screenSlotCandidates, sectionSlot, 'HOME'];
+  const globalSlotCandidates: BackgroundSlot[] = useMemo(() => {
+    const candidates = useGlobalBackgroundLayer
+      ? [...screenSlotCandidates, sectionSlot, 'HOME']
+      : [sectionSlot, 'HOME'];
     return candidates.filter(
       (slot, index) => candidates.indexOf(slot) === index
     ) as BackgroundSlot[];
-  }, [screenSlotCandidates, sectionSlot]);
+  }, [screenSlotCandidates, sectionSlot, useGlobalBackgroundLayer]);
 
-  const slot: BackgroundSlot | null = useMemo(() => {
-    for (const candidate of slotCandidates) {
-      const imageUrl = backgrounds?.[candidate]?.imageUrl;
-      if (imageUrl) return candidate;
-    }
-    return slotCandidates[0] || 'HOME';
-  }, [backgrounds, slotCandidates]);
+  const stageSlotCandidates: BackgroundSlot[] = useMemo(() => {
+    if (useGlobalBackgroundLayer) return [];
+    return screenSlotCandidates.filter(
+      (slot, index) => screenSlotCandidates.indexOf(slot) === index
+    ) as BackgroundSlot[];
+  }, [screenSlotCandidates, useGlobalBackgroundLayer]);
 
-  const bgEntry = slot ? backgrounds?.[slot] : undefined;
-  const bgImageUrl = forceBlackBackdrop
+  const globalSlot = useMemo(
+    () => firstAvailableSlot(globalSlotCandidates, backgrounds),
+    [backgrounds, globalSlotCandidates]
+  );
+  const stageSlot = useMemo(
+    () => firstAvailableSlot(stageSlotCandidates, backgrounds),
+    [backgrounds, stageSlotCandidates]
+  );
+
+  const globalBgEntry = globalSlot ? backgrounds?.[globalSlot] : undefined;
+  const stageBgEntry = stageSlot ? backgrounds?.[stageSlot] : undefined;
+
+  const globalBgImageUrl = forceBlackBackdrop
     ? ''
-    : (bgEntry?.imageUrl ? normalizeImageUrl(bgEntry.imageUrl) : '');
+    : (globalBgEntry?.imageUrl ? normalizeImageUrl(globalBgEntry.imageUrl) : '');
+  const stageBgImageUrl = stageBgEntry?.imageUrl
+    ? normalizeImageUrl(stageBgEntry.imageUrl)
+    : '';
 
   const baseBg = forceBlackBackdrop
     ? 'bg-black'
@@ -157,46 +183,52 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
 
   return (
-    <div className={`relative min-h-screen w-full overflow-x-hidden ${textColor} ${useGlobalBackgroundLayer ? '' : baseBg}`}>
-      {/* Full-bleed background for entry flow screens */}
-      {useGlobalBackgroundLayer ? (
-        <div className="fixed inset-0 z-0 pointer-events-none">
-          {!bgImageUrl ? <div className={`absolute inset-0 ${baseBg}`} /> : null}
-          {bgImageUrl ? (
+    <div className={`relative min-h-screen w-full overflow-x-hidden ${textColor}`}>
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        {forceBlackBackdrop ? <div className="absolute inset-0 bg-black" /> : null}
+        {!forceBlackBackdrop && !globalBgImageUrl ? (
+          <div className={`absolute inset-0 ${baseBg}`} />
+        ) : null}
+        {!forceBlackBackdrop && globalBgImageUrl ? (
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url("${globalBgImageUrl}")`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat'
+            }}
+          />
+        ) : null}
+
+        {!forceBlackBackdrop ? (
+          <>
             <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `url("${bgImageUrl}")`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
-              }}
+              className={`absolute inset-0 ${
+                useGlobalBackgroundLayer
+                  ? (
+                    theme === 'light'
+                      ? 'bg-white/60'
+                      : 'bg-gradient-to-b from-black/55 via-black/45 to-black/65'
+                  )
+                  : (
+                    theme === 'light'
+                      ? 'bg-white/28'
+                      : 'bg-gradient-to-b from-black/18 via-black/12 to-black/26'
+                  )
+              }`}
             />
-          ) : null}
 
-          {!forceBlackBackdrop ? (
-            <>
-              {/* Readability overlay (keeps “glass” looking like glass) */}
-              <div
-                className={`absolute inset-0 ${
-                  theme === 'light'
-                    ? 'bg-white/60'
-                    : 'bg-gradient-to-b from-black/55 via-black/45 to-black/65'
-                }`}
-              />
-
-              {/* Subtle ethereal texture */}
-              <div
-                className={`absolute inset-0 ${
-                  theme === 'light'
-                    ? 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.08),transparent_55%)]'
-                    : 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.10),transparent_55%)]'
-                }`}
-              />
-            </>
-          ) : null}
-        </div>
-      ) : null}
+            <div
+              className={`absolute inset-0 ${
+                theme === 'light'
+                  ? 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.08),transparent_55%)]'
+                  : 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.10),transparent_55%)]'
+              }`}
+            />
+          </>
+        ) : null}
+      </div>
 
       {/* App viewport */}
       <div
@@ -216,24 +248,32 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
         {/* Stage-only background for core screens (prevents duplicate full-page image) */}
         {!useGlobalBackgroundLayer ? (
           <div className="absolute inset-0 z-0 pointer-events-none">
-            {!bgImageUrl ? <div className={`absolute inset-0 ${baseBg}`} /> : null}
-            {bgImageUrl ? (
+            {stageBgImageUrl ? (
               <div
                 className="absolute inset-0"
                 style={{
-                  backgroundImage: `url("${bgImageUrl}")`,
+                  backgroundImage: `url("${stageBgImageUrl}")`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat'
+                  backgroundRepeat: 'no-repeat',
+                  opacity: 0.9
                 }}
               />
             ) : null}
 
             <div
               className={`absolute inset-0 ${
-                theme === 'light'
-                  ? 'bg-white/60'
-                  : 'bg-gradient-to-b from-black/55 via-black/45 to-black/65'
+                stageBgImageUrl
+                  ? (
+                    theme === 'light'
+                      ? 'bg-white/56'
+                      : 'bg-gradient-to-b from-black/48 via-black/36 to-black/58'
+                  )
+                  : (
+                    theme === 'light'
+                      ? 'bg-white/68'
+                      : 'bg-gradient-to-b from-slate-950/44 via-black/32 to-black/54'
+                  )
               }`}
             />
             <div

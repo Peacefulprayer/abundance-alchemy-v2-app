@@ -39,7 +39,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const [isPlaying, setIsPlaying] = useState(true);
   const didFinishRef = useRef(false);
   const finishTimeoutRef = useRef<number | null>(null);
-  const rafRef = useRef<number | null>(null);
+  const progressTimerRef = useRef<number | null>(null);
+  const playbackStartedAtRef = useRef<number | null>(null);
 
   // ✅ Returning/new decision is based ONLY on validated user prop (no localStorage)
   const isReturningUser = !!user;
@@ -63,35 +64,39 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     audioRef.current = audio;
 
     const timer = setTimeout(() => {
-      audio.play().catch((err) => {
+      audio
+        .play()
+        .then(() => {
+          playbackStartedAtRef.current = performance.now();
+          setIsPlaying(true);
+        })
+        .catch((err) => {
         console.log('Welcome audio play failed:', err);
         setIsPlaying(false);
       });
     }, 500);
 
-    const start = performance.now();
-
-    const tick = (now: number) => {
+    const updateProgress = () => {
       if (didFinishRef.current) return;
 
       const hasAudioDuration = Number.isFinite(audio.duration) && audio.duration > 0;
-      if (hasAudioDuration) {
+      const hasCurrentTime = Number.isFinite(audio.currentTime) && audio.currentTime > 0;
+
+      if (hasAudioDuration && hasCurrentTime) {
         const pct = Math.min(100, (audio.currentTime / audio.duration) * 100);
         setProgress(pct);
-      } else {
-        const elapsed = now - start;
+        return;
+      }
+
+      if (playbackStartedAtRef.current) {
+        const elapsed = performance.now() - playbackStartedAtRef.current;
         const pct = Math.min(100, (elapsed / WELCOME_DURATION_MS) * 100);
         setProgress(pct);
         if (elapsed >= WELCOME_DURATION_MS) {
           proceed();
-          return;
         }
       }
-
-      rafRef.current = requestAnimationFrame(tick);
     };
-
-    rafRef.current = requestAnimationFrame(tick);
 
     const handleEnded = () => {
       setIsPlaying(false);
@@ -99,7 +104,32 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       proceed();
     };
 
+    const handlePlay = () => {
+      if (!playbackStartedAtRef.current) {
+        playbackStartedAtRef.current = performance.now();
+      }
+      setIsPlaying(true);
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+    };
+
+    const handleTimeUpdate = () => {
+      updateProgress();
+    };
+
+    const handleLoadedMetadata = () => {
+      updateProgress();
+    };
+
+    progressTimerRef.current = window.setInterval(updateProgress, 120);
+
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
 
     return () => {
       clearTimeout(timer);
@@ -107,13 +137,17 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         window.clearTimeout(finishTimeoutRef.current);
         finishTimeoutRef.current = null;
       }
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
+      if (progressTimerRef.current) {
+        window.clearInterval(progressTimerRef.current);
+        progressTimerRef.current = null;
       }
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.removeEventListener('ended', handleEnded);
+        audioRef.current.removeEventListener('play', handlePlay);
+        audioRef.current.removeEventListener('pause', handlePause);
+        audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
+        audioRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
       }
     };
   }, [proceed]);
