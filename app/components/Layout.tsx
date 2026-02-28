@@ -63,6 +63,7 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
     mode === AppMode.PROFILE ||
     mode === AppMode.STATS ||
     mode === AppMode.SETTINGS;
+  const isImmersivePracticeMode = mode === AppMode.PRACTICE;
 
   const screenSlotCandidates: BackgroundSlot[] = useMemo(() => {
     switch (mode) {
@@ -233,11 +234,13 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
       {/* App viewport */}
       <div
         className={[
-          'relative z-10 mx-auto min-h-screen w-full',
-          // Responsive container: tighter on mobile, roomier on desktop
-          'max-w-[430px] md:max-w-[560px]',
+          'relative z-10 min-h-screen',
+          // Practice screens can fill the full mobile viewport; other screens keep the app frame.
+          isImmersivePracticeMode
+            ? 'w-screen max-w-none md:mx-auto md:w-full md:max-w-[560px]'
+            : 'mx-auto w-full max-w-[430px] md:max-w-[560px]',
           // Floating device feel on desktop
-          'shadow-2xl shadow-black/40',
+          isImmersivePracticeMode ? 'shadow-none md:shadow-2xl md:shadow-black/40' : 'shadow-2xl shadow-black/40',
           isBottomNavMode ? 'pb-24' : 'pb-0',
           // Core app screens render their assigned background inside this stage.
           useGlobalBackgroundLayer

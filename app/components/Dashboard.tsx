@@ -165,6 +165,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
+  const whitePill =
+    'inline-flex items-center rounded-full border border-amber-300/45 bg-gradient-to-r from-slate-950/78 to-slate-900/72 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)] backdrop-blur-sm';
+  const headerPill =
+    'inline-flex items-center rounded-full border border-amber-300/45 bg-gradient-to-r from-slate-950/82 to-slate-900/76 px-3 py-1.5 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)] backdrop-blur-sm';
+  const streakPill =
+    'inline-flex items-center gap-2 rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm';
   const glassCard =
     theme === 'light'
       ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200 shadow-sm'
@@ -173,14 +179,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     theme === 'light'
       ? 'bg-slate-100 hover:bg-amber-100 border-slate-200'
       : 'bg-slate-800/60 hover:bg-slate-700/60 border-white/5';
-  const sectionTitleChip =
-    theme === 'light'
-      ? 'inline-flex items-center rounded-full border border-slate-300 bg-white/90 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-800 shadow-[0_2px_8px_rgba(15,23,42,0.15)] backdrop-blur-sm'
-      : 'inline-flex items-center rounded-full border border-white/25 bg-black/60 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-[0_2px_10px_rgba(0,0,0,0.4)] backdrop-blur-sm';
+  const sectionTitleChip = whitePill;
   const daysLeftChip =
-    theme === 'light'
-      ? 'inline-flex items-center rounded-full border border-amber-300 bg-white/92 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-800 shadow-[0_2px_8px_rgba(15,23,42,0.12)] backdrop-blur-sm'
-      : 'inline-flex items-center rounded-full border border-amber-300/45 bg-black/65 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-200 shadow-[0_2px_10px_rgba(0,0,0,0.45)] backdrop-blur-sm';
+    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm';
   const infoCardBg =
     theme === 'light'
       ? 'rounded-2xl border border-slate-200 bg-white/85 p-3 shadow-sm'
@@ -201,17 +202,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="relative pt-4 px-4 pb-2">
         <div className="flex justify-between items-start">
           <div className="space-y-1 z-10">
-            <h1 className={`text-xl font-serif font-bold ${textColor}`}>
+            <div className={headerPill}>
               {greeting}
-            </h1>
-            <div className="flex items-center space-x-2">
-              <Trophy size={14} className="text-amber-500" />
-              <span className={`text-xs font-bold uppercase tracking-wider ${subTextColor}`}>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 z-10">
+            <div className={streakPill}>
+              <Trophy size={14} className="text-amber-700" />
+              <span>
                 {user.streak} Days
               </span>
             </div>
-          </div>
-          <div className="flex items-center gap-2 z-10">
             {onOpenProfile ? (
               <button
                 onClick={onOpenProfile}
@@ -340,9 +341,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Practice mode toggle */}
         <div className="space-y-4">
-          <h3 className={sectionTitleChip}>
-            Choose Your Practice
-          </h3>
+          <div className="flex justify-center">
+            <h3 className={sectionTitleChip}>
+              Choose Your Practice
+            </h3>
+          </div>
 
           <div
             className={`relative p-1 rounded-full flex ${

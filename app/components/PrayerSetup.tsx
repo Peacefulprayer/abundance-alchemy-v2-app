@@ -58,6 +58,10 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
 
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
+  const titlePill =
+    'inline-flex items-center rounded-full border border-amber-300/45 bg-gradient-to-r from-slate-950/78 to-slate-900/72 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)] backdrop-blur-sm';
+  const infoPill =
+    'w-full rounded-2xl border border-amber-300/30 bg-gradient-to-r from-slate-950/72 to-slate-900/68 px-4 py-3 text-xs text-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.28)] backdrop-blur-sm';
   const cardBg =
     theme === 'light'
       ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200'
@@ -114,7 +118,7 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
           <span className="mr-1">←</span>
           <span className="font-semibold tracking-wide uppercase">Back</span>
         </button>
-        <span className={`text-[10px] tracking-[0.22em] uppercase ${subTextColor} opacity-90`}>Omba / Pray</span>
+        <span className={titlePill}>Omba / Pray</span>
       </div>
 
       <div className={`rounded-2xl border p-5 shadow-lg mb-4 ${cardBg}`}>
@@ -300,7 +304,11 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
         Save & Continue
       </button>
 
-      <div className={`text-center text-xs mt-3 ${saved ? 'text-emerald-400' : subTextColor}`}>
+      <div
+        className={`${infoPill} mt-3 text-center ${
+          saved ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300' : ''
+        }`}
+      >
         {saved
           ? `Saved: ${selectedPath?.label || 'Prayer Path'} | ${profile.intent} | ${profile.tone}`
           : 'Your path and profile will be used in the prayer guide and session.'}

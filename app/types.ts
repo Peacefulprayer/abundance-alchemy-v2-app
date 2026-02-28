@@ -173,7 +173,11 @@ export interface LibraryProps {
   affirmations?: Affirmation[];
   customAffirmations?: Affirmation[];
   gratitudeLogs: GratitudeLog[];
-  onAdd: (text: string, type: PracticeType) => Promise<void>;
+  onAdd: (
+    text: string,
+    type: PracticeType,
+    category?: string
+  ) => Promise<{ ok: boolean; message?: string }>;
   onRemove: (id: string) => Promise<void>;
   onAudioUpload: React.Dispatch<React.SetStateAction<File | null>>;
   userAudioFile: File | null;

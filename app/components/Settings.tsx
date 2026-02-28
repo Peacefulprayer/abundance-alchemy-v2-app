@@ -37,6 +37,8 @@ export const Settings: React.FC<SettingsProps> = ({
 
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
+  const titlePill =
+    'inline-flex items-center rounded-full border border-amber-300/45 bg-gradient-to-r from-slate-950/78 to-slate-900/72 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)] backdrop-blur-sm';
   const cardBg =
     theme === 'light'
       ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200'
@@ -192,7 +194,7 @@ export const Settings: React.FC<SettingsProps> = ({
         <h1 className="text-xl font-serif font-bold">Settings</h1>
         <div className="w-16"></div>
       </div>
-      <p className={`text-[10px] tracking-[0.22em] uppercase ${subTextColor} opacity-90 mb-3`}>
+      <p className={`${titlePill} mb-3`}>
         Personalize Your Sacred Space
       </p>
 

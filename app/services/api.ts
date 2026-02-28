@@ -13,7 +13,7 @@ export type MeUser = {
 };
 
 export type MeditationTrack = Record<string, any>;
-type AddAffirmationResponse = { success: boolean; id: string | number };
+type AddAffirmationResponse = { success: boolean; id: string | number; message?: string };
 type DeleteAffirmationResponse = { success: boolean; deleted?: boolean };
 type RandomAffirmationResponse = { text?: string };
 
@@ -189,14 +189,16 @@ export const api = {
       id: String(item.id),
       text: String(item.text ?? ''),
       type: item.type as PracticeType,
-      category: 'Personal',
+      category: String(item.category ?? 'Personal'),
       isFavorite: true,
       dateAdded: item.created_at ?? new Date().toISOString(),
     }));
   },
 
-  addUserAffirmation: (_email: string, text: string, type: PracticeType) =>
-    client<AddAffirmationResponse>('add-user-affirmation.php', { body: { text, type } }),
+  addUserAffirmation: (_email: string, text: string, type: PracticeType, category?: string) =>
+    client<AddAffirmationResponse>('add-user-affirmation.php', {
+      body: { text, type, category },
+    }),
 
   removeUserAffirmation: (id: string) =>
     client<DeleteAffirmationResponse>('delete-user-affirmation.php', { body: { id }, method: 'POST' }),

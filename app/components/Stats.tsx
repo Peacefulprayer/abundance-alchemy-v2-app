@@ -17,6 +17,8 @@ export const Stats: React.FC<StatsProps> = ({ user, theme, onBack }) => {
   const primaryFocus = focusLabel(user.focusAreas?.[0]);
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
+  const titlePill =
+    'inline-flex items-center rounded-full border border-amber-300/45 bg-gradient-to-r from-slate-950/78 to-slate-900/72 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)] backdrop-blur-sm';
   const cardBg =
     theme === 'light'
       ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200'
@@ -36,7 +38,7 @@ export const Stats: React.FC<StatsProps> = ({ user, theme, onBack }) => {
           <span className="mr-1">←</span>
           <span className="font-semibold tracking-wide uppercase">Back</span>
         </button>
-        <span className={`text-[10px] tracking-[0.22em] uppercase ${subTextColor} opacity-90`}>
+        <span className={titlePill}>
           Sacred Stats
         </span>
       </div>

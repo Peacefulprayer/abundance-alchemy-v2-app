@@ -4,6 +4,17 @@ import { PracticeType } from '../types';
 import type { Affirmation, GratitudeLog, Soundscape } from '../types';
 import { audioManager } from '../services/audioManager';
 
+const CATEGORY_OPTIONS = [
+  'General',
+  'Peace',
+  'Purpose',
+  'Love & Relationships',
+  'Wealth & Abundance',
+  'Confidence & Inner Strength',
+  'Health & Wholeness',
+  'Self-Love & Worthiness',
+] as const;
+
 interface LibraryProps {
   // accept both prop names (older App.tsx vs newer Library.tsx)
   affirmations?: Affirmation[];
@@ -11,7 +22,11 @@ interface LibraryProps {
 
   gratitudeLogs?: GratitudeLog[];
 
-  onAdd: (text: string, type: PracticeType) => Promise<void> | void;
+  onAdd: (
+    text: string,
+    type: PracticeType,
+    category?: string
+  ) => Promise<{ ok: boolean; message?: string }> | { ok: boolean; message?: string };
   onRemove: (id: string) => Promise<void> | void;
 
   onAudioUpload: React.Dispatch<React.SetStateAction<File | null>> | ((file: File) => void);
@@ -45,10 +60,17 @@ export const Library: React.FC<LibraryProps> = (props) => {
   const [previewingId, setPreviewingId] = useState<string>('');
   const [newAffirmationText, setNewAffirmationText] = useState('');
   const [newAffirmationType, setNewAffirmationType] = useState<PracticeType>(PracticeType.MORNING_IAM);
+  const [newAffirmationCategory, setNewAffirmationCategory] = useState<string>('General');
   const [isSavingAffirmation, setIsSavingAffirmation] = useState(false);
+  const [affirmationStatus, setAffirmationStatus] = useState<{
+    kind: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
+  const titlePill =
+    'inline-flex items-center rounded-full border border-amber-300/45 bg-gradient-to-r from-slate-950/78 to-slate-900/72 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)] backdrop-blur-sm';
   const cardBg =
     theme === 'light'
       ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200 text-slate-900'
@@ -60,9 +82,28 @@ export const Library: React.FC<LibraryProps> = (props) => {
     if (!text || isSavingAffirmation) return;
 
     setIsSavingAffirmation(true);
+    setAffirmationStatus(null);
     try {
-      await onAdd(text, newAffirmationType);
+      const result = await onAdd(text, newAffirmationType, newAffirmationCategory);
+      if (!result?.ok) {
+        setAffirmationStatus({
+          kind: 'error',
+          message: result?.message || 'Unable to save affirmation right now.',
+        });
+        return;
+      }
+
       setNewAffirmationText('');
+      setNewAffirmationCategory('General');
+      setAffirmationStatus({
+        kind: 'success',
+        message: 'Affirmation added.',
+      });
+    } catch {
+      setAffirmationStatus({
+        kind: 'error',
+        message: 'Unable to save affirmation right now.',
+      });
     } finally {
       setIsSavingAffirmation(false);
     }
@@ -71,7 +112,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
   return (
     <div className={`p-4 max-w-md mx-auto pb-24 overflow-y-auto custom-scrollbar ${textColor}`}>
       <div className="mb-4">
-        <span className={`text-[10px] tracking-[0.22em] uppercase ${subTextColor} opacity-90`}>
+        <span className={titlePill}>
           Sacred Archive
         </span>
         <h2 className="text-xl font-bold mt-1">Maktaba (Library)</h2>
@@ -171,6 +212,21 @@ export const Library: React.FC<LibraryProps> = (props) => {
               <option value={PracticeType.MORNING_IAM}>I Am</option>
               <option value={PracticeType.EVENING_ILOVE}>I Love</option>
             </select>
+            <select
+              value={newAffirmationCategory}
+              onChange={(e) => setNewAffirmationCategory(e.target.value)}
+              className={`rounded-lg border px-2 py-2 text-xs min-w-0 flex-1 ${
+                theme === 'light'
+                  ? 'border-slate-300 bg-white text-slate-900'
+                  : 'border-slate-700 bg-slate-900 text-slate-100'
+              }`}
+            >
+              {CATEGORY_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
             <button
               className="px-3 py-2 rounded-lg bg-amber-500 text-black text-xs font-bold hover:bg-amber-400 disabled:opacity-50"
               onClick={handleAddAffirmation}
@@ -179,6 +235,17 @@ export const Library: React.FC<LibraryProps> = (props) => {
               {isSavingAffirmation ? 'Saving...' : 'Add'}
             </button>
           </div>
+          {affirmationStatus ? (
+            <div
+              className={`rounded-xl border px-3 py-2 text-xs ${
+                affirmationStatus.kind === 'success'
+                  ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-300'
+                  : 'border-red-400/35 bg-red-500/10 text-red-200'
+              }`}
+            >
+              {affirmationStatus.message}
+            </div>
+          ) : null}
         </div>
         {affirmations.length === 0 ? (
           <div className="text-sm opacity-70">No affirmations yet.</div>
@@ -186,7 +253,14 @@ export const Library: React.FC<LibraryProps> = (props) => {
           <div className="space-y-2">
             {affirmations.map((a) => (
               <div key={a.id} className={`flex items-start justify-between gap-3 rounded-xl border p-3 ${itemBorder}`}>
-                <div className="text-sm">{a.text}</div>
+                <div>
+                  <div className="text-sm">{a.text}</div>
+                  {a.category ? (
+                    <div className="mt-1 text-[10px] uppercase tracking-wider opacity-70">
+                      {a.category}
+                    </div>
+                  ) : null}
+                </div>
                 <button
                   className="text-xs font-bold text-red-400 hover:text-red-300"
                   onClick={() => onRemove(a.id)}

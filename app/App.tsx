@@ -42,7 +42,7 @@ import { href } from './services/base';
 import type { PrayerPathId } from './components/prayerContent';
 
 // UPDATED IMPORT: Use 'api' from the unified service
-import { api } from './services/api';
+import { api, ApiError } from './services/api';
 
 const REMINDER_LAST_FIRED_KEY = 'abundance_reminder_last_fired';
 const REMINDER_SNOOZE_KEY = 'abundance_reminder_snooze';
@@ -468,6 +468,18 @@ function App() {
     };
   }, [API_BASE]);
 
+  useEffect(() => {
+    const handleAuthLogout = () => {
+      setUser(null);
+      setCurrentMode(AppMode.AUTH);
+    };
+
+    window.addEventListener('auth:logout', handleAuthLogout);
+    return () => {
+      window.removeEventListener('auth:logout', handleAuthLogout);
+    };
+  }, []);
+
   // Keep user affirmations synced from DB after session/user is known.
   useEffect(() => {
     if (!user?.email) return;
@@ -833,16 +845,55 @@ function App() {
 
 
   // ✅ Library handlers
-  const handleAddAffirmation = async (text: string, type: PracticeType) => {
-    if (!user?.email) return;
-    const result = await api.addUserAffirmation(user.email, text, type);
-    if (result?.success && user) {
-      const dbAffirmations = await api.getUserAffirmations();
+  const handleAddAffirmation = async (
+    text: string,
+    type: PracticeType,
+    category?: string
+  ): Promise<{ ok: boolean; message?: string }> => {
+    if (!user?.email) {
+      return { ok: false, message: 'Please sign in again before saving.' };
+    }
+
+    try {
+      const result = await api.addUserAffirmation(user.email, text, type, category);
+      if (!result?.success || !user) {
+        return { ok: false, message: result?.message || 'Unable to save affirmation right now.' };
+      }
+
+      const dbAffirmations = await api.getUserAffirmations().catch(() => []);
+      const nextAffirmations = dbAffirmations.length
+        ? dbAffirmations
+        : [
+            ...(user.customAffirmations || []),
+            {
+              id: String(result.id),
+              text,
+              type,
+              category: category || 'Personal',
+              isFavorite: true,
+              dateAdded: new Date().toISOString(),
+            },
+          ];
+
       const updatedUser = {
         ...user,
-        customAffirmations: dbAffirmations,
+        customAffirmations: nextAffirmations,
       };
       setUser(updatedUser);
+      return { ok: true };
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.status === 401) {
+          setUser(null);
+          setCurrentMode(AppMode.AUTH);
+          return { ok: false, message: 'Your session expired. Please sign in again.' };
+        }
+        return { ok: false, message: error.message || 'Unable to save affirmation right now.' };
+      }
+      if (error instanceof Error) {
+        return { ok: false, message: error.message || 'Unable to save affirmation right now.' };
+      }
+      return { ok: false, message: 'Unable to save affirmation right now.' };
     }
   };
 

@@ -291,7 +291,9 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   // Gratitude screen
   if (showGratitude) {
     return (
-      <div className={`h-full flex flex-col items-center justify-center p-8 max-w-md mx-auto bg-gradient-to-br ${getGradient()}`}>
+      <div
+        className={`min-h-screen md:min-h-[calc(100vh-2rem)] w-full flex flex-col items-center justify-center p-8 max-w-md mx-auto bg-gradient-to-br ${getGradient()}`}
+      >
         <div className="text-center space-y-6 animate-in fade-in zoom-in w-full">
           <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center shadow-2xl">
             <Heart size={40} className="text-white" />
@@ -331,7 +333,9 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   // Main practice screen
   return (
-    <div className={`h-full flex flex-col relative bg-gradient-to-br ${getGradient()}`}>
+    <div
+      className={`min-h-screen md:min-h-[calc(100vh-2rem)] w-full flex flex-col relative bg-gradient-to-br ${getGradient()}`}
+    >
       {/* Header */}
       <header className="px-4 pt-8 pb-3 z-20 relative">
         {/* Back pill button */}
