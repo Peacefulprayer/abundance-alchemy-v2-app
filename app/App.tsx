@@ -1,7 +1,7 @@
-// App.tsx - PHASE 1: All screens wired with complete flow
+// App.tsx - PHASE 1.5: Sacred entry restored with audio orchestration extracted
 // New User: PreSplash → Splash → Welcome → Naming → Auth → Onboarding → Tutorial → Dashboard
-// Returning User: PreSplash → Splash → Welcome → Return Portal → Dashboard
-import React, { useState, useEffect, useRef } from 'react';
+// Returning User: PreSplash → Splash → Welcome → Auth/Return Portal → Dashboard
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   AppMode,
   UserAccount,
@@ -37,9 +37,10 @@ import { Stats } from './components/Stats';
 import { Profile } from './components/Profile';
 import { Layout } from './components/Layout';
 import { BottomNav } from './components/BottomNav';
-import { playAmbience, stopAmbience } from './services/audioService';
+import { playAmbience } from './services/audioService';
 import { href } from './services/base';
 import type { PrayerPathId } from './components/prayerContent';
+import { useAudioOrchestration } from './hooks/useAudioOrchestration';
 
 // UPDATED IMPORT: Use 'api' from the unified service
 import { api, ApiError } from './services/api';
@@ -47,6 +48,9 @@ import { api, ApiError } from './services/api';
 const REMINDER_LAST_FIRED_KEY = 'abundance_reminder_last_fired';
 const REMINDER_SNOOZE_KEY = 'abundance_reminder_snooze';
 const PRAYER_PROFILE_STORAGE_KEY = 'abundance_prayer_profile';
+const APP_RESUME_MODE_KEY = 'abundance_resume_mode';
+const APP_RESUME_PRACTICE_KEY = 'abundance_resume_practice';
+const RETURNING_VISITOR_KEY = 'abundance_returning_visitor';
 
 const REMINDER_ORDER: ReminderPractice[] = [
   'MORNING_IAM',
@@ -72,6 +76,12 @@ const REMINDER_META: Record<ReminderPractice, { title: string; body: string }> =
     title: 'Omba (Prayer)',
     body: 'Pause and enter your prayer practice.',
   },
+};
+
+const DEFAULT_SOUNDSCAPE: Soundscape = {
+  id: 'default',
+  label: 'Default Ambience',
+  url: href('assets/audio/ambient/default.mp3'),
 };
 
 const detectTimezone = (): string => {
@@ -120,6 +130,102 @@ const parseStoredRecord = (key: string): Record<string, any> => {
 const writeStoredRecord = (key: string, value: Record<string, any>) => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const RESUMABLE_AUTH_MODES = new Set<AppMode>([
+  AppMode.RETURN_PORTAL,
+  AppMode.ONBOARDING,
+  AppMode.TUTORIAL,
+  AppMode.DASHBOARD,
+  AppMode.PRACTICE,
+  AppMode.LIBRARY,
+  AppMode.SETTINGS,
+  AppMode.STATS,
+  AppMode.PROFILE,
+  AppMode.MEDITATION_SETUP,
+  AppMode.PRAYER_SETUP,
+  AppMode.PRAYER_GUIDE,
+  AppMode.PRAYER_SESSION,
+]);
+
+const readResumeMode = (): AppMode | null => {
+  try {
+    const value = sessionStorage.getItem(APP_RESUME_MODE_KEY);
+    if (!value) return null;
+    return RESUMABLE_AUTH_MODES.has(value as AppMode) ? (value as AppMode) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeResumeMode = (mode: AppMode) => {
+  if (!RESUMABLE_AUTH_MODES.has(mode)) return;
+  try {
+    sessionStorage.setItem(APP_RESUME_MODE_KEY, mode);
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const clearResumeMode = () => {
+  try {
+    sessionStorage.removeItem(APP_RESUME_MODE_KEY);
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const readPracticeSnapshot = (): PracticeSessionConfig | null => {
+  try {
+    const raw = sessionStorage.getItem(APP_RESUME_PRACTICE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const validType = Object.values(PracticeType).includes(parsed?.type);
+    const validDuration =
+      typeof parsed?.duration === 'number' && Number.isFinite(parsed.duration) && parsed.duration > 0;
+    if (!validType || !validDuration) return null;
+
+    return {
+      type: parsed.type,
+      duration: parsed.duration,
+      focusAreas: Array.isArray(parsed?.focusAreas) ? parsed.focusAreas : [],
+      soundscape:
+        typeof parsed?.soundscapeId === 'string' && parsed.soundscapeId
+          ? parsed.soundscapeId
+          : undefined,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const writePracticeSnapshot = (config: PracticeSessionConfig) => {
+  try {
+    const soundscapeId =
+      typeof config.soundscape === 'string'
+        ? config.soundscape
+        : config.soundscape?.id;
+
+    sessionStorage.setItem(
+      APP_RESUME_PRACTICE_KEY,
+      JSON.stringify({
+        type: config.type,
+        duration: config.duration,
+        focusAreas: Array.isArray(config.focusAreas) ? config.focusAreas : [],
+        soundscapeId: soundscapeId || null,
+      })
+    );
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const clearPracticeSnapshot = () => {
+  try {
+    sessionStorage.removeItem(APP_RESUME_PRACTICE_KEY);
   } catch {
     // ignore storage errors
   }
@@ -342,6 +448,7 @@ const loadStoredPrayerProfile = (): PrayerProfile => {
 function App() {
   // START WITH PRE_SPLASH (not SPLASH)
   const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.PRE_SPLASH);
+  const [bootDestination, setBootDestination] = useState<AppMode>(AppMode.SPLASH);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => loadStoredSettings().theme);
 
 
@@ -391,15 +498,43 @@ function App() {
     }
   });
   const [prayerProfile, setPrayerProfile] = useState<PrayerProfile>(() => loadStoredPrayerProfile());
+  const [isReturningVisitor, setIsReturningVisitor] = useState(false);
+  const [welcomeReturnMode, setWelcomeReturnMode] = useState<AppMode | null>(null);
 
 
   const API_BASE =
     (import.meta as any)?.env?.VITE_API_BASE_URL ?? '/abundance-alchemy-api';
 
+  const routeReturningVisitorToSacredEntry = () => {
+    setWelcomeReturnMode(null);
+    setIsReturningVisitor(true);
+    setBootDestination(AppMode.SPLASH);
+    clearResumeMode();
+    clearPracticeSnapshot();
+    setPracticeConfig(null);
+    try {
+      localStorage.setItem(RETURNING_VISITOR_KEY, '1');
+    } catch {
+      // ignore storage errors
+    }
+    setCurrentMode(AppMode.PRE_SPLASH);
+  };
+
 
   // Convert what Auth returns (UserAccount) into what Dashboard expects (UserProfile).
   const toUserProfile = (account: any): UserProfile => {
     const anyAcc = (account ?? {}) as Record<string, any>;
+    let storedProfile: Partial<UserProfile> = {};
+
+    try {
+      const raw = localStorage.getItem('abundance_user');
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed && typeof parsed === 'object') {
+        storedProfile = parsed as Partial<UserProfile>;
+      }
+    } catch {
+      storedProfile = {};
+    }
 
 
     const profile: UserProfile = {
@@ -413,14 +548,18 @@ function App() {
 
 
       // Required fields (safe defaults)
-      focusAreas: anyAcc.focusAreas ?? [],
-      cyclePreference: anyAcc.cyclePreference ?? CycleType.DAILY,
-      streak: anyAcc.streak ?? 0,
-      level: anyAcc.level ?? 1,
-      affirmationsCompleted: anyAcc.affirmationsCompleted ?? 0,
-      lastPracticeDate: anyAcc.lastPracticeDate ?? null,
-      customAffirmations: anyAcc.customAffirmations ?? [],
-      gratitudeLogs: anyAcc.gratitudeLogs ?? [],
+      focusAreas: anyAcc.focusAreas ?? storedProfile.focusAreas ?? [],
+      cyclePreference: anyAcc.cyclePreference ?? storedProfile.cyclePreference ?? CycleType.DAILY,
+      streak: anyAcc.streak ?? storedProfile.streak ?? 0,
+      level: anyAcc.level ?? storedProfile.level ?? 1,
+      affirmationsCompleted: anyAcc.affirmationsCompleted ?? storedProfile.affirmationsCompleted ?? 0,
+      lastPracticeDate:
+        anyAcc.lastPracticeDate ??
+        anyAcc.last_practice_date ??
+        storedProfile.lastPracticeDate ??
+        null,
+      customAffirmations: anyAcc.customAffirmations ?? storedProfile.customAffirmations ?? [],
+      gratitudeLogs: anyAcc.gratitudeLogs ?? storedProfile.gratitudeLogs ?? [],
 
 
       createdAt: anyAcc.createdAt ?? anyAcc.created_at ?? undefined,
@@ -437,15 +576,46 @@ function App() {
   // ✅ Boot validation: server session is the source of truth.
   useEffect(() => {
     let isMounted = true;
+    let hasKnownVisitor = false;
+
+    try {
+      hasKnownVisitor = localStorage.getItem(RETURNING_VISITOR_KEY) === '1';
+    } catch {
+      hasKnownVisitor = false;
+    }
 
     (async () => {
       try {
         const res = await api.me();
         if (!isMounted) return;
+        const profile = toUserProfile(res);
+        const resumeMode = readResumeMode();
+        const resumePractice =
+          resumeMode === AppMode.PRACTICE ? readPracticeSnapshot() : null;
+        const hasFocusSelection =
+          Array.isArray(profile.focusAreas) && profile.focusAreas.length > 0;
+        const defaultAuthenticatedMode = hasFocusSelection
+          ? AppMode.RETURN_PORTAL
+          : AppMode.ONBOARDING;
 
-        setUser(toUserProfile(res));
+        setUser(profile);
+        setIsReturningVisitor(true);
+        if (resumeMode === AppMode.PRACTICE) {
+          if (resumePractice) {
+            setPracticeConfig(resumePractice);
+            setBootDestination(AppMode.PRACTICE);
+          } else {
+            clearPracticeSnapshot();
+            setPracticeConfig(null);
+            setBootDestination(AppMode.DASHBOARD);
+          }
+        } else {
+          setPracticeConfig(null);
+          setBootDestination(resumeMode || defaultAuthenticatedMode);
+        }
 
         try {
+          localStorage.setItem(RETURNING_VISITOR_KEY, '1');
           localStorage.setItem(
             'abundance_auth',
             JSON.stringify({ id: res.id, email: res.email, name: res.name })
@@ -457,6 +627,11 @@ function App() {
         if (!isMounted) return;
         console.error('me.php validation failed:', e);
         localStorage.removeItem('abundance_auth');
+        clearResumeMode();
+        clearPracticeSnapshot();
+        setPracticeConfig(null);
+        setIsReturningVisitor(hasKnownVisitor);
+        setBootDestination(AppMode.SPLASH);
         setUser(null);
       } finally {
         if (isMounted) setAuthChecked(true);
@@ -471,7 +646,8 @@ function App() {
   useEffect(() => {
     const handleAuthLogout = () => {
       setUser(null);
-      setCurrentMode(AppMode.AUTH);
+      setSacredName('');
+      routeReturningVisitorToSacredEntry();
     };
 
     window.addEventListener('auth:logout', handleAuthLogout);
@@ -479,6 +655,18 @@ function App() {
       window.removeEventListener('auth:logout', handleAuthLogout);
     };
   }, []);
+
+  useEffect(() => {
+    if (!authChecked || !user) return;
+    if (RESUMABLE_AUTH_MODES.has(currentMode)) {
+      writeResumeMode(currentMode);
+    }
+    if (currentMode === AppMode.PRACTICE && practiceConfig) {
+      writePracticeSnapshot(practiceConfig);
+    } else {
+      clearPracticeSnapshot();
+    }
+  }, [authChecked, currentMode, practiceConfig, user]);
 
   // Keep user affirmations synced from DB after session/user is known.
   useEffect(() => {
@@ -526,11 +714,11 @@ function App() {
           setSoundscapes(normalized);
         } else {
           // Fallback default soundscape
-          setSoundscapes([defaultSoundscape]);
+          setSoundscapes([DEFAULT_SOUNDSCAPE]);
         }
       } catch (e) {
         console.error('Failed to load soundscapes:', e);
-        setSoundscapes([defaultSoundscape]);
+        setSoundscapes([DEFAULT_SOUNDSCAPE]);
       }
     };
     loadSoundscapes();
@@ -608,6 +796,8 @@ function App() {
   useEffect(() => {
     if (!settings.reminders.enabled || !user) return;
 
+    let intervalId: number | null = null;
+
     const runReminderCheck = () => {
       const nowMs = Date.now();
       const snoozeMap = parseStoredRecord(REMINDER_SNOOZE_KEY);
@@ -655,9 +845,33 @@ function App() {
       }
     };
 
-    runReminderCheck();
-    const intervalId = window.setInterval(runReminderCheck, 20000);
-    return () => window.clearInterval(intervalId);
+    const startInterval = () => {
+      if (intervalId !== null) return;
+      runReminderCheck();
+      intervalId = window.setInterval(runReminderCheck, 20000);
+    };
+
+    const stopInterval = () => {
+      if (intervalId === null) return;
+      window.clearInterval(intervalId);
+      intervalId = null;
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopInterval();
+      } else {
+        startInterval();
+      }
+    };
+
+    startInterval();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      stopInterval();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [
     settings.reminders.enabled,
     settings.reminders.practiceTimes,
@@ -669,7 +883,12 @@ function App() {
 
   // PreSplash → SplashScreen
   const handlePreSplashComplete = () => {
-    console.log('PreSplash complete → going to SplashScreen');
+    if (!authChecked) {
+      console.log('PreSplash continue requested before boot finished');
+      return;
+    }
+
+    console.log('PreSplash complete → going to: SPLASH');
     setCurrentMode(AppMode.SPLASH);
   };
 
@@ -687,15 +906,19 @@ function App() {
   const handleWelcomeComplete = (nextMode: AppMode) => {
     console.log('WelcomeScreen complete → going to:', nextMode);
 
+    if (welcomeReturnMode) {
+      const returnMode = welcomeReturnMode;
+      setWelcomeReturnMode(null);
+      setCurrentMode(returnMode);
+      return;
+    }
 
-    if (nextMode === AppMode.DASHBOARD) {
+
+    if (nextMode === AppMode.DASHBOARD && user) {
       if (user) {
-        setCurrentMode(AppMode.RETURN_PORTAL);
+        setCurrentMode(bootDestination);
         return;
       }
-      // If somehow unvalidated, route to AUTH (safe)
-      setCurrentMode(AppMode.AUTH);
-      return;
     }
 
 
@@ -715,7 +938,11 @@ function App() {
   const handleAuthRegister = (account: UserAccount) => {
     console.log('Auth register → going to Onboarding');
     const profile = toUserProfile(account);
+    setSacredName('');
+    setIsReturningVisitor(true);
+    setWelcomeReturnMode(null);
     setUser(profile);
+    localStorage.setItem(RETURNING_VISITOR_KEY, '1');
     localStorage.setItem('abundance_auth', JSON.stringify(account));
     setAuthChecked(true);
     // NEW USER FLOW: Auth → Onboarding → Tutorial → Dashboard
@@ -727,10 +954,14 @@ function App() {
   const handleAuthLogin = (account: UserAccount) => {
     console.log('Auth login → going to Return Portal');
     const profile = toUserProfile(account);
+    setSacredName('');
+    setIsReturningVisitor(true);
+    setWelcomeReturnMode(null);
     setUser(profile);
 
 
     // IMPORTANT: store session so refresh survives
+    localStorage.setItem(RETURNING_VISITOR_KEY, '1');
     localStorage.setItem('abundance_auth', JSON.stringify(account));
 
 
@@ -768,23 +999,63 @@ function App() {
   };
 
 
+  const calculateNextStreak = (
+    previousPracticeDate: string | null | undefined,
+    currentStreak: number | null | undefined
+  ): number => {
+    const priorStreak = Number.isFinite(currentStreak) ? Number(currentStreak) : 0;
+    if (!previousPracticeDate) return Math.max(priorStreak, 1);
+
+    const previousDate = new Date(previousPracticeDate);
+    if (Number.isNaN(previousDate.getTime())) return 1;
+
+    const now = new Date();
+    const currentDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const priorDay = new Date(
+      previousDate.getFullYear(),
+      previousDate.getMonth(),
+      previousDate.getDate()
+    );
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const dayDifference = Math.round(
+      (currentDay.getTime() - priorDay.getTime()) / MS_PER_DAY
+    );
+
+    if (dayDifference <= 0) return Math.max(priorStreak, 1);
+    if (dayDifference === 1) return Math.max(priorStreak, 0) + 1;
+    return 1;
+  };
+
   // ✅ Practice session complete
   const handlePracticeComplete = (log?: GratitudeLog) => {
     console.log('Practice complete → returning to Dashboard');
-    stopAmbience();
 
-
-    if (log && user) {
-      // Add gratitude log to user profile
+    if (user) {
+      const completedAt = new Date().toISOString();
+      const nextStreak = calculateNextStreak(
+        user.lastPracticeDate,
+        user.streak
+      );
       const updatedUser = {
         ...user,
-        gratitudeLogs: [...(user.gratitudeLogs || []), log],
+        gratitudeLogs: log ? [...(user.gratitudeLogs || []), log] : (user.gratitudeLogs || []),
+        streak: nextStreak,
         affirmationsCompleted: (user.affirmationsCompleted || 0) + 1,
+        lastPracticeDate: completedAt,
       };
       setUser(updatedUser);
       localStorage.setItem('abundance_user', JSON.stringify(updatedUser));
-    }
 
+      void api.syncProgress({
+        focusAreas: updatedUser.focusAreas || [],
+        streak: nextStreak,
+        level: updatedUser.level || 1,
+        affirmationsCompleted: updatedUser.affirmationsCompleted || 0,
+        lastPracticeDate: completedAt,
+      }).catch((error) => {
+        console.error('Failed to sync practice progress:', error);
+      });
+    }
 
     setPracticeConfig(null);
     setCurrentMode(AppMode.DASHBOARD);
@@ -794,7 +1065,6 @@ function App() {
   // ✅ Practice session exit (without completing)
   const handlePracticeExit = () => {
     console.log('Practice exit → returning to Dashboard');
-    stopAmbience();
     setPracticeConfig(null);
     setCurrentMode(AppMode.DASHBOARD);
   };
@@ -885,7 +1155,7 @@ function App() {
       if (error instanceof ApiError) {
         if (error.status === 401) {
           setUser(null);
-          setCurrentMode(AppMode.AUTH);
+          routeReturningVisitorToSacredEntry();
           return { ok: false, message: 'Your session expired. Please sign in again.' };
         }
         return { ok: false, message: error.message || 'Unable to save affirmation right now.' };
@@ -936,6 +1206,12 @@ function App() {
   // Keep your reset "backdoor" available
   const handleResetAndStartOver = () => {
     localStorage.clear();
+    clearResumeMode();
+    clearPracticeSnapshot();
+    setSacredName('');
+    setIsReturningVisitor(false);
+    setWelcomeReturnMode(null);
+    setBootDestination(AppMode.SPLASH);
     setUser(null);
     setActiveReminder(null);
     setSessionAmbienceUnlocked(false);
@@ -954,10 +1230,10 @@ function App() {
       duration,
       focusAreas: user?.focusAreas || [],
       soundscape: type === PracticeType.MORNING_IAM 
-        ? soundscapes.find(s => s.id === settings.iAmSoundscapeId) || defaultSoundscape
+        ? soundscapes.find(s => s.id === settings.iAmSoundscapeId) || DEFAULT_SOUNDSCAPE
         : type === PracticeType.EVENING_ILOVE
-        ? soundscapes.find(s => s.id === settings.iLoveSoundscapeId) || defaultSoundscape
-        : soundscapes.find(s => s.id === settings.meditationSoundscapeId) || defaultSoundscape,
+        ? soundscapes.find(s => s.id === settings.iLoveSoundscapeId) || DEFAULT_SOUNDSCAPE
+        : soundscapes.find(s => s.id === settings.meditationSoundscapeId) || DEFAULT_SOUNDSCAPE,
     };
     setPracticeConfig(config);
     setCurrentMode(AppMode.PRACTICE);
@@ -973,7 +1249,7 @@ function App() {
   const handleReminderStart = (practice: ReminderPractice) => {
     setActiveReminder(null);
     if (!user) {
-      setCurrentMode(AppMode.AUTH);
+      routeReturningVisitorToSacredEntry();
       return;
     }
 
@@ -1045,6 +1321,12 @@ function App() {
     setCurrentMode(AppMode.SETTINGS);
   };
 
+  const handleReplayWelcomeInvocation = () => {
+    console.log('Replay welcome invocation → WELCOME');
+    setWelcomeReturnMode(currentMode);
+    setCurrentMode(AppMode.WELCOME);
+  };
+
   const handlePreviewSoundscape = (id: string) => {
     const track = soundscapes.find((s) => s.id === id);
     if (!track) return;
@@ -1059,32 +1341,24 @@ function App() {
     localStorage.removeItem('abundance_user');
     localStorage.removeItem(REMINDER_LAST_FIRED_KEY);
     localStorage.removeItem(REMINDER_SNOOZE_KEY);
+    setSacredName('');
     setUser(null);
     setActiveReminder(null);
     setSessionAmbienceUnlocked(false);
     setAuthChecked(true);
-    setCurrentMode(AppMode.AUTH);
+    routeReturningVisitorToSacredEntry();
   };
-
-
-  const defaultSoundscape: Soundscape = {
-    id: 'default',
-    label: 'Default Ambience',
-    url: href('assets/audio/ambient/default.mp3'),
-  };
-
 
   const isPrayerMode =
     currentMode === AppMode.PRAYER_SETUP ||
     currentMode === AppMode.PRAYER_GUIDE ||
     currentMode === AppMode.PRAYER_SESSION;
-  const wasPrayerModeRef = useRef(isPrayerMode);
 
   // Get active soundscape based on current mode/practice type or default
   const getActiveSoundscape = (): Soundscape => {
     if (practiceConfig?.soundscape) {
       if (typeof practiceConfig.soundscape === 'string') {
-        return soundscapes.find(s => s.id === practiceConfig.soundscape) || defaultSoundscape;
+        return soundscapes.find(s => s.id === practiceConfig.soundscape) || DEFAULT_SOUNDSCAPE;
       }
       return practiceConfig.soundscape;
     }
@@ -1092,64 +1366,35 @@ function App() {
       return (
         soundscapes.find((s) => s.id === prayerSoundscapeId) ||
         soundscapes.find((s) => s.id === settings.meditationSoundscapeId) ||
-        defaultSoundscape
+        DEFAULT_SOUNDSCAPE
       );
     }
     if (!sessionAmbienceUnlocked) {
-      return defaultSoundscape;
+      return DEFAULT_SOUNDSCAPE;
     }
-    return soundscapes.find(s => s.id === settings.soundscapeId) || defaultSoundscape;
+    return soundscapes.find(s => s.id === settings.soundscapeId) || DEFAULT_SOUNDSCAPE;
   };
 
-  // Safety guard: on prayer exit, force-stop current ambience once before next mode track starts.
-  useEffect(() => {
-    if (wasPrayerModeRef.current && !isPrayerMode) {
-      stopAmbience(180);
-    }
-    wasPrayerModeRef.current = isPrayerMode;
-  }, [isPrayerMode]);
+  const activeSoundscape = useMemo(
+    () => getActiveSoundscape(),
+    [
+      practiceConfig,
+      soundscapes,
+      isPrayerMode,
+      prayerSoundscapeId,
+      settings.meditationSoundscapeId,
+      sessionAmbienceUnlocked,
+      settings.soundscapeId,
+    ]
+  );
 
-  // Keep ambient music synced with app-level settings.
-  useEffect(() => {
-    if (currentMode === AppMode.PRACTICE) return;
-    if (currentMode === AppMode.SPLASH) return;
-    if (currentMode === AppMode.WELCOME) return;
-
-    const ambienceModes = new Set<AppMode>([
-      AppMode.NAMING_CEREMONY,
-      AppMode.AUTH,
-      AppMode.ONBOARDING,
-      AppMode.TUTORIAL,
-      AppMode.DASHBOARD,
-      AppMode.LIBRARY,
-      AppMode.SETTINGS,
-      AppMode.STATS,
-      AppMode.PROFILE,
-      AppMode.RETURN_PORTAL,
-      AppMode.MEDITATION_SETUP,
-      AppMode.PRAYER_SETUP,
-      AppMode.PRAYER_GUIDE,
-      AppMode.PRAYER_SESSION,
-    ]);
-
-    if (settings.musicOn && ambienceModes.has(currentMode)) {
-      const volume = isPrayerMode ? prayerVolume : settings.ambienceVolume;
-      playAmbience(getActiveSoundscape(), volume);
-    } else {
-      stopAmbience();
-    }
-  }, [
+  useAudioOrchestration({
     currentMode,
-    isPrayerMode,
-    prayerSoundscapeId,
+    settings,
+    activeSoundscape,
     prayerVolume,
-    settings.musicOn,
-    settings.ambienceVolume,
-    settings.meditationSoundscapeId,
-    settings.soundscapeId,
-    sessionAmbienceUnlocked,
-    soundscapes,
-  ]);
+    isPrayerMode,
+  });
 
 
   // Render current screen based on mode
@@ -1158,7 +1403,7 @@ function App() {
       case AppMode.PRE_SPLASH:
         return (
           <UniversalLayout showBottomMenu={false}>
-            <PreSplash onContinue={handlePreSplashComplete} theme="dark" />
+            <PreSplash onContinue={handlePreSplashComplete} theme="dark" isReady={authChecked} />
           </UniversalLayout>
         );
 
@@ -1177,7 +1422,8 @@ function App() {
             <WelcomeScreen
               // IMPORTANT: WelcomeScreen should not use localStorage.
               // It should only see a user when validated by backend (this state).
-              user={user as any}
+              user={user}
+              isReturningVisitor={isReturningVisitor}
               onComplete={handleWelcomeComplete}
               theme={theme}
             />
@@ -1223,7 +1469,7 @@ function App() {
             ) : (
               <div className="min-h-screen flex items-center justify-center">
                 <button
-                  onClick={() => setCurrentMode(AppMode.AUTH)}
+                  onClick={routeReturningVisitorToSacredEntry}
                   className="px-4 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90"
                 >
                   Continue to Sign In
@@ -1271,7 +1517,7 @@ function App() {
                 onExit={handlePracticeExit}
                 userAudioFile={userAudioFile}
                 theme={theme}
-                soundscape={getActiveSoundscape()}
+                soundscape={activeSoundscape}
               />
             ) : (
               <div className="min-h-screen flex items-center justify-center">
@@ -1301,6 +1547,7 @@ function App() {
               onBack={handleSettingsBack}
               onSignOut={handleSignOut}
               onReplayTutorial={handleReplayTutorial}
+              onReplayWelcomeInvocation={handleReplayWelcomeInvocation}
               onAudioUpload={handleAudioUpload}
               theme={theme}
               userAudioFile={userAudioFile}
@@ -1341,7 +1588,7 @@ function App() {
             ) : (
               <div className="min-h-screen flex items-center justify-center">
                 <button
-                  onClick={() => setCurrentMode(AppMode.AUTH)}
+                  onClick={routeReturningVisitorToSacredEntry}
                   className="px-4 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90"
                 >
                   Continue to Sign In
@@ -1364,7 +1611,7 @@ function App() {
             ) : (
               <div className="min-h-screen flex items-center justify-center">
                 <button
-                  onClick={() => setCurrentMode(AppMode.AUTH)}
+                  onClick={routeReturningVisitorToSacredEntry}
                   className="px-4 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90"
                 >
                   Continue to Sign In
@@ -1455,12 +1702,12 @@ function App() {
                   handleSettingsChange({ ...settings, ambienceVolume: volume })
                 }
                 onSignOut={handleSignOut}
-                activeSoundscape={getActiveSoundscape()}
+                activeSoundscape={activeSoundscape}
               />
             ) : (
               <div className="min-h-screen flex items-center justify-center">
                 <button
-                  onClick={() => setCurrentMode(AppMode.AUTH)}
+                  onClick={routeReturningVisitorToSacredEntry}
                   className="px-4 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90"
                 >
                   Continue to Sign In
@@ -1496,7 +1743,6 @@ function App() {
         );
     }
   };
-
 
   return (
     <div className="App">

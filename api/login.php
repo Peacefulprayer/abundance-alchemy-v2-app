@@ -1,6 +1,23 @@
 <?php
 include_once 'config.php';
 
+function aa_table_columns(PDO $conn, string $table): array {
+    try {
+        $stmt = $conn->query("DESCRIBE `$table`");
+        $cols = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $cols[] = (string)($row['Field'] ?? '');
+        }
+        return $cols;
+    } catch (Throwable $e) {
+        return [];
+    }
+}
+
+function aa_has_col(array $cols, string $name): bool {
+    return in_array($name, $cols, true);
+}
+
 $raw  = file_get_contents("php://input");
 $data = json_decode($raw, true);
 
@@ -14,8 +31,12 @@ if ($email === '' || $password === '') {
 }
 
 try {
+    $userCols = aa_table_columns($pdo, 'users');
+    $lastPracticeSelect = aa_has_col($userCols, 'last_practice_date')
+        ? ', last_practice_date'
+        : ', NULL AS last_practice_date';
     $stmt = $pdo->prepare("
-        SELECT id, name, email, password_hash, level, streak, focus_area, affirmations_completed
+        SELECT id, name, email, password_hash, level, streak, focus_area, affirmations_completed{$lastPracticeSelect}
         FROM users
         WHERE email = ?
         LIMIT 1
@@ -46,6 +67,7 @@ try {
             "level" => isset($user['level']) ? (int)$user['level'] : 1,
             "focusAreas" => $focusAreas,
             "affirmationsCompleted" => isset($user['affirmations_completed']) ? (int)$user['affirmations_completed'] : 0,
+            "lastPracticeDate" => $user['last_practice_date'] ?? null,
         ]);
     } else {
         http_response_code(401);

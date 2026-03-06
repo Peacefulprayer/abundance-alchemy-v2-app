@@ -70,7 +70,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
   const titlePill =
-    'inline-flex items-center rounded-full border border-amber-300/45 bg-gradient-to-r from-slate-950/78 to-slate-900/72 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)] backdrop-blur-sm';
+    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-slate-950/92 to-black/88 px-4 py-1.5 text-xs font-extrabold tracking-wide text-white shadow-[0_4px_14px_rgba(0,0,0,0.4)] backdrop-blur-sm';
   const cardBg =
     theme === 'light'
       ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200 text-slate-900'
@@ -113,9 +113,8 @@ export const Library: React.FC<LibraryProps> = (props) => {
     <div className={`p-4 max-w-md mx-auto pb-24 overflow-y-auto custom-scrollbar ${textColor}`}>
       <div className="mb-4">
         <span className={titlePill}>
-          Sacred Archive
+          Maktaba (Library)
         </span>
-        <h2 className="text-xl font-bold mt-1">Maktaba (Library)</h2>
       </div>
 
       {!!soundscapes.length && (
@@ -170,14 +169,9 @@ export const Library: React.FC<LibraryProps> = (props) => {
             const f = e.target.files?.[0];
             if (!f) return;
             if (typeof onAudioUpload === 'function') {
-              // either setter or callback
+              // Works for both a React state setter and a direct callback.
               // @ts-ignore
-              onAudioUpload((prev: any) => f);
-              // if it’s callback style, call directly too
-              try {
-                // @ts-ignore
-                onAudioUpload(f);
-              } catch {}
+              onAudioUpload(f);
             }
           }}
         />

@@ -43,6 +43,7 @@ class AudioService {
 
   // State
   private currentSoundscapeId: string | null = null;
+  private currentSoundscapeUrl: string | null = null;
   private isAmbiencePlaying = false;
   private baseVolume = 0.5; // Applied volume (0.0 - 1.0)
   private baseVolumeRaw = 0.5; // Unscaled volume (0.0 - 1.0)
@@ -91,8 +92,12 @@ class AudioService {
       return;
     }
 
-    // Case 1: Already playing this track
-    if (this.currentSoundscapeId === soundscape.id && this.isAmbiencePlaying) {
+    // Case 1: Already playing this exact track source
+    if (
+      this.currentSoundscapeId === soundscape.id &&
+      this.currentSoundscapeUrl === soundscape.url &&
+      this.isAmbiencePlaying
+    ) {
       // Just ensure volume is correct (in case it was ducked)
       this.fadeVolume(this.baseVolume, SAME_TRACK_VOLUME_RAMP_MS);
       if (this.ambience.paused) this.ambience.play().catch(e => console.warn('Resume failed', e));
@@ -101,6 +106,7 @@ class AudioService {
 
     // Case 2: Changing tracks (or starting from stopped)
     this.currentSoundscapeId = soundscape.id;
+    this.currentSoundscapeUrl = soundscape.url;
     this.isAmbiencePlaying = true;
 
     // Fade out old if playing
@@ -127,6 +133,7 @@ class AudioService {
 
     this.isAmbiencePlaying = false;
     this.currentSoundscapeId = null; // Reset ID so next play is fresh
+    this.currentSoundscapeUrl = null;
 
     await this.fadeVolume(0, duration);
     this.ambience.pause();

@@ -1,6 +1,6 @@
-// components/WelcomeScreen.tsx - SACRED INVOCATION (validated-user only; no localStorage trust)
+// components/WelcomeScreen.tsx - SACRED INVOCATION (state-driven; no localStorage trust)
 import React, { useEffect, useRef, useState } from 'react';
-import { AppMode, UserAccount } from '../types';
+import { AppMode, UserProfile } from '../types';
 import { SacredBackground } from './SacredBackground';
 import { buttonSoundService } from '../services/buttonSoundService';
 import BreathingOrb from './BreathingOrb';
@@ -8,8 +8,9 @@ import { href } from '../services/base';
 import { stopAmbience } from '../services/audioService';
 
 interface WelcomeScreenProps {
-  // IMPORTANT: this must be the *validated* user passed from App.tsx
-  user: UserAccount | null;
+  // IMPORTANT: this must be the state user passed from App.tsx
+  user: UserProfile | null;
+  isReturningVisitor?: boolean;
   onComplete: (nextMode: AppMode) => void;
   theme?: 'light' | 'dark';
 }
@@ -31,6 +32,7 @@ const footerCardClasses =
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   user,
+  isReturningVisitor = false,
   onComplete,
   theme = 'dark',
 }) => {
@@ -42,18 +44,23 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const progressTimerRef = useRef<number | null>(null);
   const playbackStartedAtRef = useRef<number | null>(null);
 
-  // ✅ Returning/new decision is based ONLY on validated user prop (no localStorage)
+  // Returning/new decision is based only on App state (no localStorage).
   const isReturningUser = !!user;
+  const canSkipInvocation = isReturningVisitor || isReturningUser;
 
   const proceed = React.useCallback(() => {
     if (didFinishRef.current) return;
     didFinishRef.current = true;
 
-    const nextMode = isReturningUser ? AppMode.DASHBOARD : AppMode.NAMING_CEREMONY;
+    const nextMode = isReturningUser
+      ? AppMode.DASHBOARD
+      : isReturningVisitor
+      ? AppMode.AUTH
+      : AppMode.NAMING_CEREMONY;
     finishTimeoutRef.current = window.setTimeout(() => {
       onComplete(nextMode);
     }, FINISH_DELAY_MS);
-  }, [isReturningUser, onComplete]);
+  }, [isReturningUser, isReturningVisitor, onComplete]);
 
   useEffect(() => {
     // Pause ambient bed while welcome voice narration is playing.
@@ -215,15 +222,17 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={handleSkip}
-              className="mt-4 md:mt-6 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-xs md:text-sm tracking-wide hover:opacity-90 transition-opacity shadow-lg"
-            >
-              Skip Intro
-            </button>
-          </div>
+          {canSkipInvocation && (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={handleSkip}
+                className="mt-4 md:mt-6 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-xs md:text-sm tracking-wide hover:opacity-90 transition-opacity shadow-lg"
+              >
+                Skip Invocation
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="mt-6 md:mt-8 w-full flex justify-center">

@@ -140,11 +140,11 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
   // UNIVERSAL TITLE CARD CLASSES
   const titleCardClasses =
-    'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
+    'rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-900/88 to-slate-950/84 border-white/15';
 
   // UNIVERSAL CONTENT CARD CLASSES
   const contentCardClasses =
-    'backdrop-blur-lg rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-2xl bg-slate-900/40';
+    'rounded-2xl border border-amber-500/28 p-4 md:p-6 w-full max-w-[280px] shadow-2xl bg-gradient-to-b from-slate-900/84 to-slate-950/80';
 
   return (
     <SacredBackground theme={theme} backgroundType="splash">

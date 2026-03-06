@@ -72,6 +72,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [customTime, setCustomTime] = useState(20);
   const [showJournal, setShowJournal] = useState(false);
   const [journalEntry, setJournalEntry] = useState('');
+  const [journalStatus, setJournalStatus] = useState<string>('');
 
   useEffect(() => {
     apiService.getWisdom('GENERAL').then((text) => {
@@ -120,16 +121,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const descriptions: Record<string, string> = {
       Peace:
         'Cultivating inner stillness and releasing anxiety. You are learning to trust the calm within.',
+      Purpose:
+        'Discovering your unique calling and aligning with your highest path. Your purpose is unfolding.',
       'Life Purpose':
         'Discovering your unique calling and aligning with your highest path. Your purpose is unfolding.',
+      'Love & Relationships':
+        'Attracting authentic connections and deepening bonds. You are worthy of profound love.',
       'Love Relationships':
         'Attracting authentic connections and deepening bonds. You are worthy of profound love.',
+      'Wealth & Abundance':
+        'Opening channels to prosperity and financial flow. Abundance is your natural state.',
       'Wealth Abundance':
         'Opening channels to prosperity and financial flow. Abundance is your natural state.',
+      'Confidence & Inner Strength':
+        'Stepping into your inherent strength and authority. You are powerful beyond measure.',
       'Confidence Inner Power':
         'Stepping into your inherent strength and authority. You are powerful beyond measure.',
+      'Health & Wholeness':
+        'Honoring your body as a sacred vessel. Vitality flows through you effortlessly.',
       'Health Wholeness':
         'Honoring your body as a sacred vessel. Vitality flows through you effortlessly.',
+      'Self-Love & Worthiness':
+        'Embracing your divine perfection exactly as you are. You are enough, always.',
       'Self-Love Worthiness':
         'Embracing your divine perfection exactly as you are. You are enough, always.',
     };
@@ -156,7 +169,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     localStorage.setItem('abundance_user', JSON.stringify(updatedUser));
     setJournalEntry('');
     setShowJournal(false);
-    alert('✨ Reflection saved!');
+    setJournalStatus('Reflection saved.');
+    window.setTimeout(() => setJournalStatus(''), 2200);
   };
 
   const greeting = user.lastPracticeDate
@@ -210,7 +224,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className={streakPill}>
               <Trophy size={14} className="text-amber-700" />
               <span>
-                {user.streak} Days
+                {user.streak} {user.streak === 1 ? 'Day' : 'Days'} Streak
               </span>
             </div>
             {onOpenProfile ? (
@@ -317,7 +331,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <textarea
                     value={journalEntry}
                     onChange={(e) => setJournalEntry(e.target.value)}
-                    placeholder={`Reflect on your ${user.focusAreas[0] || 'focus'} practice...`}
+                    placeholder={`Reflect on your ${getFocusAreaLabel(user.focusAreas[0]) || 'focus'} practice...`}
                     className={`w-full p-3 rounded-lg text-sm resize-none border ${
                       theme === 'light'
                         ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
@@ -335,6 +349,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </div>
                 </div>
               )}
+              {journalStatus ? (
+                <div className="mt-3 rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
+                  {journalStatus}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

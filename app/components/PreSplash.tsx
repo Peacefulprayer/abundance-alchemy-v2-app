@@ -8,9 +8,10 @@ import BreathingOrb from './BreathingOrb';
 interface PreSplashProps {
   onContinue: () => void;
   theme: ThemeMode;
+  isReady?: boolean;
 }
 
-export const PreSplash = ({ onContinue, theme }: PreSplashProps) => {
+export const PreSplash = ({ onContinue, theme, isReady = true }: PreSplashProps) => {
   useEffect(() => {
     unlockAudio();
   }, []);
@@ -100,9 +101,10 @@ export const PreSplash = ({ onContinue, theme }: PreSplashProps) => {
       {/* UNIVERSAL BUTTON */}
       <button
         onClick={handleContinue}
-        className="mt-2 md:mt-4 px-4 py-1.5 md:px-5 md:py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-xs md:text-sm tracking-wider hover:opacity-90 transition-opacity shadow-lg"
+        disabled={!isReady}
+        className="mt-2 md:mt-4 px-4 py-1.5 md:px-5 md:py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-xs md:text-sm tracking-wider hover:opacity-90 transition-opacity shadow-lg disabled:cursor-wait disabled:opacity-60"
       >
-        Enter When Ready
+        {isReady ? 'Enter When Ready' : 'Preparing Your Entry'}
       </button>
     </div>
   );

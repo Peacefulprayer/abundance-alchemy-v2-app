@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { UserAccount } from '../types';
 import { Lock, Mail, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { apiService } from '../services/apiService';
+import { api } from '../services/api';
 import { SacredBackground } from './SacredBackground';
 import BreathingOrb from './BreathingOrb';
 
@@ -31,7 +31,9 @@ export const Auth: React.FC<AuthProps> = ({
   theme,
   initialName = '',
 }) => {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register'>(() =>
+    initialName.trim() ? 'register' : 'login'
+  );
   const [name, setName] = useState(initialName);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,14 +41,6 @@ export const Auth: React.FC<AuthProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // ========== Default mode ==========
-  // NOTE: This is "device-local" heuristic and may be refined later.
-  useEffect(() => {
-    const storedAuth = localStorage.getItem('abundance_auth');
-    if (!storedAuth) setMode('register');
-    else setMode('login');
-  }, []);
 
   // Keep naming ceremony name if it changes upstream
   useEffect(() => {
@@ -97,7 +91,7 @@ export const Auth: React.FC<AuthProps> = ({
 
     try {
       if (mode === 'register') {
-        const data = await apiService.register(name, email, password);
+        const data = await api.register(name, email, password);
 
         const newAccount: UserAccount = {
           id: data?.id,
@@ -113,7 +107,7 @@ export const Auth: React.FC<AuthProps> = ({
         setLoading(false);
         onRegister(newAccount);
       } else {
-        const data = await apiService.login(email, password);
+        const data = await api.login(email, password);
 
         setLoading(false);
         const account: UserAccount = {

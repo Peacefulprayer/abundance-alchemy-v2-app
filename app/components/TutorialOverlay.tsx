@@ -59,11 +59,12 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
       ),
     },
     {
-      title: 'Meditation & Duration',
+      title: 'Meditation, Prayer & Duration',
       content: (
         <div className={`space-y-3 text-left text-xs leading-relaxed ${contentText}`}>
            <p>Select 1, 5, or 15 minutes for quick sessions, or choose a custom duration for deeper practice.</p>
-           <p><strong className={contentAccentStrong}>Meditation Practice:</strong> You can also explore the specific Meditation Mode for guided stillness, breathwork, and ambient soundscapes to find your center.</p>
+           <p><strong className={contentAccentStrong}>Meditation Practice:</strong> Explore the specific Meditation Mode for guided stillness, breathwork, and ambient soundscapes to find your center.</p>
+           <p><strong className={contentAccentStrong}>Omba (Prayer):</strong> Prayer is its own sacred path. You can choose your path, shape your prayer profile, and move into a dedicated prayer atmosphere that is distinct from meditation.</p>
         </div>
       ),
     },
@@ -87,6 +88,16 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
         <div className={`space-y-3 text-left text-xs leading-relaxed ${contentText}`}>
           <p>After each session, it is a good idea to record your thoughts and feelings - this includes any ideas that come to you.</p>
           <p>Your progress is saved and together with your recordings you can look back and track your progress and see where you might want continue a particular focus or change it up.</p>
+        </div>
+      ),
+    },
+    {
+      title: 'Movement Through the App',
+      content: (
+        <div className={`space-y-3 text-left text-xs leading-relaxed ${contentText}`}>
+          <p>For the smoothest experience, move through your practice using the in-app buttons, cards, and bottom menu.</p>
+          <p>When needed use the in-app back buttons to move through the dashboard spaces.</p>
+          <p className={contentMuted}>Avoid refreshing the browser or using your browser back arrow controls as that may return you to the beginning of the entry flow.</p>
         </div>
       ),
     },

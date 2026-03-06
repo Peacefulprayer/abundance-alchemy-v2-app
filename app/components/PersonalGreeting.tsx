@@ -24,11 +24,17 @@ const cycleDays = (cycle: CycleType): number => {
   return 1;
 };
 
-const readCycleStartISO = (): string | null =>
-  localStorage.getItem('abundance_cycle_start') || null;
+const cycleStorageKey = (user: UserProfile, focus: string): string => {
+  const owner = (user.email || user.name || 'user').trim().toLowerCase().replace(/\s+/g, '_');
+  const focusKey = (focus || 'general').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+  return `abundance_cycle_start:${owner}:${focusKey}`;
+};
 
-const writeCycleStartISO = (iso: string) =>
-  localStorage.setItem('abundance_cycle_start', iso);
+const readCycleStartISO = (key: string): string | null =>
+  localStorage.getItem(key) || null;
+
+const writeCycleStartISO = (key: string, iso: string) =>
+  localStorage.setItem(key, iso);
 
 const daysBetween = (startISO: string, end: Date): number => {
   const start = new Date(startISO);
@@ -52,17 +58,18 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
   }, [user]);
 
   const focus = useMemo(() => getFocusLabel(firstFocus), [firstFocus]);
+  const cycleKey = useMemo(() => cycleStorageKey(user, focus), [focus, user]);
 
   const totalDays = useMemo(() => cycleDays(user.cyclePreference), [user.cyclePreference]);
 
   const { dayIndex, remainingDays, complete } = useMemo(() => {
     const now = new Date();
-    let startISO = readCycleStartISO();
+    let startISO = readCycleStartISO(cycleKey);
 
     if (!startISO) {
       // Temporary bridge until backend stores focus_started_at.
       startISO = user.lastPracticeDate || now.toISOString();
-      writeCycleStartISO(startISO);
+      writeCycleStartISO(cycleKey, startISO);
     }
 
     const elapsed = daysBetween(startISO, now);
@@ -71,7 +78,7 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
     const isComplete = elapsed + 1 >= totalDays;
 
     return { dayIndex: day, remainingDays: remaining, complete: isComplete };
-  }, [user.lastPracticeDate, totalDays]);
+  }, [cycleKey, totalDays, user.lastPracticeDate]);
 
   const handleContinue = () => {
     buttonSoundService.play('click');

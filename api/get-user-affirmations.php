@@ -27,6 +27,18 @@ $hasEmail = aa_has_col($affirmCols, 'email');
 $hasCategory = aa_has_col($affirmCols, 'category');
 $hasCreatedAt = aa_has_col($affirmCols, 'created_at');
 
+if ($userId <= 0 && $userEmail === '') {
+    http_response_code(401);
+    echo json_encode([]);
+    exit();
+}
+
+if (!$hasUserId && !$hasUserEmail && !$hasEmail) {
+    error_log('[api/get-user-affirmations.php] user_affirmations missing ownership columns');
+    echo json_encode([]);
+    exit();
+}
+
 if (($hasUserId && $userId > 0) || (($hasUserEmail || $hasEmail) && $userEmail !== '')) {
     try {
         $categorySelect = $hasCategory ? 'category' : 'NULL AS category';
@@ -57,7 +69,7 @@ if (($hasUserId && $userId > 0) || (($hasUserEmail || $hasEmail) && $userEmail !
         echo json_encode([]);
     }
 } else {
-    http_response_code(401);
+    error_log('[api/get-user-affirmations.php] Session identity did not match configured ownership columns');
     echo json_encode([]);
 }
 ?>

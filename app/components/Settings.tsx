@@ -12,6 +12,7 @@ interface SettingsProps {
   onBack: () => void;
   onSignOut: () => void;
   onReplayTutorial: () => void;
+  onReplayWelcomeInvocation: () => void;
   onAudioUpload: (file: File, category: string) => void;
   theme: 'light' | 'dark';
   userAudioFile: File | null;
@@ -27,6 +28,7 @@ export const Settings: React.FC<SettingsProps> = ({
   onBack,
   onSignOut,
   onReplayTutorial,
+  onReplayWelcomeInvocation,
   onAudioUpload,
   theme,
   userAudioFile,
@@ -38,12 +40,16 @@ export const Settings: React.FC<SettingsProps> = ({
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
   const titlePill =
-    'inline-flex items-center rounded-full border border-amber-300/45 bg-gradient-to-r from-slate-950/78 to-slate-900/72 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)] backdrop-blur-sm';
+    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-slate-950/92 to-black/88 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-[0_4px_14px_rgba(0,0,0,0.4)] backdrop-blur-sm';
   const cardBg =
     theme === 'light'
       ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200'
       : 'bg-gradient-to-br from-slate-900/75 to-slate-950/75 border-slate-700';
   const inputBg = theme === 'light' ? 'bg-slate-50 border-slate-300' : 'bg-slate-800 border-slate-600';
+  const actionCardBg =
+    theme === 'light'
+      ? 'bg-gradient-to-br from-slate-900/88 to-slate-800/86 border-slate-700'
+      : 'bg-gradient-to-br from-slate-950/88 to-slate-900/86 border-slate-700';
   const reminderRows: Array<{ id: ReminderPractice; label: string }> = [
     { id: 'MORNING_IAM', label: 'I Am' },
     { id: 'EVENING_ILOVE', label: 'I Love' },
@@ -173,9 +179,9 @@ export const Settings: React.FC<SettingsProps> = ({
 
   // Helper to append badge to label
   const getSourceLabel = (s: Soundscape) => {
-    // If ID is numeric (from DB) or url has 'user_', it's Cloud. Default/Hardcoded is System.
+    // If ID is numeric (from DB) or url has 'user_', it's user-provided. Default/Hardcoded is included.
     const isCloud = !isNaN(Number(s.id)) || s.url?.includes('user_');
-    return isCloud ? `${s.label} (Cloud)` : `${s.label} (System)`;
+    return isCloud ? `${s.label} (Uploaded)` : `${s.label} (Included)`;
   };
 
   return (
@@ -345,7 +351,7 @@ export const Settings: React.FC<SettingsProps> = ({
                         className={`flex-1 py-2 text-[8px] sm:text-[10px] font-bold transition-colors ${
                           uploadCategory === cat 
                           ? 'bg-emerald-600 text-white' 
-                          : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700'
+                          : 'bg-slate-800/60 text-white hover:bg-slate-700'
                         }`}
                      >
                        {cat === 'MORNING_IAM' ? 'I Am' : cat === 'EVENING_ILOVE' ? 'I Love' : cat === 'MEDITATION' ? 'Meditation' : 'Ambience'}
@@ -486,8 +492,8 @@ export const Settings: React.FC<SettingsProps> = ({
         </div>
 
         {/* Actions */}
-        <div className={`rounded-2xl p-4 border shadow-lg ${cardBg}`}>
-          <h3 className="text-sm font-bold mb-4">Actions</h3>
+        <div className={`rounded-2xl p-4 border shadow-lg ${actionCardBg}`}>
+          <h3 className="text-sm font-bold mb-4 text-white">Actions</h3>
           
           <div className="space-y-2">
             <button
@@ -504,12 +510,23 @@ export const Settings: React.FC<SettingsProps> = ({
             <button
               onClick={() => {
                 buttonSoundService.play('click');
+                onReplayWelcomeInvocation();
+              }}
+              className="w-full flex items-center justify-between p-3 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 transition-colors"
+            >
+              <span className="text-sm font-medium text-white">Replay Welcome Invocation</span>
+              <Music size={16} className="text-white" />
+            </button>
+
+            <button
+              onClick={() => {
+                buttonSoundService.play('click');
                 onReplayTutorial();
               }}
-              className="w-full flex items-center justify-between p-3 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 border border-slate-500/20 transition-colors"
+              className="w-full flex items-center justify-between p-3 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 transition-colors"
             >
-              <span className="text-sm font-medium text-slate-300">Replay Tutorial</span>
-              <RefreshCw size={16} className="text-slate-300" />
+              <span className="text-sm font-medium text-white">Replay Tutorial</span>
+              <RefreshCw size={16} className="text-white" />
             </button>
 
             <button
