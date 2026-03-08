@@ -4,6 +4,13 @@ import { UserProfile, CycleType } from '../types';
 import { ChevronRight, Sparkles } from 'lucide-react';
 import { buttonSoundService } from '../services/buttonSoundService';
 import BreathingOrb from './BreathingOrb';
+import { SacredBackground } from './SacredBackground';
+import {
+  SACRED_LAYOUT,
+  SACRED_TITLE_CARD,
+  SACRED_BODY_CARD,
+  SACRED_INNER_WIDTH,
+} from '../styles/sacredCards';
 
 interface OnboardingProps {
   onComplete: (profile: UserProfile) => void;
@@ -93,11 +100,6 @@ const FOCUS_AREAS: FocusChoice[] = [
   }
 ];
 
-const titleCardClasses =
-  'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
-
-const contentCardClasses =
-  'backdrop-blur-md rounded-2xl border p-4 md:p-6 w-full max-w-[320px] shadow-xl bg-gradient-to-b from-slate-800/80 to-slate-900/80 border-white/10';
 
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName }) => {
   const [step, setStep] = useState(1);
@@ -163,24 +165,23 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
   };
 
   return (
-    <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto">
-      <div className="mt-8 md:mt-12 mb-4 md:mb-6">
-        <BreathingOrb size={80} breathingSpeed={4000} />
-      </div>
+    <SacredBackground theme="dark" backgroundType="ONBOARDING" fallbackBackgroundType="AUTH">
+    <div className={SACRED_LAYOUT}>
+      <BreathingOrb size={80} breathingSpeed={4000} />
 
-      <div className={`${titleCardClasses} mb-4 md:mb-6`}>
+      <div className={SACRED_TITLE_CARD}>
         <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
           Abundance Alchemy
         </h1>
       </div>
 
-      <div className={`${contentCardClasses} mb-6 md:mb-6`}>
+      <div className={SACRED_BODY_CARD}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
             <Sparkles className="text-amber-400" size={16} />
             <h2 className="text-sm md:text-base font-bold text-amber-400">Welcome</h2>
           </div>
-          <div className="text-[10px] text-slate-400">Step {visibleStep} / {totalVisibleSteps}</div>
+          <div className="text-[10px] text-slate-300">Step {visibleStep} / {totalVisibleSteps}</div>
         </div>
 
         <div className="space-y-4 max-h-[55vh] overflow-y-auto custom-scrollbar pr-1 text-slate-100">
@@ -191,16 +192,16 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
                 <h3 className="text-base md:text-lg font-bold">
                   We welcome you {displayName}.
                 </h3>
-                <p className="text-xs text-slate-300">It has been spoken. So it is, Ase.</p>
+                <p className="text-xs text-slate-200">It has been spoken. So it is, Ase.</p>
               </div>
-              <p className="text-xs text-slate-300">
+              <p className="text-xs text-slate-200">
                 This is the name that follows you through the app experience.
               </p>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your name"
-                className="w-full bg-slate-900/50 border border-slate-600 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full bg-slate-800/80 border border-slate-600 rounded-xl p-3 text-sm text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-500"
               />
               <div className="mt-2 flex justify-end">
                 <button
@@ -219,13 +220,13 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
           {step === 3 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-base md:text-lg font-bold mb-1">
-                  Name chosen: {displayName}. Select your practice focus here.
+                <h3 className="text-xs md:text-sm font-medium mb-1">
+                  Name chosen: {displayName}. Select your practice focus.
                 </h3>
-                <p className="text-xs text-slate-300">This will add strength to the work.</p>
+                <p className="text-xs text-slate-200">This will add strength to the work.</p>
               </div>
 
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-1 gap-1">
                 {FOCUS_AREAS.map((focus) => {
                   const active = selectedFocus === focus.id;
                   return (
@@ -235,22 +236,22 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
                         buttonSoundService.play();
                         setSelectedFocus(focus.id);
                       }}
-                      className={`w-full text-left rounded-2xl border p-4 transition-all ${
+                      className={`w-full text-left rounded-xl border px-3 py-2 transition-all ${
                         active
                           ? 'bg-amber-500/10 border-amber-500/40'
                           : 'bg-slate-900/40 border-slate-700 hover:border-slate-500'
                       }`}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-3">
-                          <div className="text-lg leading-none mt-0.5">{focus.icon}</div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="text-sm leading-none">{focus.icon}</div>
                           <div>
-                            <div className="font-bold text-sm">{focus.label}</div>
-                            <div className="text-xs text-amber-400 font-bold">{focus.swahili}</div>
+                            <div className="text-sm font-normal">{focus.label}</div>
+                            <div className="text-xs text-amber-400">{focus.swahili}</div>
                           </div>
                         </div>
                         <div
-                          className={`mt-1 w-4 h-4 rounded-full border ${
+                          className={`w-3.5 h-3.5 rounded-full border flex-shrink-0 ${
                             active ? 'border-amber-400 bg-amber-400' : 'border-slate-500'
                           }`}
                         />
@@ -288,7 +289,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
                   {selectedFocusObj ? `(${selectedFocusObj.swahili})` : ''}
                 </span>
               </h3>
-              <p className="text-xs text-slate-300">We now hold your focus in our vision.</p>
+              <p className="text-xs text-slate-200">We now hold your focus in our vision.</p>
 
               <div className="rounded-2xl border border-amber-500/20 bg-slate-900/40 p-4">
                 <p className="text-xs md:text-sm text-slate-200 leading-relaxed">
@@ -301,7 +302,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
                       “{selectedFocusObj.swAffirmation}”
                     </div>
                     {selectedFocusObj.swAffirmationEn && (
-                      <div className="mt-1 text-xs text-slate-300">
+                      <div className="mt-1 text-xs text-slate-200">
                         “{selectedFocusObj.swAffirmationEn}”
                       </div>
                     )}
@@ -332,7 +333,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
             <div className="space-y-4">
               <div>
                 <h3 className="text-base md:text-lg font-normal mb-1">Choose your practice period</h3>
-                <p className="text-xs text-slate-300">You can change this later.</p>
+                <p className="text-xs text-slate-200">You can change this later.</p>
               </div>
 
               <div className="space-y-2">
@@ -358,7 +359,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="font-bold text-sm">{opt.label}</div>
-                          <div className="text-xs text-slate-400">{opt.sub}</div>
+                          <div className="text-xs text-slate-300">{opt.sub}</div>
                         </div>
                         <div
                           className={`mt-1 w-4 h-4 rounded-full border ${
@@ -390,7 +391,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
         </div>
       </div>
 
-      <div className="flex justify-center space-x-2">
+      <div className={`${SACRED_INNER_WIDTH} flex justify-center space-x-2`}>
         {Array.from({ length: totalVisibleSteps }).map((_, i) => {
           const index = i + 1;
           const isActive = index === visibleStep;
@@ -406,8 +407,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
           );
         })}
       </div>
-
-      <div className="h-6 md:h-4" />
     </div>
+    </SacredBackground>
   );
 };

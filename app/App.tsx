@@ -37,13 +37,20 @@ import { Stats } from './components/Stats';
 import { Profile } from './components/Profile';
 import { Layout } from './components/Layout';
 import { BottomNav } from './components/BottomNav';
+// KEPT for Preview functionality only
 import { playAmbience } from './services/audioService';
 import { href } from './services/base';
 import type { PrayerPathId } from './components/prayerContent';
+import { api, ApiError } from './services/api';
+// NEW IMPORT: Audio Orchestration Hook
 import { useAudioOrchestration } from './hooks/useAudioOrchestration';
 
-// UPDATED IMPORT: Use 'api' from the unified service
-import { api, ApiError } from './services/api';
+// ✅ MODULE-LEVEL CONSTANT (stable reference for useMemo)
+const DEFAULT_SOUNDSCAPE: Soundscape = {
+  id: 'default',
+  label: 'Default Ambience',
+  url: href('assets/audio/ambient/default.mp3'),
+};
 
 const REMINDER_LAST_FIRED_KEY = 'abundance_reminder_last_fired';
 const REMINDER_SNOOZE_KEY = 'abundance_reminder_snooze';
@@ -51,14 +58,12 @@ const PRAYER_PROFILE_STORAGE_KEY = 'abundance_prayer_profile';
 const APP_RESUME_MODE_KEY = 'abundance_resume_mode';
 const APP_RESUME_PRACTICE_KEY = 'abundance_resume_practice';
 const RETURNING_VISITOR_KEY = 'abundance_returning_visitor';
-
 const REMINDER_ORDER: ReminderPractice[] = [
   'MORNING_IAM',
   'EVENING_ILOVE',
   'MEDITATION',
   'PRAYER',
 ];
-
 const REMINDER_META: Record<ReminderPractice, { title: string; body: string }> = {
   MORNING_IAM: {
     title: 'I Am Practice',
@@ -77,13 +82,6 @@ const REMINDER_META: Record<ReminderPractice, { title: string; body: string }> =
     body: 'Pause and enter your prayer practice.',
   },
 };
-
-const DEFAULT_SOUNDSCAPE: Soundscape = {
-  id: 'default',
-  label: 'Default Ambience',
-  url: href('assets/audio/ambient/default.mp3'),
-};
-
 const detectTimezone = (): string => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -91,30 +89,25 @@ const detectTimezone = (): string => {
     return 'UTC';
   }
 };
-
 const getNotificationPermissionSnapshot = (): NotificationPermission | 'unsupported' => {
   if (typeof window === 'undefined' || typeof Notification === 'undefined') {
     return 'unsupported';
   }
   return Notification.permission;
 };
-
 const requestNotificationPermission = async (): Promise<NotificationPermission | 'unsupported'> => {
   if (typeof window === 'undefined' || typeof Notification === 'undefined') {
     return 'unsupported';
   }
-
   if (Notification.permission === 'granted' || Notification.permission === 'denied') {
     return Notification.permission;
   }
-
   try {
     return await Notification.requestPermission();
   } catch {
     return Notification.permission;
   }
 };
-
 const parseStoredRecord = (key: string): Record<string, any> => {
   try {
     const raw = localStorage.getItem(key);
@@ -126,7 +119,6 @@ const parseStoredRecord = (key: string): Record<string, any> => {
     return {};
   }
 };
-
 const writeStoredRecord = (key: string, value: Record<string, any>) => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
@@ -134,8 +126,7 @@ const writeStoredRecord = (key: string, value: Record<string, any>) => {
     // ignore storage errors
   }
 };
-
-const RESUMABLE_AUTH_MODES = new Set<AppMode>([
+const RESUMABLE_AUTH_MODES = new Set([
   AppMode.RETURN_PORTAL,
   AppMode.ONBOARDING,
   AppMode.TUTORIAL,
@@ -150,7 +141,6 @@ const RESUMABLE_AUTH_MODES = new Set<AppMode>([
   AppMode.PRAYER_GUIDE,
   AppMode.PRAYER_SESSION,
 ]);
-
 const readResumeMode = (): AppMode | null => {
   try {
     const value = sessionStorage.getItem(APP_RESUME_MODE_KEY);
@@ -160,7 +150,6 @@ const readResumeMode = (): AppMode | null => {
     return null;
   }
 };
-
 const writeResumeMode = (mode: AppMode) => {
   if (!RESUMABLE_AUTH_MODES.has(mode)) return;
   try {
@@ -169,7 +158,6 @@ const writeResumeMode = (mode: AppMode) => {
     // ignore storage errors
   }
 };
-
 const clearResumeMode = () => {
   try {
     sessionStorage.removeItem(APP_RESUME_MODE_KEY);
@@ -177,7 +165,6 @@ const clearResumeMode = () => {
     // ignore storage errors
   }
 };
-
 const readPracticeSnapshot = (): PracticeSessionConfig | null => {
   try {
     const raw = sessionStorage.getItem(APP_RESUME_PRACTICE_KEY);
@@ -187,7 +174,6 @@ const readPracticeSnapshot = (): PracticeSessionConfig | null => {
     const validDuration =
       typeof parsed?.duration === 'number' && Number.isFinite(parsed.duration) && parsed.duration > 0;
     if (!validType || !validDuration) return null;
-
     return {
       type: parsed.type,
       duration: parsed.duration,
@@ -201,14 +187,12 @@ const readPracticeSnapshot = (): PracticeSessionConfig | null => {
     return null;
   }
 };
-
 const writePracticeSnapshot = (config: PracticeSessionConfig) => {
   try {
     const soundscapeId =
       typeof config.soundscape === 'string'
         ? config.soundscape
         : config.soundscape?.id;
-
     sessionStorage.setItem(
       APP_RESUME_PRACTICE_KEY,
       JSON.stringify({
@@ -222,7 +206,6 @@ const writePracticeSnapshot = (config: PracticeSessionConfig) => {
     // ignore storage errors
   }
 };
-
 const clearPracticeSnapshot = () => {
   try {
     sessionStorage.removeItem(APP_RESUME_PRACTICE_KEY);
@@ -230,7 +213,6 @@ const clearPracticeSnapshot = () => {
     // ignore storage errors
   }
 };
-
 const getClockInTimezone = (timezone: string): { dateKey: string; hhmm: string } => {
   try {
     const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -242,7 +224,6 @@ const getClockInTimezone = (timezone: string): { dateKey: string; hhmm: string }
       minute: '2-digit',
       hour12: false,
     });
-
     const parts = formatter.formatToParts(new Date());
     const map: Record<string, string> = {};
     for (const part of parts) {
@@ -267,14 +248,12 @@ const getClockInTimezone = (timezone: string): { dateKey: string; hhmm: string }
     const day = String(now.getDate()).padStart(2, '0');
     const hour = String(now.getHours()).padStart(2, '0');
     const minute = String(now.getMinutes()).padStart(2, '0');
-
     return {
       dateKey: `${year}-${month}-${day}`,
       hhmm: `${hour}:${minute}`,
     };
   }
 };
-
 const createDefaultSettings = (): AppSettings => ({
   theme: 'light',
   soundEffectsOn: true,
@@ -288,8 +267,8 @@ const createDefaultSettings = (): AppSettings => ({
   reminders: {
     enabled: false,
     mode: 'SPECIFIC_TIMES',
-    intervalMinutes: 60, // legacy fallback
-    specificTimes: ['08:00', '20:00'], // legacy fallback
+    intervalMinutes: 60,
+    specificTimes: ['08:00', '20:00'],
     timezone: detectTimezone(),
     snoozeMinutes: 15,
     notificationPermission: getNotificationPermissionSnapshot(),
@@ -301,21 +280,17 @@ const createDefaultSettings = (): AppSettings => ({
     },
   },
 });
-
 const sanitizeTime = (value: unknown, fallback: string): string => {
   if (typeof value !== 'string') return fallback;
   return /^\d{2}:\d{2}$/.test(value) ? value : fallback;
 };
-
 const normalizeSettings = (raw: any): AppSettings => {
   const base = createDefaultSettings();
   if (!raw || typeof raw !== 'object') return base;
-
   const reminderRaw = raw.reminders && typeof raw.reminders === 'object' ? raw.reminders : {};
   const practiceRaw = reminderRaw.practiceTimes && typeof reminderRaw.practiceTimes === 'object'
     ? reminderRaw.practiceTimes
     : {};
-
   const basePractice = base.reminders.practiceTimes;
   const mergedPractice = {
     MORNING_IAM: {
@@ -347,7 +322,6 @@ const normalizeSettings = (raw: any): AppSettings => {
       time: sanitizeTime(practiceRaw.PRAYER?.time, basePractice.PRAYER.time),
     },
   };
-
   const snoozeRaw = Number(reminderRaw.snoozeMinutes);
   const snoozeMinutes = snoozeRaw === 30 || snoozeRaw === 60 ? snoozeRaw : 15;
   const permissionNow = getNotificationPermissionSnapshot();
@@ -356,9 +330,8 @@ const normalizeSettings = (raw: any): AppSettings => {
     permissionNow === 'unsupported'
       ? 'unsupported'
       : storedPermission === 'granted' || storedPermission === 'denied' || storedPermission === 'default'
-      ? storedPermission
-      : permissionNow;
-
+        ? storedPermission
+        : permissionNow;
   return {
     ...base,
     ...raw,
@@ -385,7 +358,6 @@ const normalizeSettings = (raw: any): AppSettings => {
     },
   };
 };
-
 const loadStoredSettings = (): AppSettings => {
   try {
     const raw = localStorage.getItem('abundance_settings');
@@ -395,18 +367,15 @@ const loadStoredSettings = (): AppSettings => {
     return createDefaultSettings();
   }
 };
-
 const DEFAULT_PRAYER_PROFILE: PrayerProfile = {
   intent: 'guidance',
   tone: 'gentle',
   language: 'english',
   style: 'standard',
 };
-
 const normalizePrayerProfile = (raw: any): PrayerProfile => {
   const next = { ...DEFAULT_PRAYER_PROFILE };
   if (!raw || typeof raw !== 'object') return next;
-
   if (
     raw.intent === 'gratitude' ||
     raw.intent === 'guidance' ||
@@ -431,10 +400,8 @@ const normalizePrayerProfile = (raw: any): PrayerProfile => {
   if (raw.style === 'short' || raw.style === 'standard' || raw.style === 'extended') {
     next.style = raw.style;
   }
-
   return next;
 };
-
 const loadStoredPrayerProfile = (): PrayerProfile => {
   try {
     const raw = localStorage.getItem(PRAYER_PROFILE_STORAGE_KEY);
@@ -444,40 +411,29 @@ const loadStoredPrayerProfile = (): PrayerProfile => {
     return { ...DEFAULT_PRAYER_PROFILE };
   }
 };
-
 function App() {
-  // START WITH PRE_SPLASH (not SPLASH)
-  const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.PRE_SPLASH);
+  // ✅ SACRED FLOW: Always start at PRE_SPLASH
+  const [currentMode, setCurrentMode] = useState(AppMode.PRE_SPLASH);
+  // ✅ Boot destination is set AFTER Welcome completes (not before)
   const [bootDestination, setBootDestination] = useState<AppMode>(AppMode.SPLASH);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => loadStoredSettings().theme);
-
-
-  // Dashboard expects UserProfile
   const [user, setUser] = useState<UserProfile | null>(null);
-
-
-  const [sacredName, setSacredName] = useState<string>('');
-
-
-  // ✅ Backend-validated session check
+  const [sacredName, setSacredName] = useState('');
   const [authChecked, setAuthChecked] = useState(false);
-
-
-  // ✅ Phase 1: Additional state for missing screens
   const [settings, setSettings] = useState<AppSettings>(() => loadStoredSettings());
   const [sessionAmbienceUnlocked, setSessionAmbienceUnlocked] = useState(false);
   const [practiceConfig, setPracticeConfig] = useState<PracticeSessionConfig | null>(null);
   const [soundscapes, setSoundscapes] = useState<Soundscape[]>([]);
   const [userAudioFile, setUserAudioFile] = useState<File | null>(null);
   const [activeReminder, setActiveReminder] = useState<ReminderPractice | null>(null);
-  const [prayerSoundscapeId, setPrayerSoundscapeId] = useState<string>(() => {
+  const [prayerSoundscapeId, setPrayerSoundscapeId] = useState(() => {
     try {
       return localStorage.getItem('abundance_prayer_soundscape_id') || 'default';
     } catch {
       return 'default';
     }
   });
-  const [prayerVolume, setPrayerVolume] = useState<number>(() => {
+  const [prayerVolume, setPrayerVolume] = useState(() => {
     try {
       const raw = localStorage.getItem('abundance_prayer_volume');
       const parsed = raw ? Number(raw) : NaN;
@@ -497,11 +453,9 @@ function App() {
       return null;
     }
   });
-  const [prayerProfile, setPrayerProfile] = useState<PrayerProfile>(() => loadStoredPrayerProfile());
+  const [prayerProfile, setPrayerProfile] = useState(() => loadStoredPrayerProfile());
   const [isReturningVisitor, setIsReturningVisitor] = useState(false);
   const [welcomeReturnMode, setWelcomeReturnMode] = useState<AppMode | null>(null);
-
-
   const API_BASE =
     (import.meta as any)?.env?.VITE_API_BASE_URL ?? '/abundance-alchemy-api';
 
@@ -520,12 +474,9 @@ function App() {
     setCurrentMode(AppMode.PRE_SPLASH);
   };
 
-
-  // Convert what Auth returns (UserAccount) into what Dashboard expects (UserProfile).
   const toUserProfile = (account: any): UserProfile => {
     const anyAcc = (account ?? {}) as Record<string, any>;
     let storedProfile: Partial<UserProfile> = {};
-
     try {
       const raw = localStorage.getItem('abundance_user');
       const parsed = raw ? JSON.parse(raw) : null;
@@ -536,18 +487,11 @@ function App() {
       storedProfile = {};
     }
 
-
     const profile: UserProfile = {
       ...(anyAcc as any),
-
-
-      // Identity fields
       id: anyAcc.id ?? anyAcc.user_id ?? anyAcc.email ?? 'local',
       email: anyAcc.email ?? '',
       name: anyAcc.name ?? anyAcc.username ?? anyAcc.displayName ?? '',
-
-
-      // Required fields (safe defaults)
       focusAreas: anyAcc.focusAreas ?? storedProfile.focusAreas ?? [],
       cyclePreference: anyAcc.cyclePreference ?? storedProfile.cyclePreference ?? CycleType.DAILY,
       streak: anyAcc.streak ?? storedProfile.streak ?? 0,
@@ -560,24 +504,19 @@ function App() {
         null,
       customAffirmations: anyAcc.customAffirmations ?? storedProfile.customAffirmations ?? [],
       gratitudeLogs: anyAcc.gratitudeLogs ?? storedProfile.gratitudeLogs ?? [],
-
-
       createdAt: anyAcc.createdAt ?? anyAcc.created_at ?? undefined,
       updatedAt: anyAcc.updatedAt ?? anyAcc.updated_at ?? undefined,
       lastActiveAt: anyAcc.lastActiveAt ?? anyAcc.last_active_at ?? undefined,
       settings: anyAcc.settings ?? undefined,
     } as UserProfile;
 
-
     return profile;
   };
-
 
   // ✅ Boot validation: server session is the source of truth.
   useEffect(() => {
     let isMounted = true;
     let hasKnownVisitor = false;
-
     try {
       hasKnownVisitor = localStorage.getItem(RETURNING_VISITOR_KEY) === '1';
     } catch {
@@ -649,7 +588,6 @@ function App() {
       setSacredName('');
       routeReturningVisitorToSacredEntry();
     };
-
     window.addEventListener('auth:logout', handleAuthLogout);
     return () => {
       window.removeEventListener('auth:logout', handleAuthLogout);
@@ -668,10 +606,8 @@ function App() {
     }
   }, [authChecked, currentMode, practiceConfig, user]);
 
-  // Keep user affirmations synced from DB after session/user is known.
   useEffect(() => {
     if (!user?.email) return;
-
     let isMounted = true;
     (async () => {
       try {
@@ -688,14 +624,12 @@ function App() {
     };
   }, [user?.email]);
 
-
   const normalizeSoundscapes = (raw: any): Soundscape[] => {
     const rows = Array.isArray(raw)
       ? raw
       : Array.isArray(raw?.data)
-      ? raw.data
-      : [];
-
+        ? raw.data
+        : [];
     return rows.map((row: any, index: number) => ({
       id: String(row?.id ?? row?.soundscape_id ?? row?.name ?? index),
       label: row?.label ?? row?.name ?? row?.title ?? 'Soundscape',
@@ -704,7 +638,6 @@ function App() {
     }));
   };
 
-  // ✅ Load soundscapes from backend
   useEffect(() => {
     const loadSoundscapes = async () => {
       try {
@@ -713,7 +646,6 @@ function App() {
         if (normalized.length > 0) {
           setSoundscapes(normalized);
         } else {
-          // Fallback default soundscape
           setSoundscapes([DEFAULT_SOUNDSCAPE]);
         }
       } catch (e) {
@@ -724,13 +656,10 @@ function App() {
     loadSoundscapes();
   }, [user?.email]);
 
-
-  // ✅ Sync theme from settings
   useEffect(() => {
     setTheme(settings.theme);
   }, [settings.theme]);
 
-  // Keep stored notification permission synced with browser state.
   useEffect(() => {
     const permission = getNotificationPermissionSnapshot();
     setSettings((prev) => {
@@ -774,7 +703,6 @@ function App() {
   const triggerReminder = (practice: ReminderPractice) => {
     const reminderMeta = REMINDER_META[practice];
     setActiveReminder((current) => current ?? practice);
-
     if (settings.reminders.notificationPermission !== 'granted') return;
     if (typeof Notification === 'undefined') return;
 
@@ -793,6 +721,7 @@ function App() {
     }
   };
 
+  // ✅ REMINDER EFFECT - OPTIMIZED (Mutable Interval Handle)
   useEffect(() => {
     if (!settings.reminders.enabled || !user) return;
 
@@ -803,7 +732,6 @@ function App() {
       const snoozeMap = parseStoredRecord(REMINDER_SNOOZE_KEY);
       let changedSnooze = false;
 
-      // Snoozed reminders take priority and fire when their snooze expires.
       for (const practice of REMINDER_ORDER) {
         const snoozeUntil = Number(snoozeMap[practice] ?? 0);
         if (!Number.isFinite(snoozeUntil) || snoozeUntil <= 0) continue;
@@ -852,9 +780,10 @@ function App() {
     };
 
     const stopInterval = () => {
-      if (intervalId === null) return;
-      window.clearInterval(intervalId);
-      intervalId = null;
+      if (intervalId !== null) {
+        window.clearInterval(intervalId);
+        intervalId = null;
+      }
     };
 
     const handleVisibilityChange = () => {
@@ -880,39 +809,31 @@ function App() {
     user?.email,
   ]);
 
-
-  // PreSplash → SplashScreen
+  // ✅ SACRED FLOW: PreSplash → Splash (always)
   const handlePreSplashComplete = () => {
     if (!authChecked) {
       console.log('PreSplash continue requested before boot finished');
       return;
     }
-
-    console.log('PreSplash complete → going to: SPLASH');
+    console.log('PreSplash complete → going to SPLASH');
     setCurrentMode(AppMode.SPLASH);
   };
 
-
-  // SplashScreen → WelcomeScreen
+  // ✅ SACRED FLOW: Splash → Welcome (always)
   const handleSplashComplete = () => {
-    console.log('SplashScreen complete → going to WelcomeScreen');
+    console.log('SplashScreen complete → going to WELCOME');
     setCurrentMode(AppMode.WELCOME);
   };
 
-
   // ✅ WelcomeScreen → next step
-  // WelcomeScreen stays sacred/unchanged; it may return DASHBOARD for returning users.
-  // We only route to RETURN_PORTAL if the user has been backend-validated.
   const handleWelcomeComplete = (nextMode: AppMode) => {
     console.log('WelcomeScreen complete → going to:', nextMode);
-
     if (welcomeReturnMode) {
       const returnMode = welcomeReturnMode;
       setWelcomeReturnMode(null);
       setCurrentMode(returnMode);
       return;
     }
-
 
     if (nextMode === AppMode.DASHBOARD && user) {
       if (user) {
@@ -921,36 +842,38 @@ function App() {
       }
     }
 
-
     setCurrentMode(nextMode);
   };
 
-
-  // SacredNamingCeremony → Auth
   const handleSacredNamingComplete = (userData: { name: string }) => {
+    const nextName = userData.name.trim();
+
+    if (user) {
+      console.log('SacredNamingCeremony complete → going to Onboarding');
+      setSacredName(nextName);
+      setUser((prev) => (prev ? { ...prev, name: nextName } : prev));
+      setCurrentMode(AppMode.ONBOARDING);
+      return;
+    }
+
     console.log('SacredNamingCeremony complete → going to Auth');
-    setSacredName(userData.name);
+    setSacredName(nextName);
     setCurrentMode(AppMode.AUTH);
   };
 
-
-  // ✅ FIXED: Auth register → Onboarding (not Dashboard)
   const handleAuthRegister = (account: UserAccount) => {
-    console.log('Auth register → going to Onboarding');
+    console.log('Auth register → going to Naming Ceremony');
     const profile = toUserProfile(account);
-    setSacredName('');
+    setSacredName((account.name || '').trim());
     setIsReturningVisitor(true);
     setWelcomeReturnMode(null);
     setUser(profile);
     localStorage.setItem(RETURNING_VISITOR_KEY, '1');
     localStorage.setItem('abundance_auth', JSON.stringify(account));
     setAuthChecked(true);
-    // NEW USER FLOW: Auth → Onboarding → Tutorial → Dashboard
-    setCurrentMode(AppMode.ONBOARDING);
+    setCurrentMode(AppMode.NAMING_CEREMONY);
   };
 
-
-  // ✅ After login, go to Return Portal (not Dashboard)
   const handleAuthLogin = (account: UserAccount) => {
     console.log('Auth login → going to Return Portal');
     const profile = toUserProfile(account);
@@ -958,22 +881,12 @@ function App() {
     setIsReturningVisitor(true);
     setWelcomeReturnMode(null);
     setUser(profile);
-
-
-    // IMPORTANT: store session so refresh survives
     localStorage.setItem(RETURNING_VISITOR_KEY, '1');
     localStorage.setItem('abundance_auth', JSON.stringify(account));
-
-
-    // We consider this a validated session because backend already authenticated it
     setAuthChecked(true);
-
-
     setCurrentMode(AppMode.RETURN_PORTAL);
   };
 
-
-  // ✅ Onboarding complete → Tutorial
   const handleOnboardingComplete = (profile: UserProfile) => {
     console.log('Onboarding complete → going to Tutorial');
     const mergedProfile: UserProfile = {
@@ -981,9 +894,7 @@ function App() {
       ...profile,
     };
     setUser(mergedProfile);
-    // Save updated profile to localStorage
     localStorage.setItem('abundance_user', JSON.stringify(mergedProfile));
-    // Sync focus to backend
     const email = user?.email ?? (profile as any)?.email;
     if (email) {
       api.syncProgress({ ...profile, email });
@@ -991,13 +902,10 @@ function App() {
     setCurrentMode(AppMode.TUTORIAL);
   };
 
-
-  // ✅ Tutorial complete → Dashboard
   const handleTutorialComplete = () => {
     console.log('Tutorial complete → going to Dashboard');
     setCurrentMode(AppMode.DASHBOARD);
   };
-
 
   const calculateNextStreak = (
     previousPracticeDate: string | null | undefined,
@@ -1005,7 +913,6 @@ function App() {
   ): number => {
     const priorStreak = Number.isFinite(currentStreak) ? Number(currentStreak) : 0;
     if (!previousPracticeDate) return Math.max(priorStreak, 1);
-
     const previousDate = new Date(previousPracticeDate);
     if (Number.isNaN(previousDate.getTime())) return 1;
 
@@ -1026,10 +933,8 @@ function App() {
     return 1;
   };
 
-  // ✅ Practice session complete
   const handlePracticeComplete = (log?: GratitudeLog) => {
     console.log('Practice complete → returning to Dashboard');
-
     if (user) {
       const completedAt = new Date().toISOString();
       const nextStreak = calculateNextStreak(
@@ -1061,60 +966,47 @@ function App() {
     setCurrentMode(AppMode.DASHBOARD);
   };
 
-
-  // ✅ Practice session exit (without completing)
   const handlePracticeExit = () => {
     console.log('Practice exit → returning to Dashboard');
     setPracticeConfig(null);
     setCurrentMode(AppMode.DASHBOARD);
   };
 
-
-  // ✅ Settings handlers
   const handleSettingsChange = (newSettings: AppSettings) => {
     const normalized = normalizeSettings(newSettings);
     const becameEnabled = !settings.reminders.enabled && normalized.reminders.enabled;
     const baseAmbienceChanged = normalized.soundscapeId !== settings.soundscapeId;
-
     if (baseAmbienceChanged) {
-      // Keep default ambience stable until user explicitly changes it in this session.
       setSessionAmbienceUnlocked(true);
     }
 
     setSettings(normalized);
     localStorage.setItem('abundance_settings', JSON.stringify(normalized));
 
-    // Ask only when user intentionally enables reminders.
     if (becameEnabled) {
       handleRequestReminderPermission();
     }
   };
-
 
   const handleSettingsBack = () => {
     console.log('Settings back → returning to Dashboard');
     setCurrentMode(AppMode.DASHBOARD);
   };
 
-
   const handleReplayTutorial = () => {
     console.log('Replay tutorial');
     setCurrentMode(AppMode.TUTORIAL);
   };
 
-
   const handleAudioUpload = async (file: File, category: string) => {
     setUserAudioFile(file);
     if (user?.email) {
       await api.uploadUserAudio(file, category, user.email);
-      // Refresh soundscapes
       const data = await api.getSoundscapes(user.email);
       if (data) setSoundscapes(data);
     }
   };
 
-
-  // ✅ Library handlers
   const handleAddAffirmation = async (
     text: string,
     type: PracticeType,
@@ -1123,7 +1015,6 @@ function App() {
     if (!user?.email) {
       return { ok: false, message: 'Please sign in again before saving.' };
     }
-
     try {
       const result = await api.addUserAffirmation(user.email, text, type, category);
       if (!result?.success || !user) {
@@ -1167,7 +1058,6 @@ function App() {
     }
   };
 
-
   const handleRemoveAffirmation = async (id: string) => {
     await api.removeUserAffirmation(id);
     if (user) {
@@ -1180,30 +1070,22 @@ function App() {
     }
   };
 
-
-  // ✅ Meditation setup handler
   const handleMeditationBegin = (config: PracticeSessionConfig) => {
     console.log('Meditation begin → starting practice');
     setPracticeConfig(config);
     setCurrentMode(AppMode.PRACTICE);
   };
 
-
-  // ✅ Change focus handler
   const handleChangeFocus = () => {
     console.log('Change focus → Onboarding');
     setCurrentMode(AppMode.ONBOARDING);
   };
 
-
-  // ✅ Open Library handler
   const handleOpenLibrary = () => {
     console.log('Dashboard: open library → LIBRARY');
     setCurrentMode(AppMode.LIBRARY);
   };
 
-
-  // Keep your reset "backdoor" available
   const handleResetAndStartOver = () => {
     localStorage.clear();
     clearResumeMode();
@@ -1221,19 +1103,17 @@ function App() {
     setCurrentMode(AppMode.PRE_SPLASH);
   };
 
-
-  // Dashboard-required handlers
   const handleStartPractice = (type: PracticeType, duration: number) => {
     console.log('Dashboard: start practice →', type, duration);
     const config: PracticeSessionConfig = {
       type,
       duration,
       focusAreas: user?.focusAreas || [],
-      soundscape: type === PracticeType.MORNING_IAM 
+      soundscape: type === PracticeType.MORNING_IAM
         ? soundscapes.find(s => s.id === settings.iAmSoundscapeId) || DEFAULT_SOUNDSCAPE
         : type === PracticeType.EVENING_ILOVE
-        ? soundscapes.find(s => s.id === settings.iLoveSoundscapeId) || DEFAULT_SOUNDSCAPE
-        : soundscapes.find(s => s.id === settings.meditationSoundscapeId) || DEFAULT_SOUNDSCAPE,
+          ? soundscapes.find(s => s.id === settings.iLoveSoundscapeId) || DEFAULT_SOUNDSCAPE
+          : soundscapes.find(s => s.id === settings.meditationSoundscapeId) || DEFAULT_SOUNDSCAPE,
     };
     setPracticeConfig(config);
     setCurrentMode(AppMode.PRACTICE);
@@ -1252,7 +1132,6 @@ function App() {
       routeReturningVisitorToSacredEntry();
       return;
     }
-
     if (practice === 'MORNING_IAM') {
       handleStartPractice(PracticeType.MORNING_IAM, 5);
       return;
@@ -1269,7 +1148,6 @@ function App() {
   };
 
   const activeReminderMeta = activeReminder ? REMINDER_META[activeReminder] : null;
-
 
   const handleOpenMeditation = () => {
     console.log('Dashboard: open meditation setup');
@@ -1315,7 +1193,6 @@ function App() {
     }
   };
 
-
   const handleOpenSettings = () => {
     console.log('Dashboard: open settings → SETTINGS');
     setCurrentMode(AppMode.SETTINGS);
@@ -1333,10 +1210,9 @@ function App() {
     playAmbience(track, settings.ambienceVolume);
   };
 
-
   const handleSignOut = () => {
     console.log('Dashboard: sign out');
-    api.logout().catch(() => {});
+    api.logout().catch(() => { });
     localStorage.removeItem('abundance_auth');
     localStorage.removeItem('abundance_user');
     localStorage.removeItem(REMINDER_LAST_FIRED_KEY);
@@ -1354,7 +1230,7 @@ function App() {
     currentMode === AppMode.PRAYER_GUIDE ||
     currentMode === AppMode.PRAYER_SESSION;
 
-  // Get active soundscape based on current mode/practice type or default
+  // ✅ Pure Resolver (Kept for logic clarity)
   const getActiveSoundscape = (): Soundscape => {
     if (practiceConfig?.soundscape) {
       if (typeof practiceConfig.soundscape === 'string') {
@@ -1375,19 +1251,18 @@ function App() {
     return soundscapes.find(s => s.id === settings.soundscapeId) || DEFAULT_SOUNDSCAPE;
   };
 
-  const activeSoundscape = useMemo(
-    () => getActiveSoundscape(),
-    [
-      practiceConfig,
-      soundscapes,
-      isPrayerMode,
-      prayerSoundscapeId,
-      settings.meditationSoundscapeId,
-      sessionAmbienceUnlocked,
-      settings.soundscapeId,
-    ]
-  );
+  // ✅ Stable Value (Module-level DEFAULT_SOUNDSCAPE removed from deps)
+  const activeSoundscape = useMemo(() => getActiveSoundscape(), [
+    practiceConfig,
+    soundscapes,
+    isPrayerMode,
+    prayerSoundscapeId,
+    settings.meditationSoundscapeId,
+    sessionAmbienceUnlocked,
+    settings.soundscapeId,
+  ]);
 
+  // ✅ Hook Call (Replaces old useEffect)
   useAudioOrchestration({
     currentMode,
     settings,
@@ -1396,8 +1271,6 @@ function App() {
     isPrayerMode,
   });
 
-
-  // Render current screen based on mode
   const renderScreen = () => {
     switch (currentMode) {
       case AppMode.PRE_SPLASH:
@@ -1406,22 +1279,16 @@ function App() {
             <PreSplash onContinue={handlePreSplashComplete} theme="dark" isReady={authChecked} />
           </UniversalLayout>
         );
-
-
       case AppMode.SPLASH:
         return (
           <UniversalLayout showBottomMenu={false}>
             <SplashScreen onComplete={handleSplashComplete} theme={theme} />
           </UniversalLayout>
         );
-
-
       case AppMode.WELCOME:
         return (
           <UniversalLayout showBottomMenu={false}>
             <WelcomeScreen
-              // IMPORTANT: WelcomeScreen should not use localStorage.
-              // It should only see a user when validated by backend (this state).
               user={user}
               isReturningVisitor={isReturningVisitor}
               onComplete={handleWelcomeComplete}
@@ -1429,8 +1296,6 @@ function App() {
             />
           </UniversalLayout>
         );
-
-
       case AppMode.NAMING_CEREMONY:
         return (
           <UniversalLayout showBottomMenu={false}>
@@ -1440,8 +1305,6 @@ function App() {
             />
           </UniversalLayout>
         );
-
-
       case AppMode.AUTH:
         return (
           <UniversalLayout showBottomMenu={false}>
@@ -1453,9 +1316,6 @@ function App() {
             />
           </UniversalLayout>
         );
-
-
-      // ✅ Return Portal (PersonalGreeting repurposed)
       case AppMode.RETURN_PORTAL:
         return (
           <UniversalLayout showBottomMenu={false}>
@@ -1478,9 +1338,6 @@ function App() {
             )}
           </UniversalLayout>
         );
-
-
-      // ✅ ONBOARDING - Focus selection flow
       case AppMode.ONBOARDING:
         return (
           <UniversalLayout showBottomMenu={false}>
@@ -1490,9 +1347,6 @@ function App() {
             />
           </UniversalLayout>
         );
-
-
-      // ✅ TUTORIAL - App introduction screens
       case AppMode.TUTORIAL:
         return (
           <UniversalLayout showBottomMenu={false}>
@@ -1503,9 +1357,6 @@ function App() {
             />
           </UniversalLayout>
         );
-
-
-      // ✅ PRACTICE - I Am / I Love / Meditation session
       case AppMode.PRACTICE:
         return (
           <UniversalLayout showBottomMenu={false}>
@@ -1532,9 +1383,6 @@ function App() {
             )}
           </UniversalLayout>
         );
-
-
-      // ✅ SETTINGS - App settings panel
       case AppMode.SETTINGS:
         return (
           <UniversalLayout showBottomMenu={true}>
@@ -1556,9 +1404,6 @@ function App() {
             <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
         );
-
-
-      // ✅ LIBRARY (Maktaba) - Affirmations and gratitude logs
       case AppMode.LIBRARY:
         return (
           <UniversalLayout showBottomMenu={true}>
@@ -1575,7 +1420,6 @@ function App() {
             <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
         );
-
       case AppMode.STATS:
         return (
           <UniversalLayout showBottomMenu={true}>
@@ -1598,7 +1442,6 @@ function App() {
             <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
         );
-
       case AppMode.PROFILE:
         return (
           <UniversalLayout showBottomMenu={true}>
@@ -1621,9 +1464,6 @@ function App() {
             <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
         );
-
-
-      // ✅ MEDITATION_SETUP - Duration and soundscape selection
       case AppMode.MEDITATION_SETUP:
         return (
           <UniversalLayout showBottomMenu={false}>
@@ -1635,7 +1475,6 @@ function App() {
             />
           </UniversalLayout>
         );
-
       case AppMode.PRAYER_SETUP:
         return (
           <UniversalLayout showBottomMenu={false}>
@@ -1652,7 +1491,6 @@ function App() {
             />
           </UniversalLayout>
         );
-
       case AppMode.PRAYER_GUIDE:
         return (
           <UniversalLayout showBottomMenu={false}>
@@ -1666,7 +1504,6 @@ function App() {
             />
           </UniversalLayout>
         );
-
       case AppMode.PRAYER_SESSION:
         return (
           <UniversalLayout showBottomMenu={false}>
@@ -1680,8 +1517,6 @@ function App() {
             />
           </UniversalLayout>
         );
-
-
       case AppMode.DASHBOARD:
         return (
           <UniversalLayout showBottomMenu={true}>
@@ -1714,9 +1549,7 @@ function App() {
                 </button>
               </div>
             )}
-
             <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
-
             <button
               onClick={handleResetAndStartOver}
               className="fixed bottom-24 right-4 px-3 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90 shadow-lg text-xs"
@@ -1727,8 +1560,6 @@ function App() {
             </button>
           </UniversalLayout>
         );
-
-
       default:
         return (
           <div className="min-h-screen flex items-center justify-center">
@@ -1745,21 +1576,17 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <Layout
-        mode={currentMode}
-        practiceType={practiceConfig?.type}
-        theme={theme}
-      >
-        {renderScreen()}
-      </Layout>
-
+    <Layout
+      mode={currentMode}
+      practiceType={practiceConfig?.type}
+      theme={theme}
+    >
+      {renderScreen()}
       {activeReminder && activeReminderMeta && (
         <div className="fixed inset-x-4 bottom-24 z-[120] mx-auto w-full max-w-md rounded-2xl border border-amber-400/40 bg-slate-950/95 p-4 shadow-2xl backdrop-blur">
           <p className="text-[11px] uppercase tracking-wide text-amber-300">Reminder</p>
           <h3 className="mt-1 text-base font-semibold text-white">{activeReminderMeta.title}</h3>
           <p className="mt-1 text-xs text-slate-300">{activeReminderMeta.body}</p>
-
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               onClick={() => handleReminderStart(activeReminder)}
@@ -1794,9 +1621,8 @@ function App() {
           </div>
         </div>
       )}
-    </div>
+    </Layout>
   );
 }
-
 
 export default App;

@@ -135,6 +135,15 @@ html, body, #root {
   animation: sacred-pulse 2s ease-in-out infinite;
 }
 
+/* Sacred glass — available for non-card elements that opt into blur.
+ * NOT used on entry flow cards (those use high-opacity solid gradients
+ * to avoid the Safari backdrop-filter compositing flash).
+ * Only apply where parent does NOT have overflow:hidden. */
+.sacred-glass {
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+  backdrop-filter: blur(12px) saturate(1.15);
+}
+
 /* UI Support */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;

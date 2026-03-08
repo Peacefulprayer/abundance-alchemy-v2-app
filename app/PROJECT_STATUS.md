@@ -4,25 +4,41 @@
 https://github.com/Peacefulprayer/abundance-alchemy-v2-app
 
 ## Current phase
-Phase 1 — Stabilize + unify foundation (tagged milestones)
+Phase 1.5 — Sacred entry flow polish + shared ceremonial UI system
 
 ## Non-negotiables
 - Button tap tone is canonical and must be used across the app.
 
 ## Current state
-- main is synced to origin.
-- .gitignore updated to prevent macOS/build artifacts from being committed.
+- Sacred entry flow remains:
+  - `PRE_SPLASH -> SPLASH -> WELCOME -> NAMING/AUTH/RETURN PORTAL -> ONBOARDING -> TUTORIAL -> DASHBOARD`
+- Shared `sacredCards` layout/card system is now applied across the core entry sequence:
+  - `PreSplash`
+  - `Auth`
+  - `SacredNamingCeremony`
+  - `Onboarding`
+  - `TutorialOverlay`
+  - `WelcomeScreen`
+  - `SplashScreen`
+- Tutorial screens were visually improved and are in a stronger state than the prior checkpoint.
+- Register-from-direct-auth now carries the entered name through `NAMING_CEREMONY` into `ONBOARDING`.
+- Splash glass-card treatment and welcome skip behavior were restored after regressions.
 
 ## Known issues (from prior work)
-- App sometimes blank screen when moving from tutorial to Dashboard.
-- iOS Safari overscroll gap.
-- Header overlap / dashboard bottom cutoffs on some screens.
-- Missing back/cancel on setup screens.
-- Auth/reset-password return link should point users back to app.
-- Maktaba UI text/button overflow.
-- Admin routing: /abundance-alchemy/admin
+- Anonymous pre-auth refresh behavior still needs an explicit product decision.
+- `api/me.php` can still generate expected `401` console noise on anonymous boot.
+- One user-reported flow glitch is intentionally being left for later.
+- Broader post-dashboard consistency pass is still pending on:
+  - `Library`
+  - `Settings`
+  - `Stats`
+  - `Profile`
+  - `Prayer`
+  - practice screens
 
 ## Next actions
-1) Identify canonical button sound file path and centralize playButtonTap().
-2) Confirm current app flow: PRE_SPLASH -> SPLASH -> WELCOME (welcome.mp3) -> tutorial -> dashboard.
-3) Resolve blank screen root cause and add guardrails.
+1) Visual QA the full sacred entry path on mobile Safari and desktop:
+   `PreSplash`, `Splash`, `Welcome`, `Naming`, `Auth`, `Onboarding`, `Tutorial`.
+2) Decide the intended refresh model for anonymous users before coding the deeper flow fix.
+3) Reduce anonymous-boot `401` noise by narrowing when `me.php` is called.
+4) Continue consistency polish across post-dashboard screens.

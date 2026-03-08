@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { Sparkles, ArrowRight, ArrowLeft } from 'lucide-react';
 import { buttonSoundService } from '../services/buttonSoundService';
 import BreathingOrb from './BreathingOrb';
+import { SacredBackground } from './SacredBackground';
+import {
+  SACRED_LAYOUT,
+  SACRED_TITLE_CARD,
+  SACRED_BODY_CARD,
+  SACRED_INNER_WIDTH,
+} from '../styles/sacredCards';
 
 interface TutorialOverlayProps {
   onComplete: () => void;
@@ -12,36 +19,20 @@ interface TutorialOverlayProps {
 export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, onChangeFocus, theme }) => {
   const [step, setStep] = useState(0);
 
-  const titleCardClasses =
-    'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
-
-  const getContentCardClasses = () => {
-    const base =
-      'backdrop-blur-md rounded-2xl border p-4 md:p-6 w-full max-w-[280px] shadow-xl';
-    return theme === 'dark'
-      ? `${base} bg-gradient-to-b from-slate-800/80 to-slate-900/80 border-white/10`
-      : `${base} bg-gradient-to-b from-white to-slate-50 border-slate-200`;
-  };
-
-  const textColor = theme === 'dark' ? 'text-slate-100' : 'text-slate-900';
-  const subTextColor = theme === 'dark' ? 'text-slate-300' : 'text-slate-700';
-  const contentText = theme === 'dark' ? 'text-slate-100' : 'text-slate-800';
-  const contentMuted = theme === 'dark' ? 'text-slate-300' : 'text-slate-700';
-  const contentAccent = theme === 'dark' ? 'text-amber-400' : 'text-amber-700';
-  const contentAccentStrong = theme === 'dark' ? 'text-amber-200' : 'text-amber-800';
-  const contentIndigo = theme === 'dark' ? 'text-indigo-300' : 'text-indigo-700';
-  const contentEmerald = theme === 'dark' ? 'text-emerald-400' : 'text-emerald-700';
-  const contentBorder = theme === 'dark' ? 'border-amber-500' : 'border-amber-500/50';
-  const indicatorInactive = theme === 'dark' ? 'bg-slate-600/60' : 'bg-slate-300';
-  const backButtonClasses =
-    theme === 'dark'
-      ? 'border-slate-600 text-slate-200 hover:bg-slate-800'
-      : 'border-slate-300 text-slate-700 hover:bg-slate-100';
-  const skipClasses =
-    theme === 'dark'
-      ? 'text-slate-400 hover:text-slate-300'
-      : 'text-slate-600 hover:text-slate-700';
-  const footerNote = theme === 'dark' ? 'text-slate-500' : 'text-slate-600';
+  // Tutorial is always dark + green text for sacred ceremonial path
+  const textColor = 'text-emerald-200';
+  const subTextColor = 'text-emerald-300';
+  const contentText = 'text-emerald-300';
+  const contentMuted = 'text-emerald-200';
+  const contentAccent = 'text-amber-400';
+  const contentAccentStrong = 'text-amber-200';
+  const contentIndigo = 'text-indigo-300';
+  const contentEmerald = 'text-emerald-400';
+  const contentBorder = 'border-amber-500';
+  const indicatorInactive = 'bg-slate-600/60';
+  const backButtonClasses = 'border-slate-600 text-emerald-300 hover:bg-slate-800';
+  const skipClasses = 'text-emerald-400 hover:text-emerald-300';
+  const footerNote = 'text-emerald-400';
 
   const steps = [
     {
@@ -121,18 +112,17 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
 
 
   return (
-    <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto">
-      <div className="mt-8 md:mt-12 mb-4 md:mb-6">
-        <BreathingOrb size={80} breathingSpeed={4000} />
-      </div>
+    <SacredBackground theme="dark" backgroundType="TUTORIAL" fallbackBackgroundType="ONBOARDING">
+    <div className={SACRED_LAYOUT}>
+      <BreathingOrb size={80} breathingSpeed={4000} />
 
-      <div className={`${titleCardClasses} mb-4 md:mb-6`}>
+      <div className={SACRED_TITLE_CARD}>
         <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
           Abundance Alchemy
         </h1>
       </div>
 
-      <div className={`${getContentCardClasses()} mb-6 md:mb-8`}>
+      <div className={SACRED_BODY_CARD}>
         <div className="text-center space-y-3">
           <Sparkles size={28} className="mx-auto text-amber-500" />
           <h2 className={`text-base md:text-lg font-bold text-amber-400 ${textColor}`}>
@@ -157,7 +147,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
         </div>
       </div>
 
-      <div className="w-full max-w-[280px] space-y-3">
+      <div className={`${SACRED_INNER_WIDTH} space-y-3`}>
         <div className="flex space-x-3">
           {step > 0 && (
             <button
@@ -190,5 +180,6 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
         </p>
       </div>
     </div>
+    </SacredBackground>
   );
 };

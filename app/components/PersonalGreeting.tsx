@@ -3,6 +3,13 @@ import React, { useMemo } from 'react';
 import { CycleType, FocusArea, UserProfile } from '../types';
 import BreathingOrb from './BreathingOrb';
 import { buttonSoundService } from '../services/buttonSoundService';
+import {
+  SACRED_LAYOUT,
+  SACRED_ORB_WRAPPER,
+  SACRED_TITLE_CARD,
+  SACRED_BODY_CARD,
+  SACRED_CARD_GAP,
+} from '../styles/sacredCards';
 
 interface PersonalGreetingProps {
   user: UserProfile;
@@ -46,7 +53,6 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
   user,
   onContinue,
   onChooseNewFocus,
-  theme = 'dark',
 }) => {
   const displayName = useMemo(() => {
     return (user.preferredName || user.name || 'Friend').trim() || 'Friend';
@@ -67,7 +73,6 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
     let startISO = readCycleStartISO(cycleKey);
 
     if (!startISO) {
-      // Temporary bridge until backend stores focus_started_at.
       startISO = user.lastPracticeDate || now.toISOString();
       writeCycleStartISO(cycleKey, startISO);
     }
@@ -90,49 +95,44 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
     onChooseNewFocus();
   };
 
-  const titleCard =
-    'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
-
-  const bodyCard =
-    'backdrop-blur-md rounded-2xl border border-amber-500/25 p-4 md:p-6 w-full max-w-[280px] shadow-xl bg-slate-950/70';
-
-  const returnText = 'text-white';
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto">
-      <div className="mt-8 md:mt-12 mb-4 md:mb-6">
+    <div className={`${SACRED_LAYOUT} bg-black`}>
+      {/* ORB */}
+      <div className={SACRED_ORB_WRAPPER}>
         <BreathingOrb size={80} breathingSpeed={4000} />
       </div>
 
-      <div className={`${titleCard} mb-4 md:mb-6`}>
+      {/* TITLE CARD */}
+      <div className={`${SACRED_TITLE_CARD} ${SACRED_CARD_GAP}`}>
         <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
           Abundance Alchemy
         </h1>
       </div>
 
-      <div className={`${bodyCard} mb-6 md:mb-8`}>
+      {/* BODY CARD */}
+      <div className={`${SACRED_BODY_CARD} ${SACRED_CARD_GAP}`}>
         <div className="text-center space-y-2 md:space-y-3">
-          <p className={`text-sm md:text-base font-normal tracking-wide ${returnText}`}>
+          <p className="text-sm md:text-base font-normal tracking-wide text-white">
             Karibu Tena.
           </p>
 
-          <p className={`text-sm md:text-base font-normal tracking-wide ${returnText}`}>
+          <p className="text-sm md:text-base font-normal tracking-wide text-white">
             Welcome Back
           </p>
 
-          <p className={`text-[10px] md:text-sm leading-tight whitespace-nowrap ${returnText}`}>
+          <p className="text-[10px] md:text-sm leading-tight whitespace-nowrap text-white">
             The Ancestors acknowledge your devotion.
           </p>
 
-          <p className={`text-sm md:text-base font-normal ${returnText} pt-1`}>
+          <p className="text-sm md:text-base font-normal text-white pt-1">
             {displayName}, your focus is:
           </p>
 
-          <p className={`text-sm md:text-base font-normal ${returnText}`}>
+          <p className="text-sm md:text-base font-normal text-white">
             {focus}.
           </p>
 
-          <div className={`pt-2 text-sm md:text-base font-normal ${returnText} space-y-1`}>
+          <div className="pt-2 text-sm md:text-base font-normal text-white space-y-1">
             {!complete ? (
               <p>
                 Day {dayIndex} of {totalDays}.{' '}
@@ -142,9 +142,9 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
               </p>
             ) : (
               <>
-                <p className={returnText}>You have completed your cycle.</p>
-                <p className={returnText}>Continue with this focus,</p>
-                <p className={returnText}>or choose a new one?</p>
+                <p>You have completed your cycle.</p>
+                <p>Continue with this focus,</p>
+                <p>or choose a new one?</p>
               </>
             )}
           </div>

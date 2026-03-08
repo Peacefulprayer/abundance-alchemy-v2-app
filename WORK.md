@@ -1,6 +1,6 @@
 # Abundance Alchemy Work Log
 
-Last updated: 2026-02-27
+Last updated: 2026-03-06
 
 ## Why this file exists
 This is a checkpoint record so work can resume quickly if a session drops.
@@ -143,3 +143,80 @@ This is a checkpoint record so work can resume quickly if a session drops.
   - `app/components/WelcomeScreen.tsx`
   - `app/components/PersonalGreeting.tsx`
   - `app/components/Dashboard.tsx`
+
+## Checkpoint: 2026-03-06
+
+### Resume point used
+- Continued from the 2026-02-27 UI checkpoint above.
+- Verified current working tree only has one live app entry file: `app/App.tsx`.
+- Confirmed older root-level `App.tsx` exists only in git history from pre-restructure commits and is not part of the active tree.
+
+### Latest fix completed
+- Reconfirmed the active app entry is `app/App.tsx`; older root-level `App.tsx` remains history-only.
+- Restored `app/App.tsx` to the pushed sacred-entry behavior:
+  - returning-visitor marker/state restored
+  - `WelcomeScreen` again receives `isReturningVisitor`
+  - gated `Continue to Sign In` actions route back through `PRE_SPLASH -> SPLASH -> WELCOME`
+  - auth/session-expiry exits re-enter sacred flow instead of jumping directly to `AUTH`
+- Standardized the S1-S4 entry flow screens onto a shared sacred card/layout system:
+  - `PreSplash`
+  - `Auth`
+  - `SacredNamingCeremony`
+  - `Onboarding`
+  - `TutorialOverlay`
+  - `WelcomeScreen`
+  - `SplashScreen`
+- Updated splash-entry UI after Safari/card regressions:
+  - `WelcomeScreen` card contrast strengthened
+  - `PersonalGreeting` card contrast strengthened
+  - `WelcomeScreen` now always shows the `Skip Invocation` button on the `welcome.mp3` screen
+  - `SplashScreen` glass-card treatment restored with backdrop blur
+- Tutorial screens received a stronger visual pass and are currently in a better state than the prior checkpoint.
+
+### Next likely check
+- Visual QA on Safari/iPhone for:
+  - `SplashScreen`
+  - `WelcomeScreen`
+  - returning-user `PersonalGreeting`
+- Visual QA for:
+  - `PreSplash`
+  - `Auth`
+  - `SacredNamingCeremony`
+  - `Onboarding`
+  - `TutorialOverlay`
+- Confirm the sacred entry sequence still behaves correctly for:
+  - new user
+  - returning signed-in user
+  - returning signed-out user
+  - session-expired user bounced from protected screens
+- Pending design decision:
+  - define expected refresh behavior during anonymous pre-auth flow (`PRE_SPLASH`, `SPLASH`, `WELCOME`) before implementing a deeper state fix
+- Known console noise still present:
+  - expected `401` from `api/me.php` on anonymous boot until boot-validation logic is narrowed
+
+### Verified on 2026-03-06
+- `cd app && npm run build` completed successfully after the entry-flow cleanup and splash/welcome UI fixes.
+- Additional local builds continued to pass after:
+  - shared entry-flow card refactor
+  - tutorial polish
+  - deleted-account registration flow fix
+
+### Current frontend files touched in this checkpoint
+- `app/App.tsx`
+- `app/components/Auth.tsx`
+- `app/components/Onboarding.tsx`
+- `app/components/PreSplash.tsx`
+- `app/components/SplashScreen/SplashScreen.tsx`
+- `app/components/SacredNamingCeremony.tsx`
+- `app/components/TutorialOverlay.tsx`
+- `app/components/WelcomeScreen.tsx`
+- `app/components/PersonalGreeting.tsx`
+- `app/index.css`
+- `app/tailwind.config.js`
+- `app/styles/sacredCards.ts`
+
+### Additional fix after checkpoint
+- Fixed deleted-account direct-to-auth registration flow:
+  - `handleAuthRegister` now preserves `account.name` in `sacredName`
+  - post-register flow now routes through `NAMING_CEREMONY` instead of jumping straight to `ONBOARDING`
+  - when naming completes for an already-registered user, the chosen name is carried into `ONBOARDING` instead of sending the user back to `AUTH`

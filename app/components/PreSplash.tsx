@@ -4,6 +4,14 @@ import { ThemeMode } from '../types';
 import { buttonSoundService } from '../services/buttonSoundService';
 import { unlockAudio } from '../services/audioService';
 import BreathingOrb from './BreathingOrb';
+import {
+  SACRED_LAYOUT,
+  SACRED_ORB_WRAPPER,
+  SACRED_TITLE_CARD,
+  SACRED_BODY_CARD,
+  SACRED_CARD_GAP,
+  SACRED_INNER_WIDTH,
+} from '../styles/sacredCards';
 
 interface PreSplashProps {
   onContinue: () => void;
@@ -21,40 +29,30 @@ export const PreSplash = ({ onContinue, theme, isReady = true }: PreSplashProps)
     onContinue();
   };
 
-  // UNIVERSAL TITLE CARD CLASSES
-  const titleCardClasses =
-    'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
-
-  // UNIVERSAL CONTENT CARD CLASSES
-  const getContentCardClasses = () => {
-    const base =
-      'backdrop-blur-md rounded-2xl border p-4 md:p-6 w-full max-w-[280px] shadow-xl';
-    return theme === 'dark'
-      ? `${base} bg-gradient-to-b from-slate-800/80 to-slate-900/80 border-white/10`
-      : `${base} bg-gradient-to-b from-white to-slate-50 border-slate-200`;
-  };
+  const contentCardClasses =
+    theme === 'dark'
+      ? SACRED_BODY_CARD
+      : 'sacred-glass rounded-2xl border border-slate-200 p-4 md:p-6 w-full max-w-[300px] md:max-w-[380px] shadow-xl bg-gradient-to-b from-white/95 to-slate-50/90';
 
   const textColor = theme === 'dark' ? 'text-slate-100' : 'text-slate-800';
   const subTextColor = theme === 'dark' ? 'text-slate-300' : 'text-slate-600';
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto bg-black"
-    >
-      {/* UNIVERSAL ORB - 80PX SIZE */}
-      <div className="mt-8 md:mt-12 mb-4 md:mb-6">
+    <div className={`${SACRED_LAYOUT} bg-black`}>
+      {/* ORB */}
+      <div className={SACRED_ORB_WRAPPER}>
         <BreathingOrb size={80} breathingSpeed={4000} />
       </div>
 
-      {/* UNIVERSAL TITLE CARD - SINGLE LINE */}
-      <div className={`${titleCardClasses} mb-4 md:mb-6`}>
+      {/* TITLE CARD */}
+      <div className={`${SACRED_TITLE_CARD} ${SACRED_CARD_GAP}`}>
         <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
           Abundance Alchemy
         </h1>
       </div>
 
       {/* WELCOME CARD */}
-      <div className={`${getContentCardClasses()} mb-4 md:mb-4`}>
+      <div className={`${contentCardClasses} ${SACRED_CARD_GAP}`}>
         <div className="space-y-3 text-center">
           <p className={`text-sm md:text-base font-light ${textColor} mb-2`}>
             With Great Love, Welcome.
@@ -76,11 +74,10 @@ export const PreSplash = ({ onContinue, theme, isReady = true }: PreSplashProps)
         </div>
       </div>
 
-      {/* AUDIO CARD */}
-      <div className={`${getContentCardClasses()} mb-6 md:mb-4`}>
+      {/* AUDIO NOTICE CARD */}
+      <div className={`${contentCardClasses} ${SACRED_CARD_GAP}`}>
         <div className="space-y-2 md:space-y-3 text-center">
           <div className="border-t border-amber-500/40 pt-2 md:pt-3"></div>
-
           <div className="space-y-0.5 md:space-y-1">
             <p className="text-[11px] md:text-xs text-amber-500 font-semibold tracking-wide">
               Audio Is Enabled.
@@ -89,16 +86,15 @@ export const PreSplash = ({ onContinue, theme, isReady = true }: PreSplashProps)
               Headphones Strongly Suggested.
             </p>
           </div>
-
           <div className="border-b border-amber-500/40 pb-2 md:pb-3"></div>
         </div>
       </div>
 
-      <p className="text-[10px] md:text-[11px] text-white italic tracking-[0.02em] text-center mb-2">
+      <p className={`text-[10px] md:text-[11px] text-white italic tracking-[0.02em] text-center mb-2 ${SACRED_INNER_WIDTH}`}>
         Rūaḥ ʾĔlōhīm stirs over ṯōhū wāḇōhū: movement begins.
       </p>
 
-      {/* UNIVERSAL BUTTON */}
+      {/* ENTER BUTTON */}
       <button
         onClick={handleContinue}
         disabled={!isReady}
@@ -110,5 +106,4 @@ export const PreSplash = ({ onContinue, theme, isReady = true }: PreSplashProps)
   );
 };
 
-// Add default export to make imports unambiguous/build-green.
 export default PreSplash;

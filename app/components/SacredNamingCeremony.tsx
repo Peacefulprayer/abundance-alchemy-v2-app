@@ -3,22 +3,17 @@ import React, { useEffect, useState } from 'react';
 import { SacredBackground } from './SacredBackground';
 import { buttonSoundService } from '../services/buttonSoundService';
 import BreathingOrb from './BreathingOrb';
+import {
+  SACRED_LAYOUT,
+  SACRED_TITLE_CARD,
+  SACRED_BODY_CARD,
+  SACRED_INNER_WIDTH,
+} from '../styles/sacredCards';
 
 interface SacredNamingCeremonyProps {
   onComplete: (userData: { name: string }) => void;
   theme?: 'light' | 'dark';
 }
-
-const titleCardClasses =
-  'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
-
-const getContentCardClasses = (theme: 'light' | 'dark') => {
-  const base =
-    'backdrop-blur-md rounded-2xl border p-4 md:p-6 w-full max-w-[280px] shadow-xl';
-  return theme === 'dark'
-    ? `${base} bg-gradient-to-b from-slate-800/80 to-slate-900/80 border-white/10`
-    : `${base} bg-gradient-to-b from-white to-slate-50 border-slate-200`;
-};
 
 type Step = 'prelude' | 'naming' | 'affirmation';
 
@@ -55,57 +50,36 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
     }, 3000);
   };
 
-  const textColor = theme === 'light' ? 'text-slate-800' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
-  const inputBg =
-    theme === 'light'
-      ? 'bg-white border-slate-300'
-      : 'bg-slate-900/50 border-slate-700';
+  // S1–S4 ceremonial path is always dark regardless of user theme preference
+  const textColor = 'text-slate-100';
+  const subTextColor = 'text-slate-200';
+  const inputBg = 'bg-slate-800/80 border-slate-600 text-white placeholder-slate-400';
 
   const stepsForIndicator: Step[] = ['prelude', 'naming', 'affirmation'];
 
   return (
     <SacredBackground
-      theme={theme}
-      // ✅ Explicit per screen:
+      theme="dark"
       backgroundType="NAMING_CEREMONY"
       fallbackBackgroundType="WELCOME"
     >
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto">
-        <div className="mt-4 md:mt-8 mb-3 md:mb-5">
-          <BreathingOrb size={80} breathingSpeed={4000} />
-        </div>
+      <div className={SACRED_LAYOUT}>
+        <BreathingOrb size={80} breathingSpeed={4000} />
 
-        <div className={`${titleCardClasses} mb-3 md:mb-5`}>
+        <div className={SACRED_TITLE_CARD}>
           <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
             Abundance Alchemy
           </h1>
         </div>
 
-        <div
-          className={`${getContentCardClasses(theme)} mb-6 md:mb-8 ${
-            step === 'prelude'
-              ? 'max-w-[280px] p-3 md:p-4 backdrop-blur-sm'
-              : ''
-          }`}
-          style={
-            step === 'prelude'
-              ? {
-                  backgroundColor: 'rgba(2, 6, 23, 0.92)',
-                  backgroundImage:
-                    'linear-gradient(to bottom, rgba(2, 6, 23, 0.98), rgba(0, 0, 0, 0.92))',
-                  borderColor: 'rgba(255, 255, 255, 0.18)',
-                }
-              : undefined
-          }
-        >
+        <div className={SACRED_BODY_CARD}>
           {step === 'prelude' && (
             <div className="text-center space-y-2">
               <div className="space-y-0.5">
                 <h2 className={`text-sm md:text-base font-semibold text-slate-100`}>
                   Before the Naming
                 </h2>
-                <p className="text-[11px] md:text-xs text-slate-300">
+                <p className="text-[11px] md:text-xs text-slate-200">
                   A quiet moment of intention
                 </p>
               </div>
@@ -136,7 +110,7 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
                     <div className="h-px bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
                   </div>
 
-                  <p className="text-[11px] md:text-xs text-slate-300">
+                  <p className="text-[11px] md:text-xs text-slate-200">
                     You are about to choose
                     <br />
                     how you will be called
@@ -164,7 +138,7 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
                 <div className="h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
 
                 <div className="space-y-1.5">
-                  <p className="text-[11px] md:text-xs text-slate-300">
+                  <p className="text-[11px] md:text-xs text-slate-200">
                     Walk into this space with intention.
                     <br />
                     How do you want to be called?
@@ -177,10 +151,10 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
                 </div>
 
                 <div className="space-y-1.5 pt-1">
-                  <p className="text-[11px] md:text-xs text-slate-300">
+                  <p className="text-[11px] md:text-xs text-slate-200">
                     Give it some thought.
                   </p>
-                  <p className="text-[11px] md:text-xs text-slate-300">
+                  <p className="text-[11px] md:text-xs text-slate-200">
                     When you are ready, click:
                   </p>
                 </div>
@@ -203,10 +177,10 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
           {step === 'naming' && (
             <div className="text-center space-y-4">
               <div className="space-y-2">
-                <h2 className={`text-base md:text-lg font-bold ${textColor}`}>
+                <h2 className="text-base md:text-lg font-bold text-white">
                   {hasSpiritualName ? 'Your Spiritual Name' : 'Your Sacred Name'}
                 </h2>
-                <p className={`text-xs md:text-sm ${subTextColor}`}>
+                <p className="text-xs md:text-sm text-white">
                   {hasSpiritualName
                     ? 'The name gifted to your spirit'
                     : 'Choose the name you wish to be called here.'}
@@ -226,17 +200,17 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
                       placeholder={
                         hasSpiritualName ? 'Enter your spiritual name' : 'Enter your sacred name'
                       }
-                      className={`w-full pl-10 pr-3 py-2.5 text-sm rounded-xl border focus:ring-2 focus:ring-amber-500 outline-none transition-all ${inputBg} ${textColor}`}
+                      className="w-full pl-10 pr-3 py-2.5 text-sm rounded-xl border border-slate-600 bg-slate-800/80 text-white placeholder-slate-400 focus:ring-2 focus:ring-amber-500 outline-none transition-all"
                       autoFocus
                     />
                   </div>
-                  <p className={`text-xs ${subTextColor}`}>
+                  <p className="text-xs text-white">
                     This name will appear in your affirmations and meditations
                   </p>
                 </div>
 
                 <div className="border-t border-amber-500/30 pt-3">
-                  <p className={`text-xs md:text-sm ${subTextColor} italic`}>
+                  <p className="text-xs md:text-sm text-white italic">
                     "I am not just entering a name...
                     <br />
                     I am invoking an identity."
@@ -257,7 +231,7 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
           {step === 'affirmation' && (
             <div className="text-center space-y-4">
               <div className="space-y-2">
-                <h2 className={`text-sm md:text-base font-semibold ${textColor}`}>
+                <h2 className="text-sm md:text-base font-semibold text-white">
                   We Honor You, {name}
                 </h2>
                 <div className="h-1 w-14 mx-auto bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"></div>
@@ -265,7 +239,7 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
 
               <div className="space-y-3">
                 <div className="border border-amber-500/30 rounded-xl p-4 bg-gradient-to-b from-amber-500/5 to-transparent">
-                  <p className={`text-xs md:text-sm ${textColor} font-light`}>
+                  <p className="text-xs md:text-sm text-white font-light">
                     Your name is now woven
                     <br />
                     into the fabric
@@ -275,9 +249,9 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <p className={`text-xs md:text-sm ${subTextColor}`}>We honor your journey.</p>
-                  <p className={`text-xs md:text-sm ${subTextColor}`}>We witness your becoming.</p>
-                  <p className={`text-xs md:text-sm font-semibold text-amber-500 mt-3`}>
+                  <p className="text-xs md:text-sm text-white">We honor your journey.</p>
+                  <p className="text-xs md:text-sm text-white">We witness your becoming.</p>
+                  <p className="text-xs md:text-sm font-semibold text-amber-500 mt-3">
                     Ase. And so it is.
                   </p>
                 </div>
@@ -293,8 +267,7 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
           )}
         </div>
 
-        {/* ✅ Step indicator (completed; was truncated in paste) */}
-        <div className="flex justify-center space-x-2">
+        <div className={`${SACRED_INNER_WIDTH} flex justify-center space-x-2`}>
           {stepsForIndicator.map((s) => {
             const isActive = s === step;
             const isCompleted = stepsForIndicator.indexOf(s) < stepsForIndicator.indexOf(step);
@@ -310,8 +283,6 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
             );
           })}
         </div>
-
-        <div className="h-2 md:h-3" />
       </div>
     </SacredBackground>
   );

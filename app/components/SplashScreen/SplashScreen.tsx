@@ -5,6 +5,15 @@ import { buttonSoundService } from '../../services/buttonSoundService';
 import { startAmbience } from '../../services/audioService';
 import { SacredBackground } from '../SacredBackground';
 import { href } from '../../services/base';
+import {
+  SACRED_LAYOUT,
+  SACRED_ORB_WRAPPER,
+  SACRED_TITLE_CARD,
+  SACRED_BODY_CARD,
+  SACRED_FOOTER_CARD,
+  SACRED_CARD_GAP,
+  SACRED_INNER_WIDTH,
+} from '../../styles/sacredCards';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -21,7 +30,7 @@ const PRELOAD_SLOTS: string[] = [
   'SPLASH_WELCOME',
   'AUTH',
   'RETURN_PORTAL',
-  'HOME', // Dashboard background slot in admin
+  'HOME',
   'SETTINGS',
 ];
 
@@ -33,8 +42,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
   const [isPreparing, setIsPreparing] = useState(false);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isReady, setIsReady] = useState(false);
+  const [showSwahili, setShowSwahili] = useState(false);
 
-  // keep image objects alive so the browser actually completes downloads
   const preloadImagesRef = useRef<HTMLImageElement[]>([]);
   const didPreloadRef = useRef(false);
 
@@ -54,7 +63,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
   // Best-effort background preloading during preparation
   useEffect(() => {
     if (!isPreparing) return;
-    if (didPreloadRef.current) return; // only once per mount
+    if (didPreloadRef.current) return;
     didPreloadRef.current = true;
 
     const preload = async () => {
@@ -67,10 +76,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         const urls: string[] = PRELOAD_SLOTS
           .map((slot) => data?.[slot]?.imageUrl)
           .filter((u): u is string => typeof u === 'string' && u.trim().length > 0)
-          // cap to avoid memory pressure on iOS Safari
           .slice(0, 6)
           .map((u) => {
-            // normalize to absolute to avoid edge cases
             try {
               return new URL(u, window.location.origin).toString();
             } catch {
@@ -78,7 +85,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             }
           });
 
-        // fire-and-forget preloads (best effort)
         urls.forEach((src) => {
           const img = new Image();
           img.decoding = 'async';
@@ -86,8 +92,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           img.src = src;
           preloadImagesRef.current.push(img);
         });
-
-        // Optional (debug): console.log('[Splash preload] queued', urls.length, urls);
       } catch {
         // best effort: ignore preload errors
       }
@@ -96,15 +100,14 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
     void preload();
   }, [isPreparing]);
 
-  // Handle preparation animation - SLOWER LOADING
+  // Preparation progress animation
   useEffect(() => {
     if (!isPreparing) return;
 
     const interval = setInterval(() => {
       setProgress((prev) => {
-        const newProgress = prev + 1.5; // 1.5% every 100ms = ~6.7 seconds total
+        const newProgress = prev + 1.5;
 
-        // Update message based on progress
         if (newProgress < 20) setCurrentMessage(preparationMessages[0]);
         else if (newProgress < 40) setCurrentMessage(preparationMessages[1]);
         else if (newProgress < 55) setCurrentMessage(preparationMessages[2]);
@@ -119,90 +122,62 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         }
         return newProgress;
       });
-    }, 100); // Slowed interval from 60ms to 100ms
+    }, 100);
 
     return () => clearInterval(interval);
   }, [isPreparing]);
 
+  useEffect(() => {
+    if (!isReady) return;
+    const interval = setInterval(() => setShowSwahili((s) => !s), 3500);
+    return () => clearInterval(interval);
+  }, [isReady]);
+
   const handleStartPreparation = () => {
-    console.log('Start preparation button clicked');
     buttonSoundService.play('click');
     setIsPreparing(true);
   };
 
   const handleReadyClick = () => {
-    console.log('Ready button clicked');
     buttonSoundService.play('click');
     setTimeout(() => {
       onComplete();
     }, 200);
   };
 
-  // UNIVERSAL TITLE CARD CLASSES
-  const titleCardClasses =
-    'rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-900/88 to-slate-950/84 border-white/15';
-
-  // UNIVERSAL CONTENT CARD CLASSES
-  const contentCardClasses =
-    'rounded-2xl border border-amber-500/28 p-4 md:p-6 w-full max-w-[280px] shadow-2xl bg-gradient-to-b from-slate-900/84 to-slate-950/80';
-
   return (
     <SacredBackground theme={theme} backgroundType="splash">
-      {/* UNIVERSAL CONTAINER: justify-start on mobile, center on medium+ */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-start md:justify-center p-4 md:p-6 overflow-y-auto">
-        {/* UNIVERSAL ORB - 80PX SIZE (LAW OF THE LAND) */}
-        <div className="mt-8 md:mt-12 mb-4 md:mb-6">
+      <div className={SACRED_LAYOUT}>
+        {/* ORB */}
+        <div className={SACRED_ORB_WRAPPER}>
           <BreathingOrb size={80} breathingSpeed={4000} />
         </div>
 
-        {/* UNIVERSAL TITLE CARD - "Abundance Alchemy" */}
-        <div className={`${titleCardClasses} mb-4 md:mb-6`}>
+        {/* TITLE CARD */}
+        <div className={`${SACRED_TITLE_CARD} ${SACRED_CARD_GAP}`}>
           <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
             Abundance Alchemy
           </h1>
         </div>
 
-        {/* CHIPS WITH CULTURALLY RELEVANT ICONS & SACRED HOVER */}
-        <div className="flex justify-center gap-2 mb-6">
+        {/* FEATURE CHIPS */}
+        <div className={`flex justify-center gap-2 ${SACRED_CARD_GAP}`}>
           <div className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center gap-1 group transition-all duration-500 hover:bg-amber-500/15 hover:border-amber-400/30 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]">
-            <span
-              className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125"
-              style={{ color: '#D4AF37' }}
-            >
-              ✩
-            </span>
-            <span className="text-xs text-amber-300 transition-all duration-500 group-hover:tracking-widest group-hover:font-medium group-hover:text-amber-200">
-              Affirmations
-            </span>
+            <span className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125" style={{ color: '#D4AF37' }}>✩</span>
+            <span className="text-xs text-amber-300 transition-all duration-500 group-hover:tracking-widest group-hover:font-medium group-hover:text-amber-200">Affirmations</span>
           </div>
-
           <div className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center gap-1 group transition-all duration-500 hover:bg-amber-500/15 hover:border-amber-400/30 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]">
-            <span
-              className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125"
-              style={{ color: '#8A2BE2' }}
-            >
-              🪷
-            </span>
-            <span className="text-xs text-amber-300 transition-all duration-500 group-hover:tracking-widest group-hover:font-medium group-hover:text-amber-200">
-              Meditation
-            </span>
+            <span className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125" style={{ color: '#8A2BE2' }}>🪷</span>
+            <span className="text-xs text-amber-300 transition-all duration-500 group-hover:tracking-widest group-hover:font-medium group-hover:text-amber-200">Meditation</span>
           </div>
-
           <div className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center gap-1 group transition-all duration-500 hover:bg-amber-500/15 hover:border-amber-400/30 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]">
-            <span
-              className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125"
-              style={{ color: '#DC2626' }}
-            >
-              ❤️
-            </span>
-            <span className="text-xs text-amber-300 transition-all duration-500 group-hover:tracking-widest group-hover:font-medium group-hover:text-amber-200">
-              Gratitude
-            </span>
+            <span className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125" style={{ color: '#DC2626' }}>❤️</span>
+            <span className="text-xs text-amber-300 transition-all duration-500 group-hover:tracking-widest group-hover:font-medium group-hover:text-amber-200">Gratitude</span>
           </div>
         </div>
 
-        {/* BODY CARD - USING UNIVERSAL CLASSES */}
-        <div className={`${contentCardClasses} mb-3 md:mb-4`}>
+        {/* BODY CARD */}
+        <div className={`${SACRED_BODY_CARD} ${SACRED_CARD_GAP}`}>
           <div className="text-center space-y-2">
             <p className="text-slate-300 text-sm font-extralight">Transformational Change</p>
             <p className="text-slate-300 text-sm font-extralight">Always Begins with Us</p>
@@ -220,40 +195,48 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             Enter The Sacred Space
           </button>
         ) : (
-          <div className="w-full max-w-xs space-y-4">
-            {/* LOADER */}
+          <div className={`${SACRED_INNER_WIDTH} space-y-4`}>
             <div className="space-y-3">
               <p className="text-white text-sm text-center min-h-[40px] flex items-center justify-center">
                 {currentMessage}
               </p>
-
-              {/* PLAIN ORANGE LINE - SIMPLE & WORKING */}
               <div className="w-full h-2 bg-slate-700/50 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-300"
                   style={{ width: `${progress}%` }}
                 />
               </div>
-
               <p className="text-xs text-white text-center">{progress}% Prepared</p>
             </div>
 
-            {/* "I AM READY" - UNIVERSAL BUTTON STYLE */}
             {isReady && (
               <div className="flex justify-center w-full">
                 <button
                   onClick={handleReadyClick}
                   className="mt-4 md:mt-6 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-sm tracking-wider transition-all duration-300 hover:opacity-95 shadow-[0_0_18px_rgba(245,158,11,0.45)] animate-[aaReadyPulse_1700ms_ease-in-out_infinite] hover:animate-none"
                 >
-                  I Am Ready For Transformation
+                  <span className="relative inline-block min-w-[220px]">
+                    <span
+                      className="absolute inset-0 flex items-center justify-center transition-opacity duration-700"
+                      style={{ opacity: showSwahili ? 0 : 1 }}
+                    >
+                      I Am Ready For Transformation
+                    </span>
+                    <span
+                      className="flex items-center justify-center transition-opacity duration-700"
+                      style={{ opacity: showSwahili ? 1 : 0 }}
+                    >
+                      Niko Tayari Kubadilika
+                    </span>
+                  </span>
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* FOOTER TEXT - MATCH CARD STYLE */}
-        <div className={`${contentCardClasses} mt-3 md:mt-4`}>
+        {/* FOOTER CARD */}
+        <div className={`${SACRED_FOOTER_CARD} mt-3 md:mt-4`}>
           <div className="text-center space-y-3">
             <p className="text-xs text-slate-300 leading-relaxed">
               By continuing you agree to be a part of
@@ -262,7 +245,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
               <br />
               and abide by community standards.
             </p>
-
             <p className="text-xs text-slate-300">
               <a
                 href="/privacy-policy"
@@ -273,11 +255,9 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
                 View our privacy policy here.
               </a>
             </p>
-
             <p className="text-[10px] md:text-xs text-slate-300 whitespace-nowrap">
               © 2024 Abundant Thought - Michael Soaries
             </p>
-
             <p className="text-xs text-slate-300 leading-relaxed">
               Unless otherwise indicated
               <br />
@@ -285,7 +265,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
               <br />
               used under Pexels.com Free Use License.
             </p>
-
             <p className="text-xs text-slate-300 leading-relaxed">
               Based on the book "I Am Practice"
               <br />

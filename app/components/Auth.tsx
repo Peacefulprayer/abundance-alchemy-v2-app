@@ -5,6 +5,7 @@ import { Lock, Mail, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
 import { SacredBackground } from './SacredBackground';
 import BreathingOrb from './BreathingOrb';
+import { SACRED_LAYOUT, SACRED_TITLE_CARD, SACRED_BODY_CARD } from '../styles/sacredCards';
 
 interface AuthProps {
   onRegister: (account: UserAccount) => void;
@@ -14,15 +15,9 @@ interface AuthProps {
   initialName?: string;
 }
 
-// UNIVERSAL TITLE CARD CLASSES (exact match WelcomeScreen)
-const titleCardClasses =
-  'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
-
-// UNIVERSAL CONTENT CARD CLASSES
-const getContentCardClasses = (theme: 'light' | 'dark') =>
-  theme === 'light'
-    ? 'backdrop-blur-lg rounded-2xl border border-slate-200 p-4 md:p-6 w-full max-w-[280px] shadow-2xl space-y-4 md:space-y-6 bg-white/88'
-    : 'backdrop-blur-lg rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-2xl space-y-4 md:space-y-6 bg-slate-900/40';
+// Auth uses the shared sacred design system for consistency with S1-S4 entry flow.
+// S1–S4 always dark — single card style regardless of user theme
+const getContentCardClasses = (_theme: 'light' | 'dark') => `${SACRED_BODY_CARD} space-y-4`;
 
 export const Auth: React.FC<AuthProps> = ({
   onRegister,
@@ -129,29 +124,27 @@ export const Auth: React.FC<AuthProps> = ({
     }
   };
 
-  // Theme colors
-  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
-  const inputBg = theme === 'light' ? 'bg-white border-slate-300' : 'bg-slate-900/50 border-slate-700';
+  // S1–S4 always dark ceremonial path
+  const textColor = 'text-white';
+  const subTextColor = 'text-white';
+  const inputBg = 'bg-slate-800/80 border-slate-600 text-white placeholder-slate-400';
 
   return (
     <SacredBackground
-      theme={theme}
+      theme="dark"
       backgroundType="AUTH"
-      fallbackBackgroundType="SECTION_ENTRY"
+      fallbackBackgroundType="SPLASH"
     >
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 space-y-4 md:space-y-5 overflow-y-auto">
-        <div className="mt-8 md:mt-12 mb-4 md:mb-6">
-          <BreathingOrb size={80} breathingSpeed={4000} />
-        </div>
+      <div className={SACRED_LAYOUT}>
+        <BreathingOrb size={80} breathingSpeed={4000} />
 
-        <div className={`${titleCardClasses} mb-4 md:mb-6`}>
+        <div className={SACRED_TITLE_CARD}>
           <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
             Abundance Alchemy
           </h1>
         </div>
 
-        <div className={`${getContentCardClasses(theme)} mb-6 md:mb-8 relative`}>
+        <div className={`${getContentCardClasses(theme)} relative`}>
           {mode === 'register' && (
             <div className="flex justify-center -mt-1 mb-3 md:mb-4">
               <img
@@ -220,7 +213,7 @@ export const Auth: React.FC<AuthProps> = ({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
-                    className={`w-full pl-9 pr-3 py-2 md:py-2.5 text-sm rounded-xl border focus:ring-2 focus:ring-amber-500 outline-none transition-all ${inputBg} ${textColor}`}
+                    className={`w-full pl-9 pr-3 py-2 md:py-2.5 text-sm rounded-xl border focus:ring-2 focus:ring-amber-500 outline-none transition-all ${inputBg}`}
                   />
                 </div>
               </div>
@@ -238,7 +231,7 @@ export const Auth: React.FC<AuthProps> = ({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
-                  className={`w-full pl-9 pr-3 py-2 md:py-2.5 text-sm rounded-xl border focus:ring-2 focus:ring-amber-500 outline-none transition-all ${inputBg} ${textColor}`}
+                  className={`w-full pl-9 pr-3 py-2 md:py-2.5 text-sm rounded-xl border focus:ring-2 focus:ring-amber-500 outline-none transition-all ${inputBg}`}
                 />
               </div>
             </div>
@@ -254,7 +247,7 @@ export const Auth: React.FC<AuthProps> = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full pl-9 pr-10 py-2 md:py-2.5 text-sm rounded-xl border focus:ring-2 focus:ring-amber-500 outline-none transition-all ${inputBg} ${textColor}`}
+                  className={`w-full pl-9 pr-10 py-2 md:py-2.5 text-sm rounded-xl border focus:ring-2 focus:ring-amber-500 outline-none transition-all ${inputBg}`}
                 />
                 <button
                   type="button"
