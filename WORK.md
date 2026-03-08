@@ -1,6 +1,6 @@
 # Abundance Alchemy Work Log
 
-Last updated: 2026-03-06
+Last updated: 2026-03-08
 
 ## Why this file exists
 This is a checkpoint record so work can resume quickly if a session drops.
@@ -220,3 +220,41 @@ This is a checkpoint record so work can resume quickly if a session drops.
   - `handleAuthRegister` now preserves `account.name` in `sacredName`
   - post-register flow now routes through `NAMING_CEREMONY` instead of jumping straight to `ONBOARDING`
   - when naming completes for an already-registered user, the chosen name is carried into `ONBOARDING` instead of sending the user back to `AUTH`
+
+---
+
+## Checkpoint: 2026-03-08
+
+### Work completed this session
+
+- Dark-text-on-dark-background audit across all S1–S4 screens.
+  - Root cause confirmed: `TempleSpace` uses `bg-white` base when `theme='light'` is passed in from App.tsx, which lightens the 90%-opacity card and makes slate-colored text unreadable.
+  - Fix applied across all affected screens: `SacredNamingCeremony`, `Auth`, `TutorialOverlay` now force `theme="dark"` on SacredBackground and use hardcoded `text-white` instead of theme-conditional variables.
+  - All body/caption text across `WelcomeScreen`, `Onboarding`, `SacredNamingCeremony`, `TutorialOverlay` brightened from slate-300/400 to slate-200 or white.
+
+- Bilingual (Swahili) alternating button on SplashScreen:
+  - "I Am Ready For Transformation" crossfades to "Niko Tayari Kubadilika" every 3.5 seconds using CSS opacity transitions on stacked spans.
+  - min-w-[220px] on the button prevents layout shift during swap.
+
+- Auth screen hardened to always-dark ceremonial path:
+  - `getContentCardClasses` now always returns `SACRED_BODY_CARD` (dark) regardless of user theme.
+  - `fallbackBackgroundType` changed from non-existent `SECTION_ENTRY` to `SPLASH`.
+
+- Onboarding Focus step (Step 2/4) tightened:
+  - Header reduced to `text-xs md:text-sm font-medium`.
+  - Focus option rows: padding reduced (`px-3 py-2`), gap tightened (`gap-1`), labels unbolded (`font-normal`).
+  - No longer scrolls on desktop browser.
+
+- Tutorial screens: all body text changed to emerald green (`text-emerald-300` / `text-emerald-200`) for readability against the dark glass card. Amber accents preserved. Title card ("Abundance Alchemy") stays amber-500 throughout, consistent with the full entry flow.
+
+- Full frontend/backend API audit completed. No PHP changes needed. Two pre-existing data gaps documented: sacred name not persisted to DB after naming ceremony, and new background slots (NAMING_CEREMONY, ONBOARDING, TUTORIAL) need admin panel entries for images to show.
+
+### Verified on 2026-03-08
+- `cd app && npm run build` passed clean.
+- Committed and pushed as: `checkpoint: sacred entry ui system and tutorial polish`
+- Branch `checkpoint_prayer_phase1_and_categories_2026_02_20` up to date with remote.
+
+### Next session: Dashboard (S5+)
+- Begin sacred design pass on Dashboard and inner app screens.
+- Swahili language layer additions (remaining S1–S4 touch points not yet done).
+- Investigate tutorial → Dashboard blank screen transition (known issue).
