@@ -23,6 +23,7 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
   initialDuration = 15,
 }) => {
   const [duration, setDuration] = useState(initialDuration);
+  const [showCustomTime, setShowCustomTime] = useState(false);
   const [selectedSound, setSelectedSound] = useState<Soundscape | null>(null);
   const [meditationTracks, setMeditationTracks] = useState<Soundscape[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,26 +116,70 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
           <h2 className="text-lg font-serif">Choose Duration</h2>
         </div>
 
-        <div className="grid grid-cols-5 gap-2">
-          {DURATIONS.map((d) => (
+        {!showCustomTime ? (
+          <>
+            <div className="grid grid-cols-5 gap-2">
+              {DURATIONS.map((d) => (
+                <button
+                  key={d}
+                  onClick={() => {
+                    buttonSoundService.play('click');
+                    setDuration(d);
+                  }}
+                  className={`h-11 rounded-xl text-xs font-semibold border transition-all ${
+                    duration === d
+                      ? 'bg-amber-600 text-white border-amber-500 shadow-md scale-105'
+                      : theme === 'light'
+                      ? 'bg-transparent border-slate-300 hover:border-amber-400 hover:bg-amber-50'
+                      : 'bg-transparent border-slate-600/40 hover:border-amber-400 hover:bg-amber-500/10'
+                  }`}
+                >
+                  {d}m
+                </button>
+              ))}
+            </div>
             <button
-              key={d}
+              type="button"
               onClick={() => {
                 buttonSoundService.play('click');
-                setDuration(d);
+                setShowCustomTime(true);
               }}
-              className={`h-11 rounded-xl text-xs font-semibold border transition-all ${
-                duration === d
-                  ? 'bg-amber-600 text-white border-amber-500 shadow-md scale-105'
-                  : theme === 'light'
-                  ? 'bg-transparent border-slate-300 hover:border-amber-400 hover:bg-amber-50'
-                  : 'bg-transparent border-slate-600/40 hover:border-amber-400 hover:bg-amber-500/10'
+              className={`mt-4 w-full text-center text-[11px] underline transition-colors ${
+                theme === 'light' ? 'text-slate-700 hover:text-amber-700' : 'text-amber-200 hover:text-amber-100'
               }`}
             >
-              {d}m
+              Prefer a custom timer? Choose your own meditation length.
             </button>
-          ))}
-        </div>
+          </>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className={subTextColor}>Custom duration</span>
+              <span className="font-bold text-amber-400">{duration} min</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="60"
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+              className="w-full accent-amber-500"
+              aria-label="Custom meditation duration"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                buttonSoundService.play('back');
+                setShowCustomTime(false);
+              }}
+              className={`w-full text-center text-[11px] underline transition-colors ${
+                theme === 'light' ? 'text-slate-700 hover:text-amber-700' : 'text-amber-200 hover:text-amber-100'
+              }`}
+            >
+              Back to quick times
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Soundscape card */}

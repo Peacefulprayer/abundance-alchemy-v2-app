@@ -1,4 +1,3 @@
-// src/components/Library.tsx
 import React, { useMemo, useState } from 'react';
 import { PracticeType } from '../types';
 import type { Affirmation, GratitudeLog, Soundscape } from '../types';
@@ -16,25 +15,18 @@ const CATEGORY_OPTIONS = [
 ] as const;
 
 interface LibraryProps {
-  // accept both prop names (older App.tsx vs newer Library.tsx)
   affirmations?: Affirmation[];
   customAffirmations?: Affirmation[];
-
   gratitudeLogs?: GratitudeLog[];
-
   onAdd: (
     text: string,
     type: PracticeType,
     category?: string
   ) => Promise<{ ok: boolean; message?: string }> | { ok: boolean; message?: string };
   onRemove: (id: string) => Promise<void> | void;
-
   onAudioUpload: React.Dispatch<React.SetStateAction<File | null>> | ((file: File) => void);
   userAudioFile: File | null;
-
   theme: 'light' | 'dark';
-
-  // optional props used in some variants
   soundscapes?: Soundscape[];
   activeSoundscapeId?: string;
   onSetActiveSoundscape?: (id: string) => void;
@@ -49,7 +41,8 @@ export const Library: React.FC<LibraryProps> = (props) => {
     onAudioUpload,
     userAudioFile,
     soundscapes = [],
-    onSetActiveSoundscape
+    activeSoundscapeId,
+    onSetActiveSoundscape,
   } = props;
 
   const affirmations = useMemo(
@@ -70,12 +63,28 @@ export const Library: React.FC<LibraryProps> = (props) => {
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
   const titlePill =
-    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-slate-950/92 to-black/88 px-4 py-1.5 text-xs font-extrabold tracking-wide text-white shadow-[0_4px_14px_rgba(0,0,0,0.4)] backdrop-blur-sm';
+    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm';
+  const sectionFrame =
+    theme === 'light'
+      ? 'rounded-[28px] border border-amber-200/60 bg-white/78 p-3 shadow-sm'
+      : 'rounded-[28px] border border-amber-500/18 bg-slate-950/45 p-3 shadow-[0_16px_40px_rgba(0,0,0,0.28)]';
   const cardBg =
     theme === 'light'
-      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200 text-slate-900'
-      : 'bg-gradient-to-br from-slate-900/75 to-slate-950/75 border-slate-700 text-slate-100';
-  const itemBorder = theme === 'light' ? 'border-slate-200' : 'border-white/10';
+      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-amber-200/60 text-slate-900'
+      : 'bg-gradient-to-br from-slate-900/70 to-slate-950/75 border-amber-500/20 text-slate-100';
+  const itemBorder =
+    theme === 'light'
+      ? 'border-amber-200/55 bg-white/92'
+      : 'border-amber-500/15 bg-slate-950/82';
+  const inputBg =
+    theme === 'light'
+      ? 'border-amber-200/70 bg-white/92 text-slate-900'
+      : 'border-amber-500/20 bg-slate-950/75 text-slate-100';
+  const pageShell = 'mx-auto w-full max-w-[440px] space-y-5 pb-24';
+  const sectionKicker =
+    theme === 'light'
+      ? 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-700'
+      : 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/90';
 
   const handleAddAffirmation = async () => {
     const text = newAffirmationText.trim();
@@ -110,177 +119,231 @@ export const Library: React.FC<LibraryProps> = (props) => {
   };
 
   return (
-    <div className={`p-4 max-w-md mx-auto pb-24 overflow-y-auto custom-scrollbar ${textColor}`}>
-      <div className="mb-4">
-        <span className={titlePill}>
-          Maktaba (Library)
-        </span>
-      </div>
-
-      {!!soundscapes.length && (
-        <div className={`${cardBg} rounded-2xl border p-4 mb-4 shadow-lg`}>
-          <div className="text-xs uppercase tracking-wider opacity-70 mb-2">Soundscapes</div>
-          <div className="space-y-2">
-            {soundscapes.map((s) => {
-              const id = String(s.id);
-              const previewing = previewingId === id;
-              return (
-                <div key={id} className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-bold text-sm truncate">{s.label}</div>
-                    <div className="text-xs opacity-70 truncate">{s.category || ''}</div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      className={`px-3 py-2 rounded-xl border text-xs font-bold ${
-                        theme === 'light'
-                          ? 'border-slate-300 bg-slate-50 hover:bg-slate-100'
-                          : 'border-white/10 bg-slate-900/50 hover:bg-slate-800/50'
-                      }`}
-                      onClick={() => {
-                        setPreviewingId(id);
-                        audioManager.previewSoundscape(s);
-                      }}
-                    >
-                      {previewing ? 'Previewing' : 'Preview'}
-                    </button>
-                    {onSetActiveSoundscape && (
-                      <button
-                        className="px-3 py-2 rounded-xl bg-amber-500 text-black text-xs font-bold hover:bg-amber-400"
-                        onClick={() => onSetActiveSoundscape(id)}
-                      >
-                        Set
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+    <div className={`h-full w-full overflow-y-auto px-4 pt-4 custom-scrollbar ${textColor}`}>
+      <div className={pageShell}>
+        <div className={sectionFrame}>
+          <div className={`rounded-[24px] border p-5 shadow-lg ${cardBg}`}>
+            <span className={titlePill}>Maktaba</span>
+            <h2 className="mt-4 text-2xl font-serif font-semibold">Your Sacred Library</h2>
+            <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
+              Keep your sound, affirmations, and gratitude reflections gathered in one place for easy return.
+            </p>
           </div>
         </div>
-      )}
 
-      <div className={`${cardBg} rounded-2xl border p-4 mb-4 shadow-lg`}>
-        <div className="text-xs uppercase tracking-wider opacity-70 mb-2">Your Audio</div>
-        <input
-          type="file"
-          accept="audio/*"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (!f) return;
-            if (typeof onAudioUpload === 'function') {
-              // Works for both a React state setter and a direct callback.
-              // @ts-ignore
-              onAudioUpload(f);
-            }
-          }}
-        />
-        {userAudioFile && <div className="text-xs mt-2 opacity-80 truncate">{userAudioFile.name}</div>
-        }
-      </div>
-
-      <div className={`${cardBg} rounded-2xl border p-4 mb-4 shadow-lg`}>
-        <div className="text-xs uppercase tracking-wider opacity-70 mb-2">Affirmations</div>
-        <div className="space-y-2 mb-3">
-          <textarea
-            value={newAffirmationText}
-            onChange={(e) => setNewAffirmationText(e.target.value)}
-            placeholder="Add your personal affirmation..."
-            rows={2}
-            className={`w-full rounded-xl border p-2 text-sm ${
-              theme === 'light'
-                ? 'border-slate-300 bg-slate-50 text-slate-900'
-                : 'border-slate-700 bg-slate-800 text-slate-100'
-            }`}
-          />
-          <div className="flex items-center gap-2">
-            <select
-              value={newAffirmationType}
-              onChange={(e) => setNewAffirmationType(e.target.value as PracticeType)}
-              className={`rounded-lg border px-2 py-2 text-xs ${
-                theme === 'light'
-                  ? 'border-slate-300 bg-white text-slate-900'
-                  : 'border-slate-700 bg-slate-900 text-slate-100'
-              }`}
-            >
-              <option value={PracticeType.MORNING_IAM}>I Am</option>
-              <option value={PracticeType.EVENING_ILOVE}>I Love</option>
-            </select>
-            <select
-              value={newAffirmationCategory}
-              onChange={(e) => setNewAffirmationCategory(e.target.value)}
-              className={`rounded-lg border px-2 py-2 text-xs min-w-0 flex-1 ${
-                theme === 'light'
-                  ? 'border-slate-300 bg-white text-slate-900'
-                  : 'border-slate-700 bg-slate-900 text-slate-100'
-              }`}
-            >
-              {CATEGORY_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            <button
-              className="px-3 py-2 rounded-lg bg-amber-500 text-black text-xs font-bold hover:bg-amber-400 disabled:opacity-50"
-              onClick={handleAddAffirmation}
-              disabled={isSavingAffirmation || !newAffirmationText.trim()}
-            >
-              {isSavingAffirmation ? 'Saving...' : 'Add'}
-            </button>
-          </div>
-          {affirmationStatus ? (
-            <div
-              className={`rounded-xl border px-3 py-2 text-xs ${
-                affirmationStatus.kind === 'success'
-                  ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-300'
-                  : 'border-red-400/35 bg-red-500/10 text-red-200'
-              }`}
-            >
-              {affirmationStatus.message}
+        {!!soundscapes.length && (
+          <div className={sectionFrame}>
+            <div className="px-1">
+              <h3 className={titlePill}>Soundscapes</h3>
             </div>
-          ) : null}
-        </div>
-        {affirmations.length === 0 ? (
-          <div className="text-sm opacity-70">No affirmations yet.</div>
-        ) : (
-          <div className="space-y-2">
-            {affirmations.map((a) => (
-              <div key={a.id} className={`flex items-start justify-between gap-3 rounded-xl border p-3 ${itemBorder}`}>
-                <div>
-                  <div className="text-sm">{a.text}</div>
-                  {a.category ? (
-                    <div className="mt-1 text-[10px] uppercase tracking-wider opacity-70">
-                      {a.category}
+            <div className={`mt-3 rounded-[24px] border p-4 shadow-lg ${cardBg}`}>
+              <p className={sectionKicker}>Available Atmospheres</p>
+              <div className="mt-3 space-y-3">
+                {soundscapes.map((s) => {
+                  const id = String(s.id);
+                  const previewing = previewingId === id;
+                  const isActive = activeSoundscapeId === id;
+                  return (
+                    <div
+                      key={id}
+                      className={`rounded-[20px] border p-3 ${itemBorder}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold truncate">{s.label}</div>
+                          <div className={`mt-1 text-[11px] ${subTextColor} truncate`}>
+                            {s.category || 'Sacred ambience'}
+                          </div>
+                        </div>
+                        {isActive ? (
+                          <span className={titlePill}>Active</span>
+                        ) : null}
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          className={`flex-1 rounded-full border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors ${
+                            theme === 'light'
+                              ? 'border-amber-200/70 bg-white/90 hover:bg-white'
+                              : 'border-amber-500/20 bg-slate-950/75 hover:bg-slate-950'
+                          }`}
+                          onClick={() => {
+                            setPreviewingId(id);
+                            audioManager.previewSoundscape(s);
+                          }}
+                        >
+                          {previewing ? 'Previewing' : 'Preview'}
+                        </button>
+                        {onSetActiveSoundscape ? (
+                          <button
+                            className="flex-1 rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)]"
+                            onClick={() => onSetActiveSoundscape(id)}
+                          >
+                            {isActive ? 'Selected' : 'Set'}
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
-                  ) : null}
-                </div>
-                <button
-                  className="text-xs font-bold text-red-400 hover:text-red-300"
-                  onClick={() => onRemove(a.id)}
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className={sectionFrame}>
+          <div className="px-1">
+            <h3 className={titlePill}>Your Audio</h3>
+          </div>
+          <div className={`mt-3 rounded-[24px] border p-4 shadow-lg ${cardBg}`}>
+            <p className={sectionKicker}>Upload a Personal Track</p>
+            <label
+              className={`mt-3 flex cursor-pointer items-center justify-center rounded-[20px] border border-dashed px-4 py-6 text-center transition-colors ${
+                theme === 'light'
+                  ? 'border-amber-300/65 bg-white/80 hover:bg-white'
+                  : 'border-amber-500/30 bg-slate-950/70 hover:bg-slate-950'
+              }`}
+            >
+              <input
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  if (typeof onAudioUpload === 'function') {
+                    // Works for both a React state setter and a direct callback.
+                    // @ts-ignore
+                    onAudioUpload(f);
+                  }
+                }}
+              />
+              <div>
+                <p className="text-sm font-semibold">Choose an audio file</p>
+                <p className={`mt-1 text-xs ${subTextColor}`}>
+                  Add a personal meditation or ambience track to your sacred space.
+                </p>
+              </div>
+            </label>
+            {userAudioFile ? (
+              <div className={`mt-3 rounded-[20px] border px-4 py-3 text-sm shadow-sm ${itemBorder}`}>
+                {userAudioFile.name}
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className={sectionFrame}>
+          <div className="px-1">
+            <h3 className={titlePill}>Affirmations</h3>
+          </div>
+          <div className={`mt-3 rounded-[24px] border p-4 shadow-lg ${cardBg}`}>
+            <p className={sectionKicker}>Write Your Own</p>
+            <div className="mt-3 space-y-3">
+              <textarea
+                value={newAffirmationText}
+                onChange={(e) => setNewAffirmationText(e.target.value)}
+                placeholder="Add your personal affirmation..."
+                rows={3}
+                className={`w-full rounded-[20px] border p-3 text-sm ${inputBg}`}
+              />
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,120px)_minmax(0,1fr)_auto]">
+                <select
+                  value={newAffirmationType}
+                  onChange={(e) => setNewAffirmationType(e.target.value as PracticeType)}
+                  className={`rounded-full border px-3 py-2 text-xs font-semibold ${inputBg}`}
                 >
-                  Remove
+                  <option value={PracticeType.MORNING_IAM}>I Am</option>
+                  <option value={PracticeType.EVENING_ILOVE}>I Love</option>
+                </select>
+                <select
+                  value={newAffirmationCategory}
+                  onChange={(e) => setNewAffirmationCategory(e.target.value)}
+                  className={`min-w-0 rounded-full border px-3 py-2 text-xs font-semibold ${inputBg}`}
+                >
+                  {CATEGORY_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.18em] text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] disabled:opacity-50"
+                  onClick={handleAddAffirmation}
+                  disabled={isSavingAffirmation || !newAffirmationText.trim()}
+                >
+                  {isSavingAffirmation ? 'Saving' : 'Add'}
                 </button>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              {affirmationStatus ? (
+                <div
+                  className={`rounded-[18px] border px-3 py-2 text-xs ${
+                    affirmationStatus.kind === 'success'
+                      ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-300'
+                      : 'border-red-400/35 bg-red-500/10 text-red-200'
+                  }`}
+                >
+                  {affirmationStatus.message}
+                </div>
+              ) : null}
+            </div>
 
-      <div className={`${cardBg} rounded-2xl border p-4 shadow-lg`}>
-        <div className="text-xs uppercase tracking-wider opacity-70 mb-2">Gratitude Logs</div>
-        {gratitudeLogs.length === 0 ? (
-          <div className="text-sm opacity-70">No gratitude logs yet.</div>
-        ) : (
-          <div className="space-y-2">
-            {gratitudeLogs.slice().reverse().map((g) => (
-              <div key={g.id} className={`rounded-xl border p-3 ${itemBorder}`}>
-                <div className="text-xs opacity-70">{new Date(g.date).toLocaleDateString()} • {g.focusArea}</div>
-                <div className="text-sm italic mt-1">“{g.text}”</div>
-              </div>
-            ))}
+            <div className="mt-4 space-y-3">
+              {affirmations.length === 0 ? (
+                <div className={`rounded-[20px] border px-4 py-5 text-sm ${itemBorder}`}>
+                  No affirmations yet.
+                </div>
+              ) : (
+                affirmations.map((a) => (
+                  <div key={a.id} className={`rounded-[20px] border p-3 ${itemBorder}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm leading-relaxed">{a.text}</div>
+                        {a.category ? (
+                          <div className={`mt-2 text-[10px] font-extrabold uppercase tracking-[0.22em] ${subTextColor}`}>
+                            {a.category}
+                          </div>
+                        ) : null}
+                      </div>
+                      <button
+                        className="text-[11px] font-semibold uppercase tracking-[0.18em] text-red-400 hover:text-red-300"
+                        onClick={() => onRemove(a.id)}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        )}
+        </div>
+
+        <div className={sectionFrame}>
+          <div className="px-1">
+            <h3 className={titlePill}>Gratitude Logs</h3>
+          </div>
+          <div className={`mt-3 rounded-[24px] border p-4 shadow-lg ${cardBg}`}>
+            {gratitudeLogs.length === 0 ? (
+              <div className={`rounded-[20px] border px-4 py-5 text-sm ${itemBorder}`}>
+                No gratitude logs yet.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {gratitudeLogs
+                  .slice()
+                  .reverse()
+                  .map((g) => (
+                    <div key={g.id} className={`rounded-[20px] border p-3 ${itemBorder}`}>
+                      <div className={`text-[11px] ${subTextColor}`}>
+                        {new Date(g.date).toLocaleDateString()} • {g.focusArea}
+                      </div>
+                      <div className="mt-2 text-sm italic leading-relaxed">"{g.text}"</div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -48,10 +48,10 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
   const didPreloadRef = useRef(false);
 
   const preparationMessages = [
-    'Burning Sage...',
-    'Anchoring Sacred Space...',
-    'Orishas present...',
-    'Ancestors Seated...',
+    'Opening The Space...',
+    'Settling The Atmosphere...',
+    'Gathering The Presence...',
+    'Welcoming You In...',
     'We Are Ready For You',
   ];
 
@@ -206,7 +206,9 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="text-xs text-white text-center">{progress}% Prepared</p>
+              <p className="text-xs text-white text-center">
+                {progress >= 100 ? '100% Are You Ready?' : `${progress}% Opened`}
+              </p>
             </div>
 
             {isReady && (

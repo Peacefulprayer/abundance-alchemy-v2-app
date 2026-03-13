@@ -102,14 +102,18 @@ const FOCUS_AREAS: FocusChoice[] = [
 
 
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName }) => {
-  const [step, setStep] = useState(1);
+  const hasEstablishedName = Boolean(initialName?.trim());
+  const [step, setStep] = useState<number>(() => (hasEstablishedName ? 3 : 1));
   const [name, setName] = useState(initialName || '');
   const [selectedFocus, setSelectedFocus] = useState<string>('');
   const [cycleType, setCycleType] = useState<CycleType>(CycleType.DAILY);
-  const visibleStepOrder = [1, 3, 4, 5];
+  const visibleStepOrder = hasEstablishedName ? [3, 4, 5] : [1, 3, 4, 5];
 
   useEffect(() => {
     if (initialName && !name) setName(initialName);
+    if (initialName?.trim()) {
+      setStep((current) => (current === 1 ? 3 : current));
+    }
   }, [initialName]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedFocusObj = useMemo(
@@ -137,7 +141,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
     setStep((s) => {
       if (s === 5) return 4;
       if (s === 4) return 3;
-      if (s === 3) return 1;
+      if (s === 3) return hasEstablishedName ? 3 : 1;
       return 1;
     });
   };
@@ -189,13 +193,13 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
           {step === 1 && (
             <div className="space-y-4">
               <div className="space-y-1">
-                <h3 className="text-base md:text-lg font-bold">
-                  We welcome you {displayName}.
+                <h3 className="text-base md:text-lg font-normal">
+                  We stand witness to you, {displayName}.
                 </h3>
                 <p className="text-xs text-slate-200">It has been spoken. So it is, Ase.</p>
               </div>
               <p className="text-xs text-slate-200">
-                This is the name that follows you through the app experience.
+                Affirming the name that follows you through the app experience.
               </p>
               <input
                 value={name}
@@ -262,12 +266,16 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
               </div>
 
               <div className="mt-2 flex justify-between">
-                <button
-                  onClick={back}
-                  className="px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800 font-bold text-xs md:text-sm"
-                >
-                  Back
-                </button>
+                {!hasEstablishedName ? (
+                  <button
+                    onClick={back}
+                    className="px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800 font-bold text-xs md:text-sm"
+                  >
+                    Back
+                  </button>
+                ) : (
+                  <div />
+                )}
                 <button
                   onClick={next}
                   disabled={!selectedFocus}
@@ -283,9 +291,9 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
           {/* Step 4: Focus explanation + Swahili affirmation */}
           {step === 4 && (
             <div className="space-y-4">
-              <h3 className="text-base md:text-lg font-bold">
+              <h3 className="text-base md:text-lg font-normal">
                 {selectedFocusObj?.label}{' '}
-                <span className="text-amber-400 font-bold">
+                <span className="text-amber-400 font-normal">
                   {selectedFocusObj ? `(${selectedFocusObj.swahili})` : ''}
                 </span>
               </h3>
@@ -298,12 +306,12 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, initialName 
 
                 {selectedFocusObj?.swAffirmation && (
                   <div className="mt-3 pt-3 border-t border-amber-500/20">
-                    <div className="mt-1 text-sm font-bold text-amber-300">
-                      “{selectedFocusObj.swAffirmation}”
+                    <div className="mt-1 text-sm font-normal text-amber-300">
+                      &ldquo;{selectedFocusObj.swAffirmation}&rdquo;
                     </div>
                     {selectedFocusObj.swAffirmationEn && (
                       <div className="mt-1 text-xs text-slate-200">
-                        “{selectedFocusObj.swAffirmationEn}”
+                        &ldquo;{selectedFocusObj.swAffirmationEn}&rdquo;
                       </div>
                     )}
                   </div>

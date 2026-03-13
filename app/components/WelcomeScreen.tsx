@@ -35,6 +35,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const didFinishRef = useRef(false);
   const finishTimeoutRef = useRef<number | null>(null);
   const progressTimerRef = useRef<number | null>(null);
@@ -65,8 +66,16 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
     const timer = setTimeout(() => {
       audio.play()
-        .then(() => { playbackStartedAtRef.current = performance.now(); setIsPlaying(true); })
-        .catch((err) => { console.log('Welcome audio play failed:', err); setIsPlaying(false); });
+        .then(() => {
+          playbackStartedAtRef.current = performance.now();
+          setIsPlaying(true);
+          setAudioBlocked(false);
+        })
+        .catch((err) => {
+          console.log('Welcome audio play failed:', err);
+          setIsPlaying(false);
+          setAudioBlocked(true);
+        });
     }, 500);
 
     const updateProgress = () => {
@@ -122,6 +131,21 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     proceed();
   };
 
+  const handleManualPlay = async () => {
+    buttonSoundService.play('click');
+    if (!audioRef.current) return;
+    try {
+      playbackStartedAtRef.current = performance.now();
+      await audioRef.current.play();
+      setAudioBlocked(false);
+      setIsPlaying(true);
+    } catch (err) {
+      console.log('Manual welcome audio play failed:', err);
+      setAudioBlocked(true);
+      setIsPlaying(false);
+    }
+  };
+
   return (
     <SacredBackground theme={theme} backgroundType="SPLASH_WELCOME" fallbackBackgroundType="SPLASH">
       <div className={SACRED_LAYOUT}>
@@ -163,7 +187,21 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               />
             </div>
           </div>
-          <div className="flex justify-center">
+          {audioBlocked ? (
+            <p className="text-center text-[11px] text-amber-200">
+              Audio did not begin automatically. You can play the invocation or continue in silence.
+            </p>
+          ) : null}
+          <div className="flex flex-wrap justify-center gap-2">
+            {audioBlocked ? (
+              <button
+                type="button"
+                onClick={handleManualPlay}
+                className="px-4 py-1.5 rounded-lg border border-amber-400/40 text-amber-200 font-medium text-xs md:text-sm tracking-wide hover:bg-amber-500/10 transition-colors"
+              >
+                Play Invocation
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={handleSkip}

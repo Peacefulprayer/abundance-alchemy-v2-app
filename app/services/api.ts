@@ -25,6 +25,13 @@ const CSRF_EXEMPT_ENDPOINTS = new Set([
   'request-password-reset.php',
   'csrf-token.php',
 ]);
+const NON_LOGOUT_401_ENDPOINTS = new Set([
+  'me.php',
+  'login.php',
+  'register.php',
+  'request-password-reset.php',
+  'csrf-token.php',
+]);
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 let csrfTokenCache: string | null = null;
 
@@ -139,7 +146,9 @@ async function client<T>(endpoint: string, config: ClientConfig = {}): Promise<T
   try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
 
   if (response.status === 401) {
-    clearAuth();
+    if (!NON_LOGOUT_401_ENDPOINTS.has(endpointName)) {
+      clearAuth();
+    }
     throw new ApiError('Unauthorized', 401);
   }
 
@@ -160,6 +169,12 @@ export const api = {
   // CHANGED: signup.php -> register.php to match your file
   register: (name: string, email: string, password?: string) => 
     client<MeUser>('register.php', { body: { name, email, password } }),
+
+  requestPasswordReset: (email: string) =>
+    client<{ message?: string }>('request-password-reset.php', {
+      body: { email },
+      method: 'POST',
+    }),
 
   updateProgress: (payload: { userId: string | number; type: string; duration?: number; itemId?: string }) => 
     client<{ ok: boolean }>('sync-progress.php', { body: payload }),

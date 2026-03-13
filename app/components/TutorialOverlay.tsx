@@ -36,13 +36,16 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
 
   const steps = [
     {
-      title: 'The I Am Practice',
+      title: 'App Tutorial',
       content: (
         <div className={`space-y-4 text-left text-xs leading-relaxed overflow-y-auto max-h-[50vh] pr-2 custom-scrollbar ${contentText}`}>
-          <p className={`font-bold italic text-sm ${contentAccent}`}>"Your focus sets your intention and your practice brings you into alignment with it."</p>
-          <p>This I Am Practice is about shifting your vibrational alignment to match that of all the good that is all around you, everywhere present, right here, right now.</p>
-          <p>This is a meaning of <span className={`font-semibold ${contentText}`}>"The Kingdom of Heaven is at Hand".</span></p>
-          <p>Chances are if you are not experiencing this then you are simply in alignment with something else. And God wants to bring you back, The Ancestors, The Divine wants to bring you back.</p>
+          <p className={`text-center italic text-sm ${contentAccent}`}>"Your focus sets your intention and your practice brings you into alignment with it."</p>
+          <p className="text-center">
+            <span className={`font-semibold ${contentText}`}>"The Kingdom of Heaven is at hand"</span>
+            <br />
+            These Practices are about providing concrete tools to help with shifting your vibrational alignment to match that of all the good that is all around you - right here, right now.
+          </p>
+          <p>Chances are if you are not experiencing this then you are simply in alignment with something else. And The Divine, the Ancestors want to bring you back.</p>
           <p>In that light the I Am morning practice is an adjustment, a tuning, a frequency shift from saying no to your good to saying yes to your good!</p>
           <p className={`border-l-2 pl-3 ${contentMuted} ${contentBorder}`}>Speak your I Am practice out loud and rapid (fast one after the other so your brain does not have a chance to throw any weird stuff) so you can feel the vibration of your voice in your body.</p>
           <p>Your evening <span className={`font-semibold ${contentIndigo}`}>I Love</span> practice is bringing on the vibrational alignment of gratitude, seed planting - putting good and beautiful vibes into the soil of the garden of dreams to work as you sleep.</p>
@@ -88,7 +91,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
         <div className={`space-y-3 text-left text-xs leading-relaxed ${contentText}`}>
           <p>For the smoothest experience, move through your practice using the in-app buttons, cards, and bottom menu.</p>
           <p>When needed use the in-app back buttons to move through the dashboard spaces.</p>
-          <p className={contentMuted}>Avoid refreshing the browser or using your browser back arrow controls as that may return you to the beginning of the entry flow.</p>
+          <p className={contentMuted}>Move gently and intentionally through each space, allowing the practice to unfold step by step.</p>
         </div>
       ),
     },
@@ -166,18 +169,18 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
           </button>
         </div>
 
+        <p className={`text-center text-[10px] italic mt-2 ${footerNote}`}>
+          When you are ready, click Next.
+        </p>
         <button
           onClick={() => {
             buttonSoundService.play('back');
             onComplete();
           }}
-          className={`w-full text-xs transition-colors pt-2 ${skipClasses}`}
+          className={`w-full text-xs transition-colors ${skipClasses}`}
         >
           Skip Tutorial
         </button>
-        <p className={`text-center text-[10px] italic mt-2 ${footerNote}`}>
-          When you are ready, click Next.
-        </p>
       </div>
     </div>
     </SacredBackground>

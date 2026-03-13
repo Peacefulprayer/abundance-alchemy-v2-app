@@ -57,7 +57,9 @@ const REMINDER_SNOOZE_KEY = 'abundance_reminder_snooze';
 const PRAYER_PROFILE_STORAGE_KEY = 'abundance_prayer_profile';
 const APP_RESUME_MODE_KEY = 'abundance_resume_mode';
 const APP_RESUME_PRACTICE_KEY = 'abundance_resume_practice';
+const APP_PREAUTH_NAME_KEY = 'abundance_preauth_name';
 const RETURNING_VISITOR_KEY = 'abundance_returning_visitor';
+const AUTH_FLOW_MODE_KEY = 'abundance_auth_flow_mode';
 const REMINDER_ORDER: ReminderPractice[] = [
   'MORNING_IAM',
   'EVENING_ILOVE',
@@ -126,6 +128,12 @@ const writeStoredRecord = (key: string, value: Record<string, any>) => {
     // ignore storage errors
   }
 };
+const RESUMABLE_PREAUTH_MODES = new Set([
+  AppMode.SPLASH,
+  AppMode.WELCOME,
+  AppMode.NAMING_CEREMONY,
+  AppMode.AUTH,
+]);
 const RESUMABLE_AUTH_MODES = new Set([
   AppMode.RETURN_PORTAL,
   AppMode.ONBOARDING,
@@ -141,17 +149,39 @@ const RESUMABLE_AUTH_MODES = new Set([
   AppMode.PRAYER_GUIDE,
   AppMode.PRAYER_SESSION,
 ]);
+const HISTORY_NAVIGABLE_MODES = new Set([
+  AppMode.PRE_SPLASH,
+  AppMode.SPLASH,
+  AppMode.WELCOME,
+  AppMode.NAMING_CEREMONY,
+  AppMode.AUTH,
+  AppMode.RETURN_PORTAL,
+  AppMode.ONBOARDING,
+  AppMode.TUTORIAL,
+  AppMode.DASHBOARD,
+  AppMode.LIBRARY,
+  AppMode.SETTINGS,
+  AppMode.STATS,
+  AppMode.PROFILE,
+  AppMode.MEDITATION_SETUP,
+  AppMode.PRAYER_SETUP,
+  AppMode.PRAYER_GUIDE,
+]);
+const ALL_RESUMABLE_MODES = new Set([
+  ...Array.from(RESUMABLE_PREAUTH_MODES),
+  ...Array.from(RESUMABLE_AUTH_MODES),
+]);
 const readResumeMode = (): AppMode | null => {
   try {
     const value = sessionStorage.getItem(APP_RESUME_MODE_KEY);
     if (!value) return null;
-    return RESUMABLE_AUTH_MODES.has(value as AppMode) ? (value as AppMode) : null;
+    return ALL_RESUMABLE_MODES.has(value as AppMode) ? (value as AppMode) : null;
   } catch {
     return null;
   }
 };
 const writeResumeMode = (mode: AppMode) => {
-  if (!RESUMABLE_AUTH_MODES.has(mode)) return;
+  if (!ALL_RESUMABLE_MODES.has(mode)) return;
   try {
     sessionStorage.setItem(APP_RESUME_MODE_KEY, mode);
   } catch {
@@ -161,6 +191,54 @@ const writeResumeMode = (mode: AppMode) => {
 const clearResumeMode = () => {
   try {
     sessionStorage.removeItem(APP_RESUME_MODE_KEY);
+  } catch {
+    // ignore storage errors
+  }
+};
+type AuthFlowMode = 'login' | 'register';
+const readAuthFlowMode = (): AuthFlowMode => {
+  try {
+    const value = sessionStorage.getItem(AUTH_FLOW_MODE_KEY);
+    return value === 'register' ? 'register' : 'login';
+  } catch {
+    return 'login';
+  }
+};
+const writeAuthFlowMode = (mode: AuthFlowMode) => {
+  try {
+    sessionStorage.setItem(AUTH_FLOW_MODE_KEY, mode);
+  } catch {
+    // ignore storage errors
+  }
+};
+const clearAuthFlowMode = () => {
+  try {
+    sessionStorage.removeItem(AUTH_FLOW_MODE_KEY);
+  } catch {
+    // ignore storage errors
+  }
+};
+const readPreAuthName = (): string => {
+  try {
+    return sessionStorage.getItem(APP_PREAUTH_NAME_KEY) || '';
+  } catch {
+    return '';
+  }
+};
+const writePreAuthName = (name: string) => {
+  try {
+    if (name.trim()) {
+      sessionStorage.setItem(APP_PREAUTH_NAME_KEY, name.trim());
+    } else {
+      sessionStorage.removeItem(APP_PREAUTH_NAME_KEY);
+    }
+  } catch {
+    // ignore storage errors
+  }
+};
+const clearPreAuthName = () => {
+  try {
+    sessionStorage.removeItem(APP_PREAUTH_NAME_KEY);
   } catch {
     // ignore storage errors
   }
@@ -456,12 +534,17 @@ function App() {
   const [prayerProfile, setPrayerProfile] = useState(() => loadStoredPrayerProfile());
   const [isReturningVisitor, setIsReturningVisitor] = useState(false);
   const [welcomeReturnMode, setWelcomeReturnMode] = useState<AppMode | null>(null);
+  const [authFlowMode, setAuthFlowMode] = useState<AuthFlowMode>(() => readAuthFlowMode());
+  const historyNavigationRef = React.useRef(false);
   const API_BASE =
     (import.meta as any)?.env?.VITE_API_BASE_URL ?? '/abundance-alchemy-api';
 
   const routeReturningVisitorToSacredEntry = () => {
     setWelcomeReturnMode(null);
     setIsReturningVisitor(true);
+    clearPreAuthName();
+    setAuthFlowMode('login');
+    writeAuthFlowMode('login');
     setBootDestination(AppMode.SPLASH);
     clearResumeMode();
     clearPracticeSnapshot();
@@ -517,11 +600,13 @@ function App() {
   useEffect(() => {
     let isMounted = true;
     let hasKnownVisitor = false;
+    let storedAuthFlowMode: AuthFlowMode = 'login';
     try {
       hasKnownVisitor = localStorage.getItem(RETURNING_VISITOR_KEY) === '1';
     } catch {
       hasKnownVisitor = false;
     }
+    storedAuthFlowMode = readAuthFlowMode();
 
     (async () => {
       try {
@@ -529,8 +614,10 @@ function App() {
         if (!isMounted) return;
         const profile = toUserProfile(res);
         const resumeMode = readResumeMode();
+        const authenticatedResumeMode =
+          resumeMode && RESUMABLE_AUTH_MODES.has(resumeMode) ? resumeMode : null;
         const resumePractice =
-          resumeMode === AppMode.PRACTICE ? readPracticeSnapshot() : null;
+          authenticatedResumeMode === AppMode.PRACTICE ? readPracticeSnapshot() : null;
         const hasFocusSelection =
           Array.isArray(profile.focusAreas) && profile.focusAreas.length > 0;
         const defaultAuthenticatedMode = hasFocusSelection
@@ -539,7 +626,10 @@ function App() {
 
         setUser(profile);
         setIsReturningVisitor(true);
-        if (resumeMode === AppMode.PRACTICE) {
+        clearPreAuthName();
+        setAuthFlowMode('login');
+        writeAuthFlowMode('login');
+        if (authenticatedResumeMode === AppMode.PRACTICE) {
           if (resumePractice) {
             setPracticeConfig(resumePractice);
             setBootDestination(AppMode.PRACTICE);
@@ -550,7 +640,7 @@ function App() {
           }
         } else {
           setPracticeConfig(null);
-          setBootDestination(resumeMode || defaultAuthenticatedMode);
+          setBootDestination(authenticatedResumeMode || defaultAuthenticatedMode);
         }
 
         try {
@@ -564,14 +654,24 @@ function App() {
         }
       } catch (e) {
         if (!isMounted) return;
-        console.error('me.php validation failed:', e);
+        if (!(e instanceof ApiError && e.status === 401)) {
+          console.error('me.php validation failed:', e);
+        }
         localStorage.removeItem('abundance_auth');
-        clearResumeMode();
         clearPracticeSnapshot();
         setPracticeConfig(null);
-        setIsReturningVisitor(hasKnownVisitor);
+        const resumeMode = readResumeMode();
+        const preAuthResumeMode =
+          resumeMode && RESUMABLE_PREAUTH_MODES.has(resumeMode) ? resumeMode : null;
+        const resumedSacredName = readPreAuthName();
+        const shouldRouteToLogin = hasKnownVisitor && storedAuthFlowMode === 'login';
+        setIsReturningVisitor(shouldRouteToLogin);
+        setAuthFlowMode(shouldRouteToLogin ? 'login' : 'register');
+        writeAuthFlowMode(shouldRouteToLogin ? 'login' : 'register');
+        setSacredName(resumedSacredName);
         setBootDestination(AppMode.SPLASH);
         setUser(null);
+        setCurrentMode(preAuthResumeMode || AppMode.PRE_SPLASH);
       } finally {
         if (isMounted) setAuthChecked(true);
       }
@@ -599,12 +699,65 @@ function App() {
     if (RESUMABLE_AUTH_MODES.has(currentMode)) {
       writeResumeMode(currentMode);
     }
+    clearPreAuthName();
     if (currentMode === AppMode.PRACTICE && practiceConfig) {
       writePracticeSnapshot(practiceConfig);
     } else {
       clearPracticeSnapshot();
     }
   }, [authChecked, currentMode, practiceConfig, user]);
+
+  useEffect(() => {
+    if (!authChecked || user) return;
+
+    if (RESUMABLE_PREAUTH_MODES.has(currentMode)) {
+      writeResumeMode(currentMode);
+      writePreAuthName(sacredName);
+      return;
+    }
+
+    if (currentMode === AppMode.PRE_SPLASH) {
+      clearResumeMode();
+      clearPreAuthName();
+      return;
+    }
+
+    clearPreAuthName();
+  }, [authChecked, currentMode, sacredName, user]);
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const nextMode = event.state?.appMode as AppMode | undefined;
+      if (!nextMode || !HISTORY_NAVIGABLE_MODES.has(nextMode)) return;
+      historyNavigationRef.current = true;
+      setCurrentMode(nextMode);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!authChecked || !HISTORY_NAVIGABLE_MODES.has(currentMode)) return;
+
+    if (historyNavigationRef.current) {
+      historyNavigationRef.current = false;
+      window.history.replaceState({ appMode: currentMode }, '');
+      return;
+    }
+
+    const currentHistoryMode = window.history.state?.appMode as AppMode | undefined;
+    if (!currentHistoryMode) {
+      window.history.replaceState({ appMode: currentMode }, '');
+      return;
+    }
+
+    if (currentHistoryMode !== currentMode) {
+      window.history.pushState({ appMode: currentMode }, '');
+    }
+  }, [authChecked, currentMode]);
 
   useEffect(() => {
     if (!user?.email) return;
@@ -842,6 +995,11 @@ function App() {
       }
     }
 
+    if (nextMode === AppMode.AUTH) {
+      setAuthFlowMode('login');
+      writeAuthFlowMode('login');
+    }
+
     setCurrentMode(nextMode);
   };
 
@@ -858,20 +1016,30 @@ function App() {
 
     console.log('SacredNamingCeremony complete → going to Auth');
     setSacredName(nextName);
+    setAuthFlowMode('register');
+    writeAuthFlowMode('register');
     setCurrentMode(AppMode.AUTH);
   };
 
   const handleAuthRegister = (account: UserAccount) => {
-    console.log('Auth register → going to Naming Ceremony');
+    const existingSacredName = sacredName.trim();
+    const nextSacredName = existingSacredName || (account.name || '').trim();
+    console.log(
+      existingSacredName
+        ? 'Auth register → going to Onboarding'
+        : 'Auth register → going to Naming Ceremony'
+    );
     const profile = toUserProfile(account);
-    setSacredName((account.name || '').trim());
+    setSacredName(nextSacredName);
     setIsReturningVisitor(true);
     setWelcomeReturnMode(null);
-    setUser(profile);
+    setUser({ ...profile, name: nextSacredName || profile.name });
     localStorage.setItem(RETURNING_VISITOR_KEY, '1');
     localStorage.setItem('abundance_auth', JSON.stringify(account));
+    setAuthFlowMode('login');
+    writeAuthFlowMode('login');
     setAuthChecked(true);
-    setCurrentMode(AppMode.NAMING_CEREMONY);
+    setCurrentMode(existingSacredName ? AppMode.ONBOARDING : AppMode.NAMING_CEREMONY);
   };
 
   const handleAuthLogin = (account: UserAccount) => {
@@ -883,6 +1051,8 @@ function App() {
     setUser(profile);
     localStorage.setItem(RETURNING_VISITOR_KEY, '1');
     localStorage.setItem('abundance_auth', JSON.stringify(account));
+    setAuthFlowMode('login');
+    writeAuthFlowMode('login');
     setAuthChecked(true);
     setCurrentMode(AppMode.RETURN_PORTAL);
   };
@@ -1090,6 +1260,8 @@ function App() {
     localStorage.clear();
     clearResumeMode();
     clearPracticeSnapshot();
+    clearAuthFlowMode();
+    setAuthFlowMode('register');
     setSacredName('');
     setIsReturningVisitor(false);
     setWelcomeReturnMode(null);
@@ -1309,6 +1481,11 @@ function App() {
         return (
           <UniversalLayout showBottomMenu={false}>
             <Auth
+              mode={authFlowMode}
+              onModeChange={(mode) => {
+                setAuthFlowMode(mode);
+                writeAuthFlowMode(mode);
+              }}
               onRegister={handleAuthRegister}
               onLogin={handleAuthLogin}
               initialName={sacredName}
@@ -1550,14 +1727,16 @@ function App() {
               </div>
             )}
             <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
-            <button
-              onClick={handleResetAndStartOver}
-              className="fixed bottom-24 right-4 px-3 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90 shadow-lg text-xs"
-              aria-label="Reset and start over"
-              title="Reset & Start Over"
-            >
-              Reset
-            </button>
+            {import.meta.env.DEV && (
+              <button
+                onClick={handleResetAndStartOver}
+                className="fixed bottom-24 right-4 px-3 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90 shadow-lg text-xs"
+                aria-label="Reset and start over"
+                title="Reset & Start Over"
+              >
+                Reset
+              </button>
+            )}
           </UniversalLayout>
         );
       default:

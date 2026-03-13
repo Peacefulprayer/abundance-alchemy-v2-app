@@ -77,10 +77,10 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
             <div className="text-center space-y-2">
               <div className="space-y-0.5">
                 <h2 className={`text-sm md:text-base font-semibold text-slate-100`}>
-                  Before the Naming
+                  The Naming Ceremony
                 </h2>
                 <p className="text-[11px] md:text-xs text-slate-200">
-                  A quiet moment of intention
+                  Before we begin
                 </p>
               </div>
 
@@ -97,51 +97,45 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
 
                 <div className="space-y-1.5">
                   <p className="text-xs md:text-sm text-slate-100 font-light">
-                    A name shapes
+                    You are about to be welcomed
                     <br />
-                    the one who bears it.
+                    into the Sacred I Am Space.
                   </p>
 
                   <div className="space-y-1 py-0.5">
                     <div className="h-px bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
                     <p className="text-xs md:text-sm text-slate-100 font-light tracking-[0.03em]">
-                      Pause a moment.
+                      Before we continue, we ask:
                     </p>
                     <div className="h-px bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
                   </div>
 
                   <p className="text-[11px] md:text-xs text-slate-200">
-                    You are about to choose
+                    Who are you in this space,
                     <br />
-                    how you will be called
-                    <br />
-                    in this sacred space.
+                    or who do you wish to be?
                   </p>
                 </div>
 
                 <p className="text-[11px] md:text-xs text-slate-200">
-                  Some names are given at birth.
+                  To enter this work, we need to know
                   <br />
-                  Others are chosen along the way—
+                  how you wish to be called here.
                   <br />
-                  names that hold the hopes of
+                  We call this
                   <br />
-                  others for us,
-                  <br />
-                  trace who we have been,
-                  <br />
-                  speak to who we are becoming,
-                  <br />
-                  and express how we wish to be met.
+                  The Naming Ceremony.
                 </p>
 
                 <div className="h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
 
                 <div className="space-y-1.5">
                   <p className="text-[11px] md:text-xs text-slate-200">
-                    Walk into this space with intention.
+                    Some names are given at birth.
                     <br />
-                    How do you want to be called?
+                    Others are chosen along the way.
+                    <br />
+                    Both can be sacred here.
                   </p>
                   <div className="text-[11px] md:text-xs text-amber-200/90 space-y-0.5">
                     <p>Your given name?</p>
@@ -167,7 +161,7 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
                     showPreludeNext ? 'opacity-100' : 'opacity-0 pointer-events-none'
                   }`}
                 >
-                  Next
+                  Begin Ceremony
                 </button>
                 <div className="h-3 md:h-4" />
               </div>

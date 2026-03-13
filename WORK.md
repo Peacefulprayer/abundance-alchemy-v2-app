@@ -258,3 +258,160 @@ This is a checkpoint record so work can resume quickly if a session drops.
 - Begin sacred design pass on Dashboard and inner app screens.
 - Swahili language layer additions (remaining S1–S4 touch points not yet done).
 - Investigate tutorial → Dashboard blank screen transition (known issue).
+
+### Reconciliation note on 2026-03-09
+- Code and docs were rechecked after additional local edits.
+- `app/App.tsx` was brought back in line with the documented checkpoint for post-register flow:
+  - registration again routes through `NAMING_CEREMONY` before `ONBOARDING`
+- Remaining uncommitted work is now primarily:
+  - `app/components/Dashboard.tsx` visual polish
+  - minor copy/typography refinement in `app/components/Onboarding.tsx`
+
+### Dashboard pass on 2026-03-09
+- Continued Option 1 Dashboard polish in the current sacred/gold direction.
+- Established a stronger S5 visual baseline in `app/components/Dashboard.tsx`:
+  - added a centered page shell and framed section containers
+  - strengthened wisdom, focus, practice, meditation, and Temple Sound card hierarchy
+  - tightened mobile spacing and CTA rhythm without changing dashboard behavior
+  - upgraded dark-mode contrast with more solid amber-edged card treatments
+- No flow logic was changed in this pass; practice handlers, audio controls, and navigation behavior remain intact.
+- Build verification after the Dashboard pass:
+  - `cd app && npm run build` passed
+  - existing Vite chunk-size warning remains unchanged
+
+### Recommended next working area
+- Use `Dashboard.tsx` as the S5 style baseline.
+- Continue the same visual system across the lower-risk inner-screen cluster next:
+  - `Settings`
+  - `Stats`
+  - `Profile`
+  - `Library`
+
+### Fresh-browser signup flow fix on 2026-03-09
+- Fixed duplicate name-flow routing in `app/App.tsx`.
+- Fresh new users who already completed `NAMING_CEREMONY` before registering no longer get routed back into `NAMING_CEREMONY` after `Auth` signup.
+- `handleAuthRegister` now:
+  - preserves the existing sacred name when one already exists
+  - routes fresh-path signups directly to `ONBOARDING`
+  - still routes direct-auth/deleted-account registration through `NAMING_CEREMONY` when no sacred name exists yet
+- Verification:
+  - `cd app && npm run build` passed
+  - existing Vite chunk-size warning remains unchanged
+
+### Entry-flow correction on 2026-03-09
+- Fixed incorrect anonymous/deleted-user handling in `app/services/api.ts`.
+- Root cause:
+  - the shared API client treated every `401` like a forced logout
+  - that included anonymous `me.php` boot checks and failed `login.php` attempts
+  - result: fresh users could be misclassified as returning visitors and failed sign-in attempts could bounce the app back into sacred entry
+- Fix applied:
+  - `401` responses from `me.php`, `login.php`, `register.php`, `request-password-reset.php`, and `csrf-token.php` no longer dispatch global logout behavior
+  - protected authenticated endpoints still clear auth on real session loss
+- Expected flow after this fix:
+  - fresh browser / no site data: `PRE_SPLASH -> SPLASH -> WELCOME -> NAMING_CEREMONY -> AUTH (Sign Up) -> ONBOARDING`
+  - deleted-account user who incorrectly tries `Sign In` should now stay on `Auth` with an auth error instead of being bounced back to `Splash`
+
+### Auth flow modernization on 2026-03-09
+- Reworked auth to use explicit app-owned auth intent instead of inferring login/register from `initialName`.
+- `app/App.tsx` now persists `authFlowMode` in session storage:
+  - fresh naming path sets `register`
+  - returning/signed-out path sets `login`
+  - reset/start-over clears the auth-flow hint
+- `app/components/Auth.tsx` is now a controlled screen:
+  - `App.tsx` passes `mode` and `onModeChange`
+  - auth no longer guesses the starting tab from leftovers in component state
+  - mode switches clear only the auth-form state needed for a clean transition
+- UX improvement:
+  - added explicit `Sign Up` / `Sign In` sacred segmented control at the top of Auth
+  - failed `Sign In` now stays on Auth with a clearer message guiding users to `Sign Up` when no active account exists
+- Resulting professionalized auth behavior:
+  - new user flow is explicitly registration-led
+  - returning/signed-out user flow is explicitly sign-in-led
+  - failed auth no longer collapses back into the sacred entry loop
+- Verification:
+  - `cd app && npm run build` passed
+  - existing Vite chunk-size warning remains unchanged
+
+### Standards pass checklist on 2026-03-09
+- Goal:
+  - bring the sacred entry and transition sequence up to a cleaner modern product standard without flattening the ceremonial tone
+- Standards-pass checklist:
+  - reduce repeated identity friction
+  - provide real auth recovery/help affordances
+  - improve invocation fallback and accessibility
+  - replace fake-loading language with truer ritual-transition language
+  - remove tutorial copy that teaches around app weaknesses
+  - defer the deeper browser-refresh/navigation resilience pass as a separate architecture item
+
+### Standards pass implemented on 2026-03-09
+- `app/components/Onboarding.tsx`
+  - users with an already-established sacred name now skip the redundant name-confirmation step and begin at focus selection
+- `app/components/Auth.tsx`
+  - added controlled `Sign Up` / `Sign In` segmented auth switch
+  - added real `Forgot Password?` flow using the existing password-reset API
+  - improved recovery messaging for failed sign-in
+- `app/components/WelcomeScreen.tsx`
+  - added autoplay failure fallback with explicit `Play Invocation`
+  - added a readable invocation text toggle for accessibility and control
+- `app/components/SplashScreen/SplashScreen.tsx`
+  - softened the staged progress language from fake loading semantics to ritual-opening language
+- `app/components/TutorialOverlay.tsx`
+  - removed the explicit warning telling users not to refresh or use browser back
+- `app/services/api.ts`
+  - added password-reset API support
+
+### Remaining standards item after this pass
+- Still pending as its own deeper architecture pass:
+  - make browser refresh / browser back behavior truly resilient across the pre-auth journey rather than merely avoiding weak copy around it
+
+### Verified after standards pass
+- `cd app && npm run build` passed
+- existing Vite chunk-size warning remains unchanged
+
+### Pre-auth resilience pass on 2026-03-12
+- Strengthened `app/App.tsx` refresh/back behavior across the anonymous sacred-entry path.
+- Added intentional resume handling for the pre-auth flow:
+  - `SPLASH`
+  - `WELCOME`
+  - `NAMING_CEREMONY`
+  - `AUTH`
+- Added dedicated pre-auth sacred-name persistence so the chosen name can survive refresh without bleeding into unrelated flows.
+- Split authenticated resume handling from anonymous resume handling so dashboard/session restoration no longer shares the same coarse path as anonymous boot.
+- Synced major app modes into browser history state so browser back/forward behaves more predictably instead of dumping the user into mismatched entry states.
+- Verification:
+  - `cd app && npm run build` passed
+  - existing Vite chunk-size warning remains unchanged
+
+### Inner-screen polish pass on 2026-03-12
+- Continued the Dashboard sacred/gold system into the first post-dashboard cluster:
+  - `app/components/Settings.tsx`
+  - `app/components/Stats.tsx`
+  - `app/components/Profile.tsx`
+  - `app/components/Library.tsx`
+- `Settings.tsx`
+  - rebuilt into framed sacred sections with clearer hierarchy for appearance, audio, reminders, and actions
+  - preserved all existing controls and handlers while improving readability and spacing
+- `Stats.tsx`
+  - upgraded from a flat utilitarian screen into a proper journey snapshot using the sacred-card system
+- `Profile.tsx`
+  - aligned profile identity details and key metrics to the Dashboard baseline
+- `Library.tsx`
+  - reorganized into clearer sections for soundscapes, uploaded audio, affirmations, and gratitude logs
+  - improved composer/readability without changing library behavior
+- Verification:
+  - `cd app && npm run build` passed
+  - existing Vite chunk-size warning remains unchanged
+
+### Next session
+- Visual QA:
+  - sacred entry refresh/back behavior
+  - `Dashboard`
+  - `Settings`
+  - `Stats`
+  - `Profile`
+  - `Library`
+- Then continue the sacred-system pass into:
+  - `Prayer`
+  - `Meditation`
+  - `I Am`
+  - `I Love`
