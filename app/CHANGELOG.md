@@ -1,5 +1,19 @@
 # Changelog (human-readable)
 
+## 2026-03-13 checkpoint-inner-screens-and-resilience
+- Strengthened pre-auth refresh/back resilience in `app/App.tsx`.
+- Preserved anonymous sacred-entry state more deliberately across `SPLASH`, `WELCOME`, `NAMING_CEREMONY`, and `AUTH`.
+- Completed the first inner-screen sacred/gold baseline pass on:
+  - `Settings`
+  - `Stats`
+  - `Profile`
+  - `Library`
+- Kept the Dashboard baseline and sacred-entry standards work aligned with current docs.
+- Updated handoff docs:
+  - `WORK.md`
+  - `app/PROJECT_STATUS.md`
+  - `app/CHANGELOG.md`
+
 ## 2026-03-08 checkpoint-sacred-entry-ui
 - Applied a shared sacred card/layout system across the entry sequence.
 - Polished tutorial visuals and improved readability.
