@@ -23,8 +23,26 @@ interface WelcomeScreenProps {
 }
 
 const WELCOME_URL = href('assets/audio/voices/welcome.mp3');
-const WELCOME_DURATION_MS = 35000;
+const WELCOME_DURATION_MS = 34664;
 const FINISH_DELAY_MS = 1500;
+const INVOCATION_CAPTIONS = [
+  { startMs: 0, endMs: 6000, text: 'Welcome to Abundance Alchemy, your I am transformation station.' },
+  { startMs: 6000, endMs: 11000, text: 'I am an abundance alchemist. I stand as witness and guide for your practice.' },
+  { startMs: 11000, endMs: 18000, text: 'Your morning I am, your evening I love, and your meditation moments of gratitude sealing the work.' },
+  { startMs: 18000, endMs: 20000, text: 'Remember the Divine One said,' },
+  { startMs: 20000, endMs: 25000, text: 'Where two or more are gathered there shall I be, with the Divine One invoked.' },
+  { startMs: 25000, endMs: 26000, text: 'Ancestors at the ready,' },
+  { startMs: 26000, endMs: WELCOME_DURATION_MS, text: 'set your focus, speak your word, rest in gratitude, and let divine law do the rest.' },
+] as const;
+
+const getInvocationCaption = (elapsedMs: number, durationMs: number): string => {
+  const normalizedDuration = durationMs > 0 ? durationMs : WELCOME_DURATION_MS;
+  const scaledElapsed = Math.max(0, Math.min(WELCOME_DURATION_MS, (elapsedMs / normalizedDuration) * WELCOME_DURATION_MS));
+  const activeCue =
+    INVOCATION_CAPTIONS.find((cue) => scaledElapsed >= cue.startMs && scaledElapsed < cue.endMs) ||
+    INVOCATION_CAPTIONS[INVOCATION_CAPTIONS.length - 1];
+  return activeCue.text;
+};
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   user,
@@ -36,6 +54,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [currentCaption, setCurrentCaption] = useState<string>(INVOCATION_CAPTIONS[0].text);
+  const [showTranscript, setShowTranscript] = useState(false);
   const didFinishRef = useRef(false);
   const finishTimeoutRef = useRef<number | null>(null);
   const progressTimerRef = useRef<number | null>(null);
@@ -83,17 +103,26 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       const hasAudioDuration = Number.isFinite(audio.duration) && audio.duration > 0;
       const hasCurrentTime = Number.isFinite(audio.currentTime) && audio.currentTime > 0;
       if (hasAudioDuration && hasCurrentTime) {
+        const elapsedMs = audio.currentTime * 1000;
+        const durationMs = audio.duration * 1000;
         setProgress(Math.min(100, (audio.currentTime / audio.duration) * 100));
+        setCurrentCaption(getInvocationCaption(elapsedMs, durationMs));
         return;
       }
       if (playbackStartedAtRef.current) {
         const elapsed = performance.now() - playbackStartedAtRef.current;
         setProgress(Math.min(100, (elapsed / WELCOME_DURATION_MS) * 100));
+        setCurrentCaption(getInvocationCaption(elapsed, WELCOME_DURATION_MS));
         if (elapsed >= WELCOME_DURATION_MS) proceed();
       }
     };
 
-    const handleEnded = () => { setIsPlaying(false); setProgress(100); proceed(); };
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setProgress(100);
+      setCurrentCaption(INVOCATION_CAPTIONS[INVOCATION_CAPTIONS.length - 1].text);
+      proceed();
+    };
     const handlePlay = () => { if (!playbackStartedAtRef.current) playbackStartedAtRef.current = performance.now(); setIsPlaying(true); };
     const handlePause = () => setIsPlaying(false);
     const handleTimeUpdate = () => updateProgress();
@@ -136,6 +165,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     if (!audioRef.current) return;
     try {
       playbackStartedAtRef.current = performance.now();
+      setCurrentCaption(INVOCATION_CAPTIONS[0].text);
       await audioRef.current.play();
       setAudioBlocked(false);
       setIsPlaying(true);
@@ -160,24 +190,25 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
         <div className={SACRED_BODY_CARD}>
           <div className="text-center space-y-2 md:space-y-3">
+            <p className="text-xs md:text-sm font-extrabold uppercase tracking-[0.22em] text-amber-400">
+              Invocation
+            </p>
             <p className="text-sm md:text-base text-slate-200 font-extralight">
-              We Are Honored To Be Here<br />With You Now
+              Welcome To Abundance Alchemy<br />Your I Am Transformation Station
             </p>
             <div className="space-y-1 md:space-y-1.5 text-slate-200 text-xs md:text-sm font-light">
-              <p>Pausing A Moment</p>
-              <p>Breathing In The Divine</p>
-              <p>We Let Go And Allow</p>
-              <p>Immersing Ourselves</p>
-              <p>In This Sacred Invocation</p>
-              <p>Uniting Hearts And Minds</p>
-              <p className="pt-1 text-amber-500 text-xs md:text-sm">Ase.</p>
+              <p>I Am An Abundance Alchemist</p>
+              <p>I Stand As Witness And Guide For Your Practice</p>
+              <p className="pt-1 text-emerald-400 text-xs md:text-sm">
+                Live Captions Below Follow The Spoken Invocation
+              </p>
             </div>
           </div>
         </div>
 
         <div className={`${SACRED_INNER_WIDTH} space-y-3`}>
           <div className="text-center">
-            <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-black/60 border border-white/25 text-[11px] tracking-[0.15em] uppercase text-white mb-2 shadow-[0_0_14px_rgba(0,0,0,0.45)]">
+            <div className="inline-flex animate-breath items-center justify-center px-3 py-1 rounded-full bg-black/60 border border-white/25 text-[11px] tracking-[0.15em] uppercase text-white mb-2 shadow-[0_0_14px_rgba(0,0,0,0.45)]">
               WE ARE PRAYING NOW
             </div>
             <div className="w-full h-1 md:h-1.5 rounded-full bg-slate-800 overflow-hidden">
@@ -186,6 +217,30 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 style={{ width: `${progress}%` }}
               />
             </div>
+          </div>
+          <div className="rounded-[22px] border border-white/12 bg-slate-950/72 px-4 py-3 text-center shadow-[0_18px_36px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400">
+              Closed Captions
+            </p>
+            <p className="mt-2 min-h-[2.75rem] text-sm leading-relaxed text-white md:text-base">
+              {currentCaption}
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowTranscript((prev) => !prev)}
+              className="mt-3 inline-flex items-center justify-center rounded-full border border-white/14 bg-white/8 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:bg-white/12"
+            >
+              {showTranscript ? 'Hide Full Invocation Text' : 'Show Full Invocation Text'}
+            </button>
+            {showTranscript ? (
+              <div className="mt-3 space-y-2 border-t border-white/10 pt-3 text-left">
+                {INVOCATION_CAPTIONS.map((cue, index) => (
+                  <p key={`${cue.startMs}-${index}`} className="text-xs leading-relaxed text-slate-200">
+                    {cue.text}
+                  </p>
+                ))}
+              </div>
+            ) : null}
           </div>
           {audioBlocked ? (
             <p className="text-center text-[11px] text-amber-200">

@@ -1,4 +1,4 @@
-export type PrayerPathId = 'christian' | 'muslim' | 'traditional' | 'universal';
+export type PrayerPathId = 'christian' | 'muslim' | 'traditional' | 'science_of_mind' | 'universal';
 
 export interface PrayerPath {
   id: PrayerPathId;
@@ -27,6 +27,12 @@ export const PRAYER_PATHS: PrayerPath[] = [
     description: 'Grounded in heritage, gratitude, elders, and ancestral wisdom.',
   },
   {
+    id: 'science_of_mind',
+    label: 'Science of Mind',
+    swahili: 'Akili ya Roho',
+    description: 'Built around the classic five-step treatment: recognition, unification, realization, thanksgiving, and release.',
+  },
+  {
     id: 'universal',
     label: 'Universal / Spiritual',
     swahili: 'Kiroho',
@@ -53,6 +59,13 @@ export const PRAYER_GUIDE_STEPS: Record<PrayerPathId, string[]> = {
     'Ask for protection, strength, and upright character.',
     'Close by committing your actions to wisdom and service.',
   ],
+  science_of_mind: [
+    'Recognition: Acknowledge the Presence, Power, and intelligence of the Divine.',
+    'Unification: Remember that the same Divine life lives and moves through you now.',
+    'Realization: Speak your desired truth as already active, whole, guided, and unfolding.',
+    'Thanksgiving: Give thanks that the prayer is already answered in Spirit.',
+    'Release: Let go, trust the law in motion, and rest in calm expectancy.',
+  ],
   universal: [
     'Take three slow breaths and center your intention.',
     'Name what you are grateful for right now.',
@@ -76,6 +89,13 @@ export const PRAYER_TEXTS: Record<PrayerPathId, string[]> = {
     'Creator of life, I give thanks for breath, family, and another day. Ancestors of light, guide my path with wisdom and courage.',
     'May my words be clean, my heart be steady, and my hands be useful. Keep me aligned with truth, dignity, and service.',
     'I pray for protection over my home and strength for my purpose. Let what I build bring healing, honor, and abundance.',
+  ],
+  science_of_mind: [
+    'There is one Life, one Presence, one boundless Intelligence expressing as all things. I recognize that this Divine life is here now.',
+    'I am one with this Presence. Its wisdom guides my mind, its peace steadies my heart, and its abundance moves freely through my life.',
+    'I speak the word for clarity, healing, love, and right action. What I need is already being revealed, organized, and fulfilled.',
+    'I give thanks that the answer is active now, even before I can see every detail. I rest in trust and spiritual certainty.',
+    'I release this word into the creative law of life, knowing it is done. And so it is.',
   ],
   universal: [
     'Source of life, thank You for this moment. Fill me with calm, clarity, and compassion as I move through this day.',

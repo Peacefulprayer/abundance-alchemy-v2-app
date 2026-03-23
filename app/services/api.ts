@@ -1,4 +1,4 @@
-import { Affirmation, Soundscape, PracticeType } from '../types';
+import { Affirmation, PrayerContent, PracticeType, Soundscape, UserPrayer } from '../types';
 
 export type BackgroundMap = Record<string, { imageUrl: string; creatorName?: string }>;
 
@@ -16,6 +16,8 @@ export type MeditationTrack = Record<string, any>;
 type AddAffirmationResponse = { success: boolean; id: string | number; message?: string };
 type DeleteAffirmationResponse = { success: boolean; deleted?: boolean };
 type RandomAffirmationResponse = { text?: string };
+type AddPrayerResponse = { success: boolean; id: string | number; message?: string };
+type DeletePrayerResponse = { success: boolean; deleted?: boolean };
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy-api';
@@ -180,6 +182,33 @@ export const api = {
     client<{ ok: boolean }>('sync-progress.php', { body: payload }),
 
   getSoundscapes: (email?: string) => client<Soundscape[]>('get-soundscapes.php' + (email ? `?email=${encodeURIComponent(email)}` : '')),
+
+  getPrayerContent: (pathId: string) =>
+    client<PrayerContent>(`get-prayer-content.php?path=${encodeURIComponent(pathId)}`),
+
+  getUserPrayers: async (pathId: string): Promise<UserPrayer[]> => {
+    const rows = await client<any[]>(`get-user-prayers.php?path=${encodeURIComponent(pathId)}`);
+    return (rows || []).map((item: any) => ({
+      id: String(item.id),
+      path_key: String(item.path_key ?? pathId),
+      title: String(item.title ?? ''),
+      body: String(item.body ?? ''),
+      created_at: item.created_at ?? null,
+      updated_at: item.updated_at ?? null,
+    }));
+  },
+
+  addUserPrayer: (pathId: string, text: string, title?: string) =>
+    client<AddPrayerResponse>('add-user-prayer.php', {
+      body: { pathId, text, title },
+      method: 'POST',
+    }),
+
+  removeUserPrayer: (id: string) =>
+    client<DeletePrayerResponse>('delete-user-prayer.php', {
+      body: { id },
+      method: 'POST',
+    }),
 
   getBackgrounds: () => client<BackgroundMap>('get-backgrounds.php'),
 

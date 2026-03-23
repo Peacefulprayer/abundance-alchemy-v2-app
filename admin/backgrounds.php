@@ -222,12 +222,102 @@ $getSlotCreator = static function(array $items, string $slot): string {
           crossorigin="anonymous">
     <style>
         body { padding: 20px; }
+        .page-intro {
+            border: 1px solid #e9ecef;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 18px 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        .guide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .guide-card {
+            border: 1px solid #e9ecef;
+            border-radius: 14px;
+            background: #fff;
+            padding: 12px 14px;
+        }
+        .guide-card h3 {
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+        .guide-card .size-badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            background: #fff3cd;
+            color: #7a5200;
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 4px 10px;
+            margin-bottom: 8px;
+        }
+        .section-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .slot-card {
+            height: 100%;
+            border-radius: 16px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+        .slot-card .card-body {
+            padding: 14px;
+        }
+        .slot-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .slot-title {
+            font-size: 0.98rem;
+            margin: 0;
+        }
+        .slot-key {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 2px 8px;
+            font-size: 0.72rem;
+            color: #495057;
+        }
+        .slot-meta {
+            font-size: 0.78rem;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
         .bg-thumb {
-            width: 180px;
-            height: 100px;
+            width: 100%;
+            height: 120px;
             object-fit: cover;
             border-radius: 8px;
             border: 1px solid #ddd;
+        }
+        .upload-form .form-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .upload-form .form-control,
+        .upload-form .btn {
+            font-size: 0.88rem;
+        }
+        .empty-state {
+            font-size: 0.82rem;
+            color: #6c757d;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -236,9 +326,31 @@ $getSlotCreator = static function(array $items, string $slot): string {
 
 <div class="container mt-4">
     <h1 class="h4 mb-3">Backgrounds</h1>
-    <p class="text-muted mb-4">
-        Resolve order is: <strong>Screen Image</strong> → <strong>Section Image</strong> → <strong>App Fallback Image (HOME)</strong>. Color/overlay layers are handled in the app theme.
-    </p>
+    <div class="page-intro mb-4">
+        <p class="text-muted mb-3">
+            Resolve order is: <strong>Screen Image</strong> → <strong>Section Image</strong> → <strong>App Fallback Image (HOME)</strong>.
+            Color and overlay styling are still handled in the app theme.
+        </p>
+        <div class="guide-grid">
+            <div class="guide-card">
+                <div class="size-badge">App Background</div>
+                <h3>Best Size</h3>
+                <div><strong>2160 x 3840</strong> px</div>
+                <div class="text-muted small">Use this for global and section atmosphere images.</div>
+            </div>
+            <div class="guide-card">
+                <div class="size-badge">Screen Background</div>
+                <h3>Best Size</h3>
+                <div><strong>1440 x 2560</strong> px</div>
+                <div class="text-muted small">You can also use <strong>2160 x 3840</strong> if you want one master size.</div>
+            </div>
+            <div class="guide-card">
+                <div class="size-badge">Composition Notes</div>
+                <h3>Keep It Safe</h3>
+                <div class="text-muted small">Keep important details centered, avoid text baked into the art, and expect edge crop on phones and desktop.</div>
+            </div>
+        </div>
+    </div>
 
     <?php if ($msg): ?>
         <div class="alert alert-info"><?= htmlspecialchars($msg) ?></div>
@@ -263,22 +375,24 @@ $getSlotCreator = static function(array $items, string $slot): string {
         </div>
     <?php endif; ?>
 
-    <h2 class="h5 mt-4 mb-3">1) Section Defaults</h2>
-    <p class="text-muted small mb-3">Use these to set one background for an entire app section.</p>
-    <div class="row">
+    <div class="section-header mt-4">
+        <h2 class="h5 mb-0">1) Section Defaults</h2>
+        <p class="text-muted small mb-0">Use these to set one background for an entire app section.</p>
+    </div>
+    <div class="row g-3">
         <?php foreach ($sectionSlots as $key => $label): ?>
             <?php
                 $imageUrl = $getSlotImage($current, $key);
                 $creatorName = $getSlotCreator($current, $key);
             ?>
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card">
+            <div class="col-md-6 col-lg-4">
+                <div class="card slot-card">
                     <div class="card-body">
-                        <h5 class="card-title"><?= htmlspecialchars($label) ?></h5>
-                        <p class="card-text">
-                            Slot key: <code><?= htmlspecialchars($key) ?></code>
-                        </p>
-                        <p class="small text-muted">Used when screen-specific background is not assigned.</p>
+                        <div class="slot-header">
+                            <h5 class="slot-title"><?= htmlspecialchars($label) ?></h5>
+                            <span class="slot-key"><?= htmlspecialchars($key) ?></span>
+                        </div>
+                        <div class="slot-meta">Used when a screen-specific background is not assigned.</div>
 
                         <?php if ($imageUrl !== ''): ?>
                             <div class="mb-3">
@@ -290,13 +404,13 @@ $getSlotCreator = static function(array $items, string $slot): string {
                                 <p class="small text-muted mb-3">Creator: <?= htmlspecialchars($creatorName) ?></p>
                             <?php endif; ?>
                         <?php else: ?>
-                            <p class="text-muted">No background set yet.</p>
+                            <p class="empty-state">No background set yet.</p>
                         <?php endif; ?>
 
-                        <form method="post" enctype="multipart/form-data">
+                        <form method="post" enctype="multipart/form-data" class="upload-form">
                             <?php if (function_exists('aa_csrf_field')) { aa_csrf_field(); } ?>
                             <input type="hidden" name="slot" value="<?= htmlspecialchars($key) ?>">
-                            <div class="mb-3">
+                            <div class="mb-2">
                                 <label class="form-label">Upload new image</label>
                                 <input type="file" name="image" class="form-control" accept="image/*" required>
                             </div>
@@ -314,7 +428,7 @@ $getSlotCreator = static function(array $items, string $slot): string {
                                     <div class="form-text text-warning">Enable <code>creator_name</code> column to save credits.</div>
                                 <?php endif; ?>
                             </div>
-                            <button class="btn btn-primary btn-sm">Save Background</button>
+                            <button class="btn btn-primary btn-sm w-100">Save Background</button>
                         </form>
                     </div>
                 </div>
@@ -322,21 +436,23 @@ $getSlotCreator = static function(array $items, string $slot): string {
         <?php endforeach; ?>
     </div>
 
-    <h2 class="h5 mt-4 mb-3">2) Global Fallback</h2>
-    <p class="text-muted small mb-3">Used only when neither screen nor section background is assigned.</p>
-    <div class="row">
+    <div class="section-header mt-4">
+        <h2 class="h5 mb-0">2) Global Fallback</h2>
+        <p class="text-muted small mb-0">Used only when neither screen nor section background is assigned.</p>
+    </div>
+    <div class="row g-3">
         <?php foreach ($globalSlots as $key => $label): ?>
             <?php
                 $imageUrl = $getSlotImage($current, $key);
                 $creatorName = $getSlotCreator($current, $key);
             ?>
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card">
+            <div class="col-md-6 col-lg-4">
+                <div class="card slot-card">
                     <div class="card-body">
-                        <h5 class="card-title"><?= htmlspecialchars($label) ?></h5>
-                        <p class="card-text">
-                            Slot key: <code><?= htmlspecialchars($key) ?></code>
-                        </p>
+                        <div class="slot-header">
+                            <h5 class="slot-title"><?= htmlspecialchars($label) ?></h5>
+                            <span class="slot-key"><?= htmlspecialchars($key) ?></span>
+                        </div>
 
                         <?php if ($imageUrl !== ''): ?>
                             <div class="mb-3">
@@ -348,13 +464,13 @@ $getSlotCreator = static function(array $items, string $slot): string {
                                 <p class="small text-muted mb-3">Creator: <?= htmlspecialchars($creatorName) ?></p>
                             <?php endif; ?>
                         <?php else: ?>
-                            <p class="text-muted">No background set yet.</p>
+                            <p class="empty-state">No background set yet.</p>
                         <?php endif; ?>
 
-                        <form method="post" enctype="multipart/form-data">
+                        <form method="post" enctype="multipart/form-data" class="upload-form">
                             <?php if (function_exists('aa_csrf_field')) { aa_csrf_field(); } ?>
                             <input type="hidden" name="slot" value="<?= htmlspecialchars($key) ?>">
-                            <div class="mb-3">
+                            <div class="mb-2">
                                 <label class="form-label">Upload new image</label>
                                 <input type="file" name="image" class="form-control" accept="image/*" required>
                             </div>
@@ -372,7 +488,7 @@ $getSlotCreator = static function(array $items, string $slot): string {
                                     <div class="form-text text-warning">Enable <code>creator_name</code> column to save credits.</div>
                                 <?php endif; ?>
                             </div>
-                            <button class="btn btn-primary btn-sm">Save Background</button>
+                            <button class="btn btn-primary btn-sm w-100">Save Background</button>
                         </form>
                     </div>
                 </div>
@@ -380,11 +496,11 @@ $getSlotCreator = static function(array $items, string $slot): string {
         <?php endforeach; ?>
     </div>
 
-    <h2 class="h5 mt-4 mb-3">3) Screen Overrides</h2>
-    <p class="text-muted small mb-3">
-        If a screen override is empty, that screen inherits its section default (and then HOME if needed).
-    </p>
-    <div class="row">
+    <div class="section-header mt-4">
+        <h2 class="h5 mb-0">3) Screen Overrides</h2>
+        <p class="text-muted small mb-0">If empty, a screen inherits its section default and then HOME if needed.</p>
+    </div>
+    <div class="row g-3">
         <?php foreach ($screenSlots as $key => $label): ?>
             <?php
                 $inherits = $screenFallbackSection[$key] ?? 'HOME';
@@ -392,16 +508,16 @@ $getSlotCreator = static function(array $items, string $slot): string {
                 $imageUrl = $getSlotImage($current, $key);
                 $creatorName = $getSlotCreator($current, $key);
             ?>
-            <div class="col-md-6 mb-4">
-                <div class="card">
+            <div class="col-md-6 col-xl-4">
+                <div class="card slot-card">
                     <div class="card-body">
-                        <h5 class="card-title"><?= htmlspecialchars($label) ?></h5>
-                        <p class="card-text">
-                            Slot key: <code><?= htmlspecialchars($key) ?></code>
-                        </p>
-                        <p class="small text-muted">
-                            Inherits: <strong><?= htmlspecialchars($inheritsLabel) ?></strong> when empty.
-                        </p>
+                        <div class="slot-header">
+                            <h5 class="slot-title"><?= htmlspecialchars($label) ?></h5>
+                            <span class="slot-key"><?= htmlspecialchars($key) ?></span>
+                        </div>
+                        <div class="slot-meta">
+                            Inherits <strong><?= htmlspecialchars($inheritsLabel) ?></strong> when empty.
+                        </div>
 
                         <?php if ($imageUrl !== ''): ?>
                             <div class="mb-3">
@@ -413,13 +529,13 @@ $getSlotCreator = static function(array $items, string $slot): string {
                                 <p class="small text-muted mb-3">Creator: <?= htmlspecialchars($creatorName) ?></p>
                             <?php endif; ?>
                         <?php else: ?>
-                            <p class="text-muted">No override set yet.</p>
+                            <p class="empty-state">No override set yet.</p>
                         <?php endif; ?>
 
-                        <form method="post" enctype="multipart/form-data">
+                        <form method="post" enctype="multipart/form-data" class="upload-form">
                             <?php if (function_exists('aa_csrf_field')) { aa_csrf_field(); } ?>
                             <input type="hidden" name="slot" value="<?= htmlspecialchars($key) ?>">
-                            <div class="mb-3">
+                            <div class="mb-2">
                                 <label class="form-label">Upload new image</label>
                                 <input type="file" name="image" class="form-control" accept="image/*" required>
                             </div>
@@ -437,7 +553,7 @@ $getSlotCreator = static function(array $items, string $slot): string {
                                     <div class="form-text text-warning">Enable <code>creator_name</code> column to save credits.</div>
                                 <?php endif; ?>
                             </div>
-                            <button class="btn btn-primary btn-sm">Save Background</button>
+                            <button class="btn btn-primary btn-sm w-100">Save Background</button>
                         </form>
                     </div>
                 </div>

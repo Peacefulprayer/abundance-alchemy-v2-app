@@ -1,11 +1,38 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { PracticeSessionConfig, Affirmation, GratitudeLog, PracticeType, Soundscape, FocusArea } from '../types';
-import { Heart, Play, Pause, RotateCcw, Volume2, VolumeX, SkipBack, Zap } from 'lucide-react';
-import { playCompletionSound, updateVolume, stopAmbience, startAmbience } from '../services/audioService';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Heart,
+  Pause,
+  Play,
+  RotateCcw,
+  SkipBack,
+  Volume2,
+  VolumeX,
+  Zap,
+} from 'lucide-react';
+import {
+  Affirmation,
+  FocusArea,
+  GratitudeLog,
+  PracticeSessionConfig,
+  PracticeType,
+  Soundscape,
+} from '../types';
+import { playCompletionSound, startAmbience, stopAmbience, updateVolume } from '../services/audioService';
 import { getMeditationWisdom } from '../services/geminiService';
 import { api } from '../services/api';
+import {
+  INNER_PAGE_SHELL,
+  INNER_PRIMARY_BUTTON,
+  INNER_TITLE_PILL,
+  innerBackButton,
+  innerHeroCard,
+  innerInputBg,
+  innerSectionFrame,
+  innerSectionKicker,
+  innerSecondaryButton,
+  innerSurfaceCard,
+} from '../styles/sacredInnerScreen';
 
-// ADDED: Helper to extract string from FocusArea union type
 const getFocusAreaLabel = (focusArea: FocusArea | undefined): string => {
   if (!focusArea) return '';
   return typeof focusArea === 'string' ? focusArea : focusArea.label;
@@ -33,25 +60,19 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   theme,
   soundscape,
 }) => {
-  // Timer State
   const [timeLeft, setTimeLeft] = useState(config.duration * 60);
   const [isRunning, setIsRunning] = useState(false);
-
-  // Content State
   const [fallbackQueue, setFallbackQueue] = useState<string[]>([]);
   const [fallbackIndex, setFallbackIndex] = useState(0);
   const [currentAffirmation, setCurrentAffirmation] = useState('');
   const [meditationWisdom, setMeditationWisdom] = useState('');
   const [isFetchingAffirmation, setIsFetchingAffirmation] = useState(false);
-
-  // UI State
   const [showGratitude, setShowGratitude] = useState(false);
   const [gratitudeText, setGratitudeText] = useState('');
   const [isLoadingContent, setIsLoadingContent] = useState(true);
-
-  // Audio State
   const [volume, setVolume] = useState(50);
   const [isMuted, setIsMuted] = useState(false);
+
   const audioInitialized = useRef(false);
   const isAdvancingRef = useRef(false);
   const recentAffirmationsRef = useRef<string[]>([]);
@@ -60,89 +81,79 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const isMorning = config.type === PracticeType.MORNING_IAM;
 
   useEffect(() => {
-    // Initialize Audio - FIXED: Removed settings reference
     if (soundscape) {
       startAmbience(soundscape, 50);
       updateVolume(volume);
       audioInitialized.current = true;
     }
 
-    // Load Content
-    loadSessionContent();
-
-    // Cleanup is handled by App.tsx when mode changes
+    void loadSessionContent();
   }, []);
 
-  // Timer Logic
   useEffect(() => {
     if (timeLeft <= 0) {
       handleSessionEnd();
       return;
     }
 
-    let timer: any;
+    let timer: ReturnType<typeof setInterval> | undefined;
     if (isRunning) {
       timer = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     }
 
-    return () => clearInterval(timer);
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, [timeLeft, isRunning]);
 
-  // Load Content Logic
   const loadSessionContent = async () => {
     setIsLoadingContent(true);
     recentAffirmationsRef.current = [];
 
-    // FIXED: Use helper function to extract label
     const focusAreaRaw = config.focusAreas?.[0] || 'General';
     const focusLabel = getFocusAreaLabel(focusAreaRaw as FocusArea) || 'General';
 
     if (isMeditation) {
       const wisdom = await getMeditationWisdom(focusLabel);
       setMeditationWisdom(wisdom);
-    } else {
-      // Build a local fallback queue in case live DB pulls fail.
-      const systemAffs = await api.getSystemAffirmations(config.type).catch(() => []);
-      const userAffs = customAffirmations.filter((a) => a.type === config.type);
+      setIsLoadingContent(false);
+      return;
+    }
 
-      let allTexts = [
-        ...userAffs.map((a) => a.text),
-        ...systemAffs.map((a) => a.text),
-      ];
+    const systemAffs = await api.getSystemAffirmations(config.type).catch(() => []);
+    const userAffs = customAffirmations.filter((a) => a.type === config.type);
 
-      if (allTexts.length === 0) {
-        allTexts = isMorning
-          ? ['I am capable.', 'I am strong.', 'I am worthy.', 'I am creating my reality.']
-          : ['I love my life.', 'I love who I am becoming.', 'I love the peace I feel.'];
-      }
+    let allTexts = [...userAffs.map((a) => a.text), ...systemAffs.map((a) => a.text)];
+    if (allTexts.length === 0) {
+      allTexts = isMorning
+        ? ['I am capable.', 'I am strong.', 'I am worthy.', 'I am creating my reality.']
+        : ['I love my life.', 'I love who I am becoming.', 'I love the peace I feel.'];
+    }
 
-      // Shuffle texts (Fisher-Yates)
-      for (let i = allTexts.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [allTexts[i], allTexts[j]] = [allTexts[j], allTexts[i]];
-      }
+    for (let i = allTexts.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allTexts[i], allTexts[j]] = [allTexts[j], allTexts[i]];
+    }
 
-      setFallbackQueue(allTexts);
-      setFallbackIndex(0);
+    setFallbackQueue(allTexts);
+    setFallbackIndex(0);
 
-      // Pull first visible affirmation from DB.
-      let firstAffirmation: string | null = null;
-      for (let i = 0; i < 6; i++) {
-        const text = await api.getRandomAffirmation(config.type, focusLabel);
-        if (text && normalizeAffirmation(text) !== normalizeAffirmation(currentAffirmation)) {
-          firstAffirmation = text;
-          break;
-        }
-      }
-      const initialAffirmation = firstAffirmation || allTexts[0];
-      setCurrentAffirmation(initialAffirmation);
-      if (initialAffirmation) {
-        recentAffirmationsRef.current = [normalizeAffirmation(initialAffirmation)];
+    let firstAffirmation: string | null = null;
+    for (let i = 0; i < 6; i += 1) {
+      const text = await api.getRandomAffirmation(config.type, focusLabel);
+      if (text && normalizeAffirmation(text) !== normalizeAffirmation(currentAffirmation)) {
+        firstAffirmation = text;
+        break;
       }
     }
 
+    const initialAffirmation = firstAffirmation || allTexts[0];
+    setCurrentAffirmation(initialAffirmation);
+    if (initialAffirmation) {
+      recentAffirmationsRef.current = [normalizeAffirmation(initialAffirmation)];
+    }
     setIsLoadingContent(false);
   };
 
@@ -160,7 +171,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       const recentNorms = new Set(recentAffirmationsRef.current);
 
       let nextAffirmation: string | null = null;
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 6; i += 1) {
         const text = await api.getRandomAffirmation(config.type, focusLabel);
         if (!text) continue;
         const candidateNorm = normalizeAffirmation(text);
@@ -172,15 +183,17 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
       if (nextAffirmation) {
         setCurrentAffirmation(nextAffirmation);
-        const nextNorm = normalizeAffirmation(nextAffirmation);
-        recentAffirmationsRef.current = [...recentAffirmationsRef.current, nextNorm].slice(-4);
+        recentAffirmationsRef.current = [
+          ...recentAffirmationsRef.current,
+          normalizeAffirmation(nextAffirmation),
+        ].slice(-4);
         return;
       }
 
       if (fallbackQueue.length > 0) {
         const size = fallbackQueue.length;
         let pickedIndex = -1;
-        for (let step = 1; step <= size; step++) {
+        for (let step = 1; step <= size; step += 1) {
           const candidateIndex = (fallbackIndex + step) % size;
           const candidateText = fallbackQueue[candidateIndex];
           const candidateNorm = normalizeAffirmation(candidateText);
@@ -195,8 +208,10 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
         const pickedText = fallbackQueue[pickedIndex];
         setFallbackIndex(pickedIndex);
         setCurrentAffirmation(pickedText);
-        const pickedNorm = normalizeAffirmation(pickedText);
-        recentAffirmationsRef.current = [...recentAffirmationsRef.current, pickedNorm].slice(-4);
+        recentAffirmationsRef.current = [
+          ...recentAffirmationsRef.current,
+          normalizeAffirmation(pickedText),
+        ].slice(-4);
       }
     } finally {
       setIsFetchingAffirmation(false);
@@ -211,54 +226,47 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   };
 
   const handleComplete = () => {
-    if (gratitudeText.trim()) {
-      // FIXED: Use helper function to extract string from FocusArea
-      const focusAreaValue = config.focusAreas?.[0] || 'General';
-      
-      const log: GratitudeLog = {
-        id: `log-${Date.now()}`,
-        date: new Date().toISOString(),
-        sessionType: config.type,
-        focusArea: getFocusAreaLabel(focusAreaValue as FocusArea) || 'General',
-        text: gratitudeText,
-      };
-      onComplete(log);
-    } else {
+    if (!gratitudeText.trim()) {
       onComplete();
+      return;
     }
+
+    const focusAreaValue = config.focusAreas?.[0] || 'General';
+    const log: GratitudeLog = {
+      id: `log-${Date.now()}`,
+      date: new Date().toISOString(),
+      sessionType: config.type,
+      focusArea: getFocusAreaLabel(focusAreaValue as FocusArea) || 'General',
+      text: gratitudeText,
+    };
+    onComplete(log);
   };
 
-  // Timer Controls
-  const toggleTimer = () => setIsRunning(!isRunning);
+  const toggleTimer = () => setIsRunning((prev) => !prev);
+
   const resetTimer = () => {
     setIsRunning(false);
     setTimeLeft(config.duration * 60);
   };
 
-  // Audio Controls
   const toggleMute = () => {
-    const newMuteState = !isMuted;
-    setIsMuted(newMuteState);
-    if (newMuteState) {
-      updateVolume(0);
-    } else {
-      updateVolume(volume);
-    }
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    updateVolume(nextMuted ? 0 : volume);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVol = Number(e.target.value);
-    setVolume(newVol);
-    if (isMuted && newVol > 0) {
+    const nextVolume = Number(e.target.value);
+    setVolume(nextVolume);
+    if (isMuted && nextVolume > 0) {
       setIsMuted(false);
     }
-    updateVolume(newVol);
+    updateVolume(nextVolume);
   };
 
   const restartMusic = () => {
     stopAmbience();
     setTimeout(() => {
-      // FIXED: Removed settings reference
       startAmbience(soundscape, 50);
       updateVolume(volume);
     }, 100);
@@ -271,121 +279,168 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   };
 
   const progress = ((config.duration * 60 - timeLeft) / (config.duration * 60)) * 100;
-
-  const getGradient = () => {
-    if (config.type === PracticeType.MORNING_IAM)
-      return 'from-amber-900 via-slate-900 to-slate-950';
-    if (config.type === PracticeType.EVENING_ILOVE)
-      return 'from-rose-900 via-slate-900 to-slate-950';
-    return 'from-emerald-900 via-slate-900 to-slate-950';
-  };
+  const pageShell = INNER_PAGE_SHELL;
+  const sectionFrame = innerSectionFrame(theme);
+  const heroCard = innerHeroCard(theme);
+  const surfaceCard = innerSurfaceCard(theme);
+  const backButton = innerBackButton(theme);
+  const inputBg = innerInputBg(theme);
+  const sectionKicker = innerSectionKicker(theme);
+  const secondaryButton = innerSecondaryButton(theme);
+  const practiceGlassCard =
+    'rounded-[22px] border border-white/12 bg-slate-950/78 p-4 text-white shadow-[0_22px_44px_rgba(0,0,0,0.32)] backdrop-blur-xl';
+  const practiceGlassControl =
+    'inline-flex items-center justify-center rounded-full border border-white/14 bg-white/8 text-white transition-colors hover:bg-white/12';
+  const practiceLabel = isMeditation
+    ? 'Meditation'
+    : isMorning
+      ? 'I Am Practice'
+      : 'I Love Practice';
+  const practiceSubtitle = isMeditation
+    ? 'Let the stillness settle around your breath and attention.'
+    : isMorning
+      ? 'Speak with certainty and let the words reshape your inner state.'
+      : 'Move slowly, receive the words, and let gratitude lead the tone.';
+  const accent = isMeditation
+    ? {
+        icon: 'text-emerald-400',
+        softBorder:
+          theme === 'light'
+            ? 'border-emerald-300/60 bg-emerald-100/80 text-emerald-950'
+            : 'border-emerald-400/35 bg-emerald-500/12 text-emerald-100',
+        stops: ['#34d399', '#10b981'],
+      }
+    : isMorning
+      ? {
+          icon: 'text-amber-400',
+          softBorder:
+            theme === 'light'
+              ? 'border-amber-300/60 bg-amber-100/80 text-amber-950'
+              : 'border-amber-400/35 bg-amber-500/12 text-amber-100',
+          stops: ['#fbbf24', '#f59e0b'],
+        }
+      : {
+          icon: 'text-rose-300',
+          softBorder:
+            theme === 'light'
+              ? 'border-rose-300/60 bg-rose-100/80 text-rose-950'
+              : 'border-rose-400/35 bg-rose-500/12 text-rose-100',
+          stops: ['#fb7185', '#f43f5e'],
+        };
+  const progressGradientId = `practice-progress-${config.type.toLowerCase()}`;
 
   const getInstructionText = () => {
-    if (isMeditation)
-      return 'Take 3 slow deep breathes. Release the day and all it held, holds, could hold. Allow the silence to settle over you. When you are ready start the timer and allow Meditation to settle within you.';
-    if (isMorning)
-      return 'Speak these affirmations out loud and rapidly. Let the vibration of your voice shift your frequency. Tap the text to advance to the next affirmation.';
-    return 'Bring your awareness to the feeling of gratitude. Speak slowly and plant these seeds into your subconscious. Tap to advance when you are ready.';
+    if (isMeditation) {
+      return 'Take 3 slow deep breaths. Release the day and all it carried. Let silence settle over you, then begin the timer when you are ready.';
+    }
+    if (isMorning) {
+      return 'Speak these affirmations out loud and rapidly. Let the vibration of your voice shift your frequency. Tap the text to advance.';
+    }
+    return 'Bring your awareness to gratitude. Speak slowly and allow each phrase to root itself in your subconscious. Tap to advance when ready.';
   };
 
-  // Gratitude screen
   if (showGratitude) {
     return (
-      <div
-        className={`min-h-screen md:min-h-[calc(100vh-2rem)] w-full flex flex-col items-center justify-center p-8 max-w-md mx-auto bg-gradient-to-br ${getGradient()}`}
-      >
-        <div className="text-center space-y-6 animate-in fade-in zoom-in w-full">
-          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center shadow-2xl">
-            <Heart size={40} className="text-white" />
+      <div className={`h-full w-full overflow-y-auto px-4 pt-4 pb-8 custom-scrollbar ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>
+        <div className={pageShell}>
+          <div className="flex items-center justify-between">
+            <div className={backButton}>
+              <span>✓</span>
+              <span>Complete</span>
+            </div>
+            <span className={INNER_TITLE_PILL}>{practiceLabel}</span>
           </div>
 
-          <h2 className="text-2xl font-serif font-bold text-white">Session Complete!</h2>
-          <p className="text-slate-300 text-sm">Take a moment to reflect on your practice</p>
+          <div className={sectionFrame}>
+            <div className={`${heroCard} text-center`}>
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-amber-400/35 bg-amber-500/12">
+                <Heart size={28} className="text-amber-400" />
+              </div>
+              <h1 className="mt-4 text-2xl font-serif font-semibold">Session Complete</h1>
+              <p className={`mt-2 text-sm leading-relaxed ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>
+                Take a moment to name what this practice opened, steadied, or clarified in you.
+              </p>
+            </div>
+          </div>
 
-          <textarea
-            value={gratitudeText}
-            onChange={(e) => setGratitudeText(e.target.value)}
-            placeholder="What are you grateful for? (optional)"
-            className="w-full p-4 rounded-xl bg-slate-900/70 border border-slate-700 text-slate-100 placeholder-slate-500 resize-none focus:ring-2 focus:ring-amber-500 outline-none"
-            rows={4}
-            autoFocus
-          />
-
-          <div className="space-y-3 w-full">
-            <button
-              onClick={handleComplete}
-              className="w-full bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all"
-            >
-              {gratitudeText.trim() ? 'Save & Continue' : 'Continue'}
-            </button>
-
-            <button
-              onClick={() => onComplete()}
-              className="w-full text-slate-400 hover:text-slate-300 text-sm transition-colors"
-            >
-              Skip
-            </button>
+          <div className={sectionFrame}>
+            <div className={`${surfaceCard} space-y-4`}>
+              <p className={sectionKicker}>Reflection</p>
+              <textarea
+                value={gratitudeText}
+                onChange={(e) => setGratitudeText(e.target.value)}
+                placeholder="What are you grateful for? (optional)"
+                className={`min-h-[140px] w-full resize-none rounded-[20px] border p-4 text-sm outline-none focus:ring-2 focus:ring-amber-500 ${inputBg}`}
+                rows={5}
+                autoFocus
+              />
+              <button onClick={handleComplete} className={INNER_PRIMARY_BUTTON}>
+                {gratitudeText.trim() ? 'Save & Continue' : 'Continue'}
+              </button>
+              <button onClick={() => onComplete()} className={secondaryButton}>
+                Skip Reflection
+              </button>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  // Main practice screen
   return (
-    <div
-      className={`min-h-screen md:min-h-[calc(100vh-2rem)] w-full flex flex-col relative bg-gradient-to-br ${getGradient()}`}
-    >
-      {/* Header */}
-      <header className="px-4 pt-8 pb-3 z-20 relative">
-        {/* Back pill button */}
-        <button
-          onClick={() => {
-            stopAmbience();
-            onExit();
-          }}
-          className="inline-flex items-center px-3 py-1.5 rounded-full bg-black/60 border border-white/15 text-11px text-slate-100 hover:bg-black/80 transition-colors absolute left-4 top-3 sm:top-4"
-        >
-          <span className="mr-1">←</span>
-          <span className="font-semibold tracking-wide uppercase">Back</span>
-        </button>
+    <div className={`h-full w-full overflow-y-auto px-4 pt-4 pb-8 custom-scrollbar ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}>
+      <div className={pageShell}>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => {
+              stopAmbience();
+              onExit();
+            }}
+            className={backButton}
+          >
+            <span>←</span>
+            <span>Back</span>
+          </button>
+          <span className={INNER_TITLE_PILL}>{practiceLabel}</span>
+        </div>
 
-        {/* Title aligned away from the audio slider, a bit lower */}
-        <div className="flex justify-center sm:justify-end">
-          <div className="flex items-center space-x-2 mt-6 sm:mt-0">
-            <img
-              src="/logo.png"
-              alt="Logo"
-              className="h-8 w-8 object-contain drop-shadow-md"
-              onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')}
-            />
-            <h1 className="font-serif font-bold text-white tracking-wide text-sm drop-shadow-md">
-              Abundance Alchemy
-            </h1>
+        <div className={sectionFrame}>
+          <div className={heroCard}>
+            <p className={sectionKicker}>Sacred Session</p>
+            <h1 className="mt-3 text-2xl font-serif font-semibold">{practiceLabel}</h1>
+            <p className={`mt-2 text-sm leading-relaxed ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>
+              {practiceSubtitle}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className={`rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] ${accent.softBorder}`}>
+                {config.duration} Minute Session
+              </span>
+              <span
+                className={`rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] ${
+                  isRunning
+                    ? accent.softBorder
+                    : theme === 'light'
+                      ? 'border-amber-200/60 bg-white/90 text-slate-700'
+                      : 'border-amber-500/18 bg-slate-900/75 text-slate-200'
+                }`}
+              >
+                {isRunning ? 'In Progress' : 'Ready to Begin'}
+              </span>
+            </div>
           </div>
         </div>
-      </header>
 
-      {/* Body */}
-      <div className="flex-1 flex flex-col items-center justify-between p-6 pt-4 max-w-md mx-auto w-full overflow-y-auto custom-scrollbar pb-8">
-        <div className="w-full space-y-6 flex flex-col items-center">
-          {/* Instructions */}
-          <div className="text-center animate-in fade-in slide-in-from-bottom-2 px-2">
-            <p className="text-slate-200 text-sm leading-relaxed font-serif italic opacity-90">
-              {getInstructionText()}
-            </p>
-          </div>
-
-          {/* Progress Circle & Timer */}
-          <div className="text-center space-y-4">
-            <div className="relative">
-              <svg className="w-48 h-48 mx-auto" viewBox="0 0 120 120">
+        <div className={sectionFrame}>
+          <div className={`${practiceGlassCard} text-center`}>
+            <p className={sectionKicker}>Timer</p>
+            <div className="relative mt-4">
+              <svg className="mx-auto h-48 w-48" viewBox="0 0 120 120">
                 <circle
                   cx="60"
                   cy="60"
                   r="54"
                   fill="none"
-                  stroke="rgba(255,255,255,0.1)"
+                  stroke={theme === 'light' ? 'rgba(148,163,184,0.25)' : 'rgba(255,255,255,0.12)'}
                   strokeWidth="4"
                 />
                 <circle
@@ -393,7 +448,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
                   cy="60"
                   r="54"
                   fill="none"
-                  stroke="url(#progressGradient)"
+                  stroke={`url(#${progressGradientId})`}
                   strokeWidth="4"
                   strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 54}`}
@@ -402,110 +457,109 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
                   className="transition-all duration-1000"
                 />
                 <defs>
-                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#fbbf24" />
-                    <stop offset="100%" stopColor="#f43f5e" />
+                  <linearGradient id={progressGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor={accent.stops[0]} />
+                    <stop offset="100%" stopColor={accent.stops[1]} />
                   </linearGradient>
                 </defs>
               </svg>
-
-              <div className="absolute inset-0 flex items-center justify-center flex-col">
-                <p
-                  className={`text-4xl font-bold text-white tabular-nums tracking-wider ${
-                    !isRunning ? 'opacity-70' : 'opacity-100'
-                  }`}
-                >
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400">
+                  Remaining
+                </p>
+                <p className="mt-2 text-4xl font-semibold tabular-nums tracking-wider text-white">
                   {formatTime(timeLeft)}
                 </p>
               </div>
-
-              <div className="flex space-x-3 mt-3">
-                <button
-                  onClick={toggleTimer}
-                  className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all active:scale-95 backdrop-blur-sm"
-                >
-                  {isRunning ? (
-                    <Pause size={20} className="text-white fill-current" />
-                  ) : (
-                    <Play size={20} className="text-white fill-current" />
-                  )}
-                </button>
-                <button
-                  onClick={resetTimer}
-                  className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all active:scale-95 backdrop-blur-sm"
-                >
-                  <RotateCcw size={20} className="text-white" />
-                </button>
-              </div>
+            </div>
+            <div className="mt-5 flex justify-center gap-3">
+              <button
+                onClick={toggleTimer}
+                className={`inline-flex h-12 w-12 items-center justify-center rounded-full border ${accent.softBorder}`}
+              >
+                {isRunning ? <Pause size={18} className="fill-current" /> : <Play size={18} className="fill-current" />}
+              </button>
+              <button
+                onClick={resetTimer}
+                className={`${practiceGlassControl} h-12 w-12`}
+              >
+                <RotateCcw size={18} />
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* Main Content (affirmations or meditation wisdom) */}
+        <div className={sectionFrame}>
+          <div className={`${practiceGlassCard} space-y-4`}>
+            <p className={sectionKicker}>Guidance</p>
+            <p className="text-sm leading-relaxed text-white">
+              {getInstructionText()}
+            </p>
+          </div>
+        </div>
+
+        <div className={sectionFrame}>
           <button
             onClick={handleNextAffirmation}
             disabled={isMeditation || isLoadingContent || isFetchingAffirmation}
-            className={`text-center animate-in fade-in slide-in-from-bottom-4 min-h-[120px] flex flex-col items-center justify-center w-full rounded-2xl p-4 transition-all ${
-              !isMeditation ? 'active:scale-95 hover:bg-white/5 cursor-pointer' : ''
+            className={`${practiceGlassCard} min-h-[180px] w-full text-left transition-all ${
+              !isMeditation ? 'active:scale-[0.99]' : ''
             }`}
           >
-            {isLoadingContent ? (
-              <div className="animate-pulse text-slate-400 text-sm">Loading practices...</div>
-            ) : isMeditation ? (
-              <div className="space-y-3">
-                <div
-                  className={`w-8 h-8 mx-auto rounded-full bg-gradient-to-br from-amber-500/30 to-emerald-500/30 ${
-                    isRunning ? 'animate-pulse' : ''
-                  }`}
-                />
-                <p className="text-base font-serif text-slate-200 italic leading-relaxed px-4">
-                  {meditationWisdom || 'Breathe deeply and find your center...'}
-                </p>
-              </div>
-            ) : (
-              <p
-                className="text-base md:text-lg text-white leading-relaxed px-4 drop-shadow-md font-medium"
-                style={{ fontFamily: 'Trebuchet MS, Trebuchet, Arial, sans-serif' }}
-              >
-                {currentAffirmation}
-              </p>
-            )}
-
-            {isRunning && !isMeditation && (
-              <div className="mt-4 flex items-center space-x-2 text-[10px] uppercase tracking-widest text-slate-400/60">
-                <Zap size={10} />
-                <span>Tap for next</span>
-              </div>
-            )}
+            <div className="flex h-full flex-col items-center justify-center text-center">
+              <p className={sectionKicker}>Active Reflection</p>
+              {isLoadingContent ? (
+                <div className="mt-6 animate-pulse text-sm text-white">Loading practice content...</div>
+              ) : isMeditation ? (
+                <div className="mt-5 space-y-4">
+                  <div className={`mx-auto h-10 w-10 rounded-full border ${accent.softBorder} ${isRunning ? 'animate-pulse' : ''}`} />
+                  <p className="max-w-[280px] text-base font-serif italic leading-relaxed text-white">
+                    {meditationWisdom || 'Breathe deeply and find your center...'}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p
+                    className="mt-5 text-base font-medium leading-relaxed text-white md:text-lg"
+                    style={{ fontFamily: 'Trebuchet MS, Trebuchet, Arial, sans-serif' }}
+                  >
+                    {currentAffirmation}
+                  </p>
+                  {isRunning ? (
+                    <div className="mt-4 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/80">
+                      <Zap size={10} />
+                      <span>Tap for next affirmation</span>
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
           </button>
+        </div>
 
-          {/* Unified Audio Controls */}
-          <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl p-4 border border-white/10 space-y-4 shadow-lg w-full">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3 flex-1">
-                <button onClick={toggleMute} className="text-slate-300 hover:text-white transition-colors">
-                  {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                </button>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={isMuted ? 0 : volume}
-                  onChange={handleVolumeChange}
-                  className="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-amber-500"
-                />
-              </div>
-
-              <div className="flex items-center space-x-3 ml-4">
-                <span className="text-[10px] text-slate-400 uppercase tracking-widest truncate max-w-[80px]">
-                  {soundscape?.label}
-                </span>
-                <button
-                  onClick={restartMusic}
-                  className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
-                >
-                  <SkipBack size={16} />
-                </button>
-              </div>
+        <div className={sectionFrame}>
+          <div className={`${practiceGlassCard} space-y-4`}>
+            <div className="flex items-center justify-between gap-3">
+              <p className={sectionKicker}>Temple Sound</p>
+              <span className="truncate text-[10px] font-extrabold uppercase tracking-[0.18em] text-white">
+                {userAudioFile?.name || soundscape?.label}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={toggleMute} className={`${practiceGlassControl} h-10 px-4 py-2`}>
+                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={isMuted ? 0 : volume}
+                onChange={handleVolumeChange}
+                className="h-2 w-full rounded-lg bg-slate-600 accent-amber-500"
+              />
+              <button onClick={restartMusic} className={`${practiceGlassControl} h-10 px-4 py-2`}>
+                <SkipBack size={16} />
+              </button>
             </div>
           </div>
         </div>

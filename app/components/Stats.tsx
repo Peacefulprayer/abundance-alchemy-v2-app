@@ -26,10 +26,7 @@ export const Stats: React.FC<StatsProps> = ({ user, theme, onBack }) => {
     theme === 'light'
       ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-amber-200/60'
       : 'bg-gradient-to-br from-slate-900/70 to-slate-950/75 border-amber-500/20';
-  const statCardBg =
-    theme === 'light'
-      ? 'bg-white/92 border-amber-200/55'
-      : 'bg-slate-950/82 border-amber-500/15';
+  const statCardBg = cardBg;
   const pageShell = 'mx-auto w-full max-w-[440px] space-y-5 pb-24';
   const sectionKicker =
     theme === 'light'

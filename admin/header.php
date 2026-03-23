@@ -8,6 +8,7 @@
         <a class="btn btn-outline-primary btn-sm me-2" href="dashboard.php">Dashboard</a>
         <a class="btn btn-outline-secondary btn-sm me-2" href="users.php">Users</a>
         <a class="btn btn-outline-secondary btn-sm me-2" href="affirmations.php">Affirmations</a>
+        <a class="btn btn-outline-secondary btn-sm me-2" href="prayers.php">Prayers</a>
         <a class="btn btn-outline-secondary btn-sm me-2" href="wisdom.php">Wisdom</a>
         <a class="btn btn-outline-secondary btn-sm" href="push.php">Push Notif.</a>
         <a class="btn btn-outline-secondary btn-sm me-2" href="soundscapes.php">Soundscapes</a>

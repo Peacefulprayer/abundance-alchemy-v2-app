@@ -114,24 +114,24 @@ if (!in_array($type, $allowedTypes, true)) {
 
 $focusLabel = isset($_GET['category']) ? trim((string)$_GET['category']) : '';
 $focusCategories = aa_focus_aliases($focusLabel);
-$userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
-$focusWeight = 70; // Hybrid strategy: favor focus-specific pool.
+$identity = aa_get_session_identity();
+$ownerBinding = aa_resolve_owner_binding($conn, 'user_affirmations', $identity['userId'], $identity['userEmail']);
+$focusWeight = 70;
 $recentWindow = 10;
 
 try {
     $globalPool = [];
     $focusPool = [];
 
-    // Include this user's custom affirmations when authenticated.
-    if ($userId > 0) {
+    if ($ownerBinding && aa_has_col($ownerBinding['columns'], 'text') && aa_has_col($ownerBinding['columns'], 'type')) {
         $userStmt = $conn->prepare("
             SELECT text
             FROM user_affirmations
-            WHERE user_id = :uid
+            WHERE {$ownerBinding['column']} = :owner
               AND type = :type
             ORDER BY id DESC
         ");
-        $userStmt->bindValue(':uid', $userId, PDO::PARAM_INT);
+        $userStmt->bindValue(':owner', $ownerBinding['value'], $ownerBinding['pdoType']);
         $userStmt->bindValue(':type', $type, PDO::PARAM_STR);
         $userStmt->execute();
 
@@ -203,19 +203,14 @@ try {
         $index = random_int(0, count($selectedPool) - 1);
         $picked = $selectedPool[$index];
         aa_store_recent($type, $picked, $recentWindow);
-        echo json_encode(['text' => $picked]);
-    } else {
-        $fallback = $type === 'EVENING_ILOVE'
-            ? 'I love the life I am building.'
-            : 'I am aligned with my highest good.';
-        echo json_encode(['text' => $fallback]);
+        aa_json_response(['text' => $picked]);
     }
+
+    $fallback = $type === 'EVENING_ILOVE'
+        ? 'I love the life I am building.'
+        : 'I am aligned with my highest good.';
+    aa_json_response(['text' => $fallback]);
 } catch (Throwable $e) {
-    http_response_code(500);
-    if (defined('DEBUG_MODE') && DEBUG_MODE) {
-        echo json_encode(['message' => 'Failed to load affirmation', 'error' => $e->getMessage()]);
-    } else {
-        echo json_encode(['message' => 'Failed to load affirmation']);
-    }
+    error_log('[api/get-affirmation.php] Failed to load affirmation: ' . $e->getMessage());
+    aa_error_response('Failed to load affirmation', 500);
 }
-?>

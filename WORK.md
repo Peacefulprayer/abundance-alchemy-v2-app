@@ -1,9 +1,70 @@
 # Abundance Alchemy Work Log
 
-Last updated: 2026-03-08
+Last updated: 2026-03-20
 
 ## Why this file exists
 This is a checkpoint record so work can resume quickly if a session drops.
+
+## Checkpoint: 2026-03-20
+
+### Actual resume point
+- The workspace resumed after a machine restart with the broader prayer/backend work still present locally.
+- The prior handoff docs had drifted behind the working tree and did not mention the newer companion-page assets.
+- Current reality is better reflected by:
+  - `app/PROJECT_STATUS.md`
+  - `app/CHANGELOG.md`
+  - this checkpoint section
+
+### Major work currently present in the tree
+
+#### 1) Backend cleanup + prayer-content system
+- Shared helper layer exists in `api/helpers.php` for:
+  - JSON/error responses
+  - method enforcement
+  - JSON parsing
+  - session identity
+  - table/ownership inspection
+  - prayer table bootstrap + default seeding
+- Prayer backend endpoints exist for:
+  - curated content: `api/get-prayer-content.php`
+  - user prayers: `api/get-user-prayers.php`
+  - saving user prayers: `api/add-user-prayer.php`
+  - deleting user prayers: `api/delete-user-prayer.php`
+- Admin prayer management exists in:
+  - `admin/prayers.php`
+
+#### 2) Frontend prayer/practice work
+- `PrayerGuide` now loads backend guide steps with frontend fallback.
+- `PrayerSession` now loads backend curated prayers, merges in personal prayers, and supports save/delete flows.
+- `PracticeSession` and related inner sacred-shell work remain heavily modified from the recent UI pass.
+- Supporting API/type changes are present in:
+  - `app/services/api.ts`
+  - `app/types.ts`
+
+#### 3) Standalone companion pages
+- Local companion pages exist in:
+  - `app/companion-pages/prayer.html`
+  - `app/companion-pages/meditation.html`
+  - `app/companion-pages/assets/companion-pages.css`
+- These pages are real editorial/static content, not placeholders.
+- Image folder scaffolding also exists for prayer and meditation under:
+  - `app/companion-pages/assets/images/prayer/`
+  - `app/companion-pages/assets/images/meditation/`
+- At the moment, the image folders mostly contain placeholder `.gitkeep` files.
+
+### Important caveat
+- The companion pages are not yet wired into the React app or linked from the active app code.
+- `app/companion-pages/` also contains macOS `._*` sidecar files that should be removed before commit/deploy.
+
+### Best next steps from here
+1. Verify the prayer tables/endpoints/admin UI against the live runtime/database.
+2. Decide whether the companion pages are meant to be:
+   - committed as standalone static pages
+   - integrated into the app/site navigation
+   - deployed separately from the React app
+3. Clean the macOS sidecar files from `app/companion-pages/`.
+4. Run final Safari/real-device QA on the signed-in routes.
+5. Resolve the intentionally deferred flow glitch, then checkpoint/commit/deploy.
 
 ## Major changes completed
 

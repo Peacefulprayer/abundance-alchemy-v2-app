@@ -83,6 +83,21 @@ export interface PrayerProfile {
   style: PrayerStyle;
 }
 
+export interface PrayerContent {
+  pathKey: string;
+  guideSteps: string[];
+  sessionPrayers: string[];
+}
+
+export interface UserPrayer {
+  id: string;
+  path_key: string;
+  title: string;
+  body: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface ReminderPracticeSchedule {
   enabled: boolean;
   time: string; // HH:MM (24h)
@@ -117,6 +132,7 @@ export interface UserAccount {
   id?: number;
   email?: string; // keep optional because some flows store just email/token
   name?: string;
+  profileImage?: string;
   streak?: number;
   level?: number;
   focusAreas?: FocusArea[];
@@ -151,6 +167,7 @@ export interface UserProfile {
   name: string; // keep optional? your onboarding currently sets it
   preferredName?: string;
   email?: string;
+  profileImage?: string;
   focusAreas: FocusArea[];
   cyclePreference: CycleType; // CHANGED from cycleType to cyclePreference
   streak: number;

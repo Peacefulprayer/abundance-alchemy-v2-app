@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/helpers.php';
 
 // CORS allowlist
 $origin         = $_SERVER['HTTP_ORIGIN'] ?? '';

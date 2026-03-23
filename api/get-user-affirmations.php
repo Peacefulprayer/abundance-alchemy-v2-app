@@ -1,75 +1,36 @@
 <?php
 include_once 'config.php';
 
-function aa_table_columns(PDO $conn, string $table): array {
-    try {
-        $stmt = $conn->query("DESCRIBE `$table`");
-        $cols = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $cols[] = (string)($row['Field'] ?? '');
-        }
-        return $cols;
-    } catch (Throwable $e) {
-        return [];
-    }
+aa_require_method('GET');
+$identity = aa_get_session_identity();
+$ownerBinding = aa_resolve_owner_binding($conn, 'user_affirmations', $identity['userId'], $identity['userEmail']);
+
+if (!$ownerBinding) {
+    aa_json_response([], 401);
 }
 
-function aa_has_col(array $cols, string $name): bool {
-    return in_array($name, $cols, true);
+if (!aa_has_col($ownerBinding['columns'], 'text') || !aa_has_col($ownerBinding['columns'], 'type')) {
+    error_log('[api/get-user-affirmations.php] user_affirmations missing required text/type columns');
+    aa_json_response([]);
 }
 
-$userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
-$userEmail = trim((string)($_SESSION['user_email'] ?? ''));
-$affirmCols = aa_table_columns($conn, 'user_affirmations');
-$hasUserId = aa_has_col($affirmCols, 'user_id');
-$hasUserEmail = aa_has_col($affirmCols, 'user_email');
-$hasEmail = aa_has_col($affirmCols, 'email');
-$hasCategory = aa_has_col($affirmCols, 'category');
-$hasCreatedAt = aa_has_col($affirmCols, 'created_at');
+try {
+    $hasCategory = aa_has_col($ownerBinding['columns'], 'category');
+    $hasCreatedAt = aa_has_col($ownerBinding['columns'], 'created_at');
+    $categorySelect = $hasCategory ? 'category' : 'NULL AS category';
+    $createdAtSelect = $hasCreatedAt ? 'created_at' : 'NULL AS created_at';
+    $query = "
+        SELECT id, text, type, {$categorySelect}, {$createdAtSelect}
+        FROM user_affirmations
+        WHERE {$ownerBinding['column']} = :owner
+        ORDER BY " . ($hasCreatedAt ? 'created_at DESC' : 'id DESC');
 
-if ($userId <= 0 && $userEmail === '') {
-    http_response_code(401);
-    echo json_encode([]);
-    exit();
+    $stmt = $conn->prepare($query);
+    $stmt->bindValue(':owner', $ownerBinding['value'], $ownerBinding['pdoType']);
+    $stmt->execute();
+
+    aa_json_response($stmt->fetchAll(PDO::FETCH_ASSOC));
+} catch (Throwable $e) {
+    error_log('[api/get-user-affirmations.php] Read failed: ' . $e->getMessage());
+    aa_json_response([], 500);
 }
-
-if (!$hasUserId && !$hasUserEmail && !$hasEmail) {
-    error_log('[api/get-user-affirmations.php] user_affirmations missing ownership columns');
-    echo json_encode([]);
-    exit();
-}
-
-if (($hasUserId && $userId > 0) || (($hasUserEmail || $hasEmail) && $userEmail !== '')) {
-    try {
-        $categorySelect = $hasCategory ? 'category' : 'NULL AS category';
-        $createdAtSelect = $hasCreatedAt ? 'created_at' : 'NULL AS created_at';
-        $whereColumn = $hasUserId ? 'user_id' : ($hasUserEmail ? 'user_email' : 'email');
-        $query = "
-            SELECT id, text, type, {$categorySelect}, {$createdAtSelect}
-            FROM user_affirmations
-            WHERE {$whereColumn} = :owner
-            ORDER BY " . ($hasCreatedAt ? "created_at DESC" : "id DESC");
-
-        $stmt = $conn->prepare($query);
-        if ($hasUserId) {
-            $stmt->bindValue(":owner", $userId, PDO::PARAM_INT);
-        } else {
-            $stmt->bindValue(":owner", $userEmail, PDO::PARAM_STR);
-        }
-        $stmt->execute();
-
-        $data = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $data[] = $row;
-        }
-        echo json_encode($data);
-    } catch (Throwable $e) {
-        error_log('[api/get-user-affirmations.php] Read failed: ' . $e->getMessage());
-        http_response_code(500);
-        echo json_encode([]);
-    }
-} else {
-    error_log('[api/get-user-affirmations.php] Session identity did not match configured ownership columns');
-    echo json_encode([]);
-}
-?>

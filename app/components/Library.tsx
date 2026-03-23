@@ -124,7 +124,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
         <div className={sectionFrame}>
           <div className={`rounded-[24px] border p-5 shadow-lg ${cardBg}`}>
             <span className={titlePill}>Maktaba</span>
-            <h2 className="mt-4 text-2xl font-serif font-semibold">Your Sacred Library</h2>
+            <h2 className="mt-4 text-2xl font-serif font-semibold">Sacred Library (Maktaba) Space</h2>
             <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
               Keep your sound, affirmations, and gratitude reflections gathered in one place for easy return.
             </p>

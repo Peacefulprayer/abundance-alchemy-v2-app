@@ -1,9 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { HandHeart, ArrowRight } from 'lucide-react';
 import { buttonSoundService } from '../services/buttonSoundService';
+import { api } from '../services/api';
 import { getPrayerPathById, PRAYER_GUIDE_STEPS } from './prayerContent';
 import type { PrayerPathId } from './prayerContent';
 import type { PrayerProfile } from '../types';
+import {
+  INNER_PAGE_SHELL,
+  INNER_PRIMARY_BUTTON,
+  INNER_TITLE_PILL,
+  innerBackButton,
+  innerHeroCard,
+  innerSectionFrame,
+  innerSectionKicker,
+  innerSecondaryButton,
+  innerSurfaceCard,
+} from '../styles/sacredInnerScreen';
 
 interface PrayerGuideProps {
   prayerPathId: PrayerPathId | null;
@@ -24,23 +36,62 @@ export const PrayerGuide: React.FC<PrayerGuideProps> = ({
 }) => {
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
-  const cardBg =
-    theme === 'light'
-      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-slate-200'
-      : 'bg-gradient-to-br from-slate-900/75 to-slate-950/75 border-slate-700';
+  const pageShell = INNER_PAGE_SHELL;
+  const sectionFrame = innerSectionFrame(theme);
+  const heroCard = innerHeroCard(theme);
+  const surfaceCard = innerSurfaceCard(theme);
+  const sectionKicker = innerSectionKicker(theme);
+  const backButton = innerBackButton(theme);
+  const secondaryButton = innerSecondaryButton(theme);
   const formatToken = (value: string) =>
     value
       .split('_')
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
 
+  const [steps, setSteps] = useState<string[]>([]);
+  const [isLoadingSteps, setIsLoadingSteps] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!prayerPathId) {
+      setSteps([]);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    setIsLoadingSteps(true);
+    setSteps(PRAYER_GUIDE_STEPS[prayerPathId] || []);
+
+    void api
+      .getPrayerContent(prayerPathId)
+      .then((content) => {
+        if (!isMounted) return;
+        if (Array.isArray(content?.guideSteps) && content.guideSteps.length > 0) {
+          setSteps(content.guideSteps);
+        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setSteps(PRAYER_GUIDE_STEPS[prayerPathId] || []);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingSteps(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [prayerPathId]);
+
   if (!prayerPathId) {
     return (
       <div className={`h-full flex flex-col p-6 max-w-md mx-auto items-center justify-center text-center ${textColor}`}>
-        <p className="text-sm mb-4">No prayer path selected yet.</p>
+        <p className="mb-4 text-sm">No prayer path selected yet.</p>
         <button
           onClick={onChangePath}
-          className="px-4 py-2 rounded-lg bg-amber-500 text-black font-semibold hover:opacity-90"
+          className={INNER_PRIMARY_BUTTON}
         >
           Select Prayer Path
         </button>
@@ -49,79 +100,120 @@ export const PrayerGuide: React.FC<PrayerGuideProps> = ({
   }
 
   const path = getPrayerPathById(prayerPathId);
-  const steps = PRAYER_GUIDE_STEPS[prayerPathId] || [];
 
   return (
-    <div className={`h-full flex flex-col p-4 max-w-md mx-auto pb-8 overflow-y-auto custom-scrollbar ${textColor}`}>
-      <div className="flex items-center justify-between mb-5">
-        <button
-          onClick={() => {
-            buttonSoundService.play('back');
-            onBack();
-          }}
-          className="inline-flex items-center px-3 py-1.5 rounded-full bg-black/60 border border-white/15 text-[11px] text-slate-100 hover:bg-black/80 transition-colors"
-        >
-          <span className="mr-1">←</span>
-          <span className="font-semibold tracking-wide uppercase">Back</span>
-        </button>
-        <span className={`text-[10px] tracking-[0.22em] uppercase ${subTextColor} opacity-90`}>Prayer Guide</span>
-      </div>
-
-      <div className={`rounded-2xl border p-5 shadow-lg mb-4 ${cardBg}`}>
-        <div className="flex items-center gap-2 mb-2">
-          <HandHeart size={18} className="text-amber-400" />
-          <h2 className="text-lg font-bold">{path?.label || 'Prayer'} Instructions</h2>
+    <div className={`h-full w-full overflow-y-auto px-4 pt-4 pb-8 custom-scrollbar ${textColor}`}>
+      <div className={pageShell}>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => {
+              buttonSoundService.play('back');
+              onBack();
+            }}
+            className={backButton}
+          >
+            <span>←</span>
+            <span className="font-semibold tracking-wide uppercase">Back</span>
+          </button>
+          <span className={INNER_TITLE_PILL}>Prayer Guide</span>
         </div>
-        <p className={`text-xs uppercase tracking-wide text-amber-400 mb-2`}>{path?.swahili || ''}</p>
-        <p className={`text-sm ${subTextColor}`}>{path?.description || 'Prepare your heart and intention.'}</p>
-      </div>
 
-      <div className={`rounded-2xl border p-4 mb-4 ${cardBg}`}>
-        <div className="text-xs uppercase tracking-wide opacity-80 mb-3">Prayer Profile</div>
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs">
-            Intent: <span className="font-semibold">{formatToken(prayerProfile.intent)}</span>
-          </div>
-          <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs">
-            Tone: <span className="font-semibold">{formatToken(prayerProfile.tone)}</span>
-          </div>
-          <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs">
-            Language: <span className="font-semibold">{formatToken(prayerProfile.language)}</span>
-          </div>
-          <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs">
-            Style: <span className="font-semibold">{formatToken(prayerProfile.style)}</span>
-          </div>
-        </div>
-        <div className="text-xs uppercase tracking-wide opacity-80 mb-3">How To Pray In This Flow</div>
-        <div className="space-y-2">
-          {steps.map((step, index) => (
-            <div key={`${prayerPathId}-${index}`} className="flex gap-2 items-start">
-              <span className="text-[11px] mt-[2px] inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/20 text-amber-300">
-                {index + 1}
-              </span>
-              <p className={`text-sm leading-relaxed ${subTextColor}`}>{step}</p>
+        <div className={sectionFrame}>
+          <div className={heroCard}>
+            <p className={sectionKicker}>Prayer Orientation</p>
+            <div className="mt-3 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-amber-400/35 bg-amber-500/12">
+                <HandHeart size={18} className="text-amber-400" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-serif font-semibold">{path?.label || 'Prayer'} Instructions</h1>
+                <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400">
+                  {path?.swahili || ''}
+                </p>
+              </div>
             </div>
-          ))}
+            <p className={`mt-4 text-sm leading-relaxed ${subTextColor}`}>
+              {path?.description || 'Prepare your heart and intention.'}
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div className="mt-auto pt-2 space-y-2">
-        <button
-          onClick={() => {
-            buttonSoundService.play('confirm');
-            onStartPrayer();
-          }}
-          className="w-full py-3 rounded-xl bg-amber-500 text-black font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-        >
-          Begin Prayer
-          <ArrowRight size={16} />
-        </button>
-        <button
-          onClick={onChangePath}
-          className={`w-full py-2 rounded-xl border text-sm ${theme === 'light' ? 'border-slate-300 bg-white/80' : 'border-slate-700 bg-slate-900/50'} ${textColor}`}
-        >
-          Change Prayer Path
-        </button>
+        <div className={sectionFrame}>
+          <div className="px-1">
+            <h2 className={INNER_TITLE_PILL}>Prayer Profile</h2>
+          </div>
+          <div className={`mt-3 space-y-4 ${surfaceCard}`}>
+            <p className={sectionKicker}>Current Settings</p>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                ['Intent', formatToken(prayerProfile.intent)],
+                ['Tone', formatToken(prayerProfile.tone)],
+                ['Language', formatToken(prayerProfile.language)],
+                ['Style', formatToken(prayerProfile.style)],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className={`rounded-[18px] border px-3 py-3 text-xs ${
+                    theme === 'light'
+                      ? 'border-amber-200/60 bg-white/90 text-slate-700'
+                      : 'border-amber-500/18 bg-slate-900/75 text-slate-200'
+                  }`}
+                >
+                  <div className="font-extrabold uppercase tracking-[0.18em] text-amber-400">{label}</div>
+                  <div className="mt-2 text-sm font-semibold text-inherit">{value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className={sectionFrame}>
+          <div className="px-1">
+            <h2 className={INNER_TITLE_PILL}>Guide Steps</h2>
+          </div>
+          <div className={`mt-3 space-y-3 ${surfaceCard}`}>
+            <p className={sectionKicker}>How to Pray in This Flow</p>
+            {isLoadingSteps ? (
+              <p className={`text-sm ${subTextColor}`}>Loading prayer guidance...</p>
+            ) : null}
+            {steps.map((step, index) => (
+              <div
+                key={`${prayerPathId}-${index}`}
+                className={`flex gap-3 rounded-[18px] border px-4 py-4 ${
+                  theme === 'light'
+                    ? 'border-amber-200/60 bg-white/88'
+                    : 'border-amber-500/18 bg-slate-900/75'
+                }`}
+              >
+                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-xs font-extrabold text-amber-300">
+                  {index + 1}
+                </span>
+                <p className={`text-sm leading-relaxed ${subTextColor}`}>{step}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={sectionFrame}>
+          <div className={`${surfaceCard} space-y-3`}>
+            <button
+              onClick={() => {
+                buttonSoundService.play('confirm');
+                onStartPrayer();
+              }}
+              className={`${INNER_PRIMARY_BUTTON} flex items-center justify-center gap-2`}
+            >
+              Begin Prayer
+              <ArrowRight size={16} />
+            </button>
+            <button
+              onClick={onChangePath}
+              className={secondaryButton}
+            >
+              Change Prayer Path
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

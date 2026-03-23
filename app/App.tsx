@@ -523,7 +523,13 @@ function App() {
   const [prayerPathId, setPrayerPathId] = useState<PrayerPathId | null>(() => {
     try {
       const value = localStorage.getItem('abundance_prayer_path');
-      if (value === 'christian' || value === 'muslim' || value === 'traditional' || value === 'universal') {
+      if (
+        value === 'christian' ||
+        value === 'muslim' ||
+        value === 'traditional' ||
+        value === 'science_of_mind' ||
+        value === 'universal'
+      ) {
         return value;
       }
       return null;
@@ -575,6 +581,11 @@ function App() {
       id: anyAcc.id ?? anyAcc.user_id ?? anyAcc.email ?? 'local',
       email: anyAcc.email ?? '',
       name: anyAcc.name ?? anyAcc.username ?? anyAcc.displayName ?? '',
+      profileImage:
+        anyAcc.profileImage ??
+        anyAcc.profile_img ??
+        storedProfile.profileImage ??
+        '',
       focusAreas: anyAcc.focusAreas ?? storedProfile.focusAreas ?? [],
       cyclePreference: anyAcc.cyclePreference ?? storedProfile.cyclePreference ?? CycleType.DAILY,
       streak: anyAcc.streak ?? storedProfile.streak ?? 0,
@@ -600,13 +611,38 @@ function App() {
   useEffect(() => {
     let isMounted = true;
     let hasKnownVisitor = false;
+    let hasStoredAuth = false;
     let storedAuthFlowMode: AuthFlowMode = 'login';
     try {
       hasKnownVisitor = localStorage.getItem(RETURNING_VISITOR_KEY) === '1';
+      hasStoredAuth = !!localStorage.getItem('abundance_auth');
     } catch {
       hasKnownVisitor = false;
+      hasStoredAuth = false;
     }
     storedAuthFlowMode = readAuthFlowMode();
+
+    const resumeMode = readResumeMode();
+    const preAuthResumeMode =
+      resumeMode && RESUMABLE_PREAUTH_MODES.has(resumeMode) ? resumeMode : null;
+    const resumedSacredName = readPreAuthName();
+    const shouldValidateServerSession = hasKnownVisitor || hasStoredAuth;
+
+    if (!shouldValidateServerSession) {
+      clearPracticeSnapshot();
+      setPracticeConfig(null);
+      setIsReturningVisitor(false);
+      setAuthFlowMode('register');
+      writeAuthFlowMode('register');
+      setSacredName(resumedSacredName);
+      setBootDestination(AppMode.SPLASH);
+      setUser(null);
+      setCurrentMode(preAuthResumeMode || AppMode.PRE_SPLASH);
+      setAuthChecked(true);
+      return () => {
+        isMounted = false;
+      };
+    }
 
     (async () => {
       try {
@@ -660,10 +696,6 @@ function App() {
         localStorage.removeItem('abundance_auth');
         clearPracticeSnapshot();
         setPracticeConfig(null);
-        const resumeMode = readResumeMode();
-        const preAuthResumeMode =
-          resumeMode && RESUMABLE_PREAUTH_MODES.has(resumeMode) ? resumeMode : null;
-        const resumedSacredName = readPreAuthName();
         const shouldRouteToLogin = hasKnownVisitor && storedAuthFlowMode === 'login';
         setIsReturningVisitor(shouldRouteToLogin);
         setAuthFlowMode(shouldRouteToLogin ? 'login' : 'register');
@@ -1172,8 +1204,11 @@ function App() {
     setUserAudioFile(file);
     if (user?.email) {
       await api.uploadUserAudio(file, category, user.email);
-      const data = await api.getSoundscapes(user.email);
-      if (data) setSoundscapes(data);
+      const raw = await api.getSoundscapes(user.email);
+      const normalized = normalizeSoundscapes(raw);
+      if (normalized.length > 0) {
+        setSoundscapes(normalized);
+      }
     }
   };
 
@@ -1374,6 +1409,19 @@ function App() {
     console.log('Replay welcome invocation → WELCOME');
     setWelcomeReturnMode(currentMode);
     setCurrentMode(AppMode.WELCOME);
+  };
+
+  const handleUpdateProfile = (patch: Partial<UserProfile>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...patch };
+      try {
+        localStorage.setItem('abundance_user', JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
   };
 
   const handlePreviewSoundscape = (id: string) => {
@@ -1627,6 +1675,7 @@ function App() {
                 user={user}
                 theme={theme}
                 onBack={() => setCurrentMode(AppMode.DASHBOARD)}
+                onUpdateProfile={handleUpdateProfile}
               />
             ) : (
               <div className="min-h-screen flex items-center justify-center">

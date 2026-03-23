@@ -144,11 +144,7 @@ export const TempleSpace: React.FC<TempleSpaceProps> = ({
   }, [targetUrl, activeUrl]);
 
   return (
-    <div
-      className={`relative min-h-screen w-full overflow-hidden ${
-        theme === 'dark' ? 'bg-black' : 'bg-white'
-      }`}
-    >
+    <div className="relative min-h-screen w-full overflow-hidden bg-black">
       {/* Background layer */}
       <div
         className="absolute inset-0"
@@ -157,6 +153,7 @@ export const TempleSpace: React.FC<TempleSpaceProps> = ({
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
+          backgroundColor: 'black',
           // Gentle crossfade. (We keep it subtle to feel “Apple-like”.)
           transition: 'opacity 220ms ease-out',
           opacity: 1,

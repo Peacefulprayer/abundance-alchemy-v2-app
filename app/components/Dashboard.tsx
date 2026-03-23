@@ -18,10 +18,10 @@ import {
   ChevronDown,
   BookOpen,
   Sparkles as SparklesIcon,
-  Wind,
-  User
+  Wind
 } from 'lucide-react';
 import { AlchemistAvatar } from './AlchemistAvatar';
+import { ProfileImage } from './ProfileImage';
 import { apiService } from '../services/apiService';
 import { playBell } from '../services/audioService';
 
@@ -225,6 +225,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const currentTrackName = userAudioFile
     ? `File: ${userAudioFile.name}`
     : activeSoundscape.label;
+  const displayName = (user.preferredName || user.name || 'Initiate').trim();
 
   return (
     <div className="h-full w-full overflow-y-auto overflow-x-hidden pb-24">
@@ -232,13 +233,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Header Section */}
         <div className="relative pt-4 px-4 pb-2">
           <div className="flex justify-between items-start">
-            <div className="space-y-1 z-10">
-              <div className={headerPill}>
-                {greeting}
+            <div className="z-10 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => onOpenProfile?.()}
+                className="rounded-full transition-transform hover:scale-[1.02]"
+                aria-label="Open profile"
+              >
+                <ProfileImage name={displayName} imageUrl={user.profileImage} size="md" />
+              </button>
+              <div className="space-y-1">
+                <div className={headerPill}>
+                  {greeting}
+                </div>
+                <p className={`text-base font-semibold ${textColor}`}>
+                  {displayName}
+                </p>
               </div>
-              <p className={`pl-1 text-[11px] ${subTextColor}`}>
-                Your sacred hub for today&apos;s practice.
-              </p>
             </div>
             <div className="flex items-center gap-3 z-10">
               <div className={streakPill}>
@@ -247,20 +258,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   {user.streak} {user.streak === 1 ? 'Day' : 'Days'} Streak
                 </span>
               </div>
-              {onOpenProfile ? (
-                <button
-                  onClick={onOpenProfile}
-                  aria-label="Open profile"
-                  className={`p-2 rounded-full border transition-colors ${
-                    theme === 'light'
-                      ? 'bg-white/50 hover:bg-white text-slate-600 border-slate-200'
-                      : 'bg-slate-800/50 hover:bg-slate-800 text-slate-200 border-amber-500/25'
-                  }`}
-                >
-                  <User size={20} />
-                </button>
-              ) : null}
             </div>
+          </div>
+
+          <div
+            className={`mt-4 rounded-[20px] border px-4 py-3 text-center shadow-sm ${
+              theme === 'light'
+                ? 'border-amber-200/70 bg-white/82'
+                : 'border-amber-400/15 bg-slate-950/72'
+            }`}
+          >
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-amber-400">
+              Dashibodi
+            </p>
+            <p className={`mt-2 text-sm font-semibold ${textColor}`}>
+              Your sacred hub for today&apos;s practices.
+            </p>
           </div>
 
           {/* Wisdom card */}

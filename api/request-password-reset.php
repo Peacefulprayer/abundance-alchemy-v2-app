@@ -1,46 +1,44 @@
 <?php
-// API: request password reset
-// POST JSON: { "email": "user@example.com" }
+include_once 'config.php';
 
-include_once 'config.php';                       // $conn, CORS & JSON headers
-require_once __DIR__ . '/../password-reset-helpers.php'; // $pdo in that file, but helpers accept any PDO
+aa_require_method('POST');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(["message" => "Method not allowed"]);
-    exit();
+function aa_send_password_reset_email_fallback(string $email, string $name = ''): void
+{
+    $templatePath = __DIR__ . '/../admin/email_templates/password_reset.txt';
+    $template = @file_get_contents($templatePath);
+    if ($template === false || trim($template) === '') {
+        $template = "Hello {name},\n\nWe received a request to reset your Abundance Alchemy password. If you made this request, please contact support or use the latest reset instructions provided by the team.\n\nEmail: {email}\n";
+    }
+
+    $body = str_replace(
+        ['{name}', '{email}'],
+        [$name !== '' ? $name : 'there', $email],
+        $template
+    );
+
+    $serverName = $_SERVER['SERVER_NAME'] ?? 'localhost';
+    @mail($email, 'Abundance Alchemy Password Reset', $body, 'From: no-reply@' . $serverName);
 }
 
-$raw  = file_get_contents("php://input");
-$data = json_decode($raw, true);
-
-$email = isset($data['email']) ? trim($data['email']) : '';
+$data = aa_read_json_input();
+$email = trim((string)($data['email'] ?? ''));
 
 if ($email === '') {
-    http_response_code(400);
-    echo json_encode(["message" => "Email required"]);
-    exit();
+    aa_error_response('Email required', 400);
 }
 
 try {
-    $stmt = $conn->prepare("SELECT id, name, email FROM users WHERE email = ?");
+    $stmt = $conn->prepare('SELECT id, name, email FROM users WHERE email = ?');
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user && !empty($user['email'])) {
-        // Use the same helper used by forgot-password.php
-        aa_send_password_reset_email_public(
-            $conn,                    // $conn is also a PDO instance
-            (int)$user['id'],
-            $user['email'],
-            $user['name'] ?? ''
-        );
+        aa_send_password_reset_email_fallback($user['email'], (string)($user['name'] ?? ''));
     }
 
-    // Same message as before, but now actually sends an email if possible.
-    echo json_encode(["message" => "Reset link sent"]);
-} catch (PDOException $e) {
+    aa_json_response(['message' => 'Reset link sent']);
+} catch (Throwable $e) {
     error_log('[api/request-password-reset.php] Reset request failed: ' . $e->getMessage());
-    http_response_code(500);
-    echo json_encode(["message" => "Error"]);
+    aa_error_response('Error', 500);
 }

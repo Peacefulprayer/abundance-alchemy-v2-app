@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { AppMode, PracticeType, ThemeMode } from '../types';
 import { useBackgrounds } from '../services/useBackgrounds';
 import type { BackgroundSlot } from '../services/apiService';
+import { useLoadedBackgroundImage } from '../hooks/useLoadedBackgroundImage';
 
 interface LayoutProps {
   mode: AppMode;
@@ -173,6 +174,10 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
   const stageBgImageUrl = stageBgEntry?.imageUrl
     ? normalizeImageUrl(stageBgEntry.imageUrl)
     : '';
+  const loadedGlobalBgImageUrl = useLoadedBackgroundImage(globalBgImageUrl || undefined);
+  const loadedStageBgImageUrl = useLoadedBackgroundImage(stageBgImageUrl || undefined);
+  const isGlobalImageLoading = !forceBlackBackdrop && !!globalBgImageUrl && !loadedGlobalBgImageUrl;
+  const isStageImageLoading = !!stageBgImageUrl && !loadedStageBgImageUrl;
 
   const baseBg = forceBlackBackdrop
     ? 'bg-black'
@@ -186,15 +191,15 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
   return (
     <div className={`relative min-h-screen w-full overflow-x-hidden ${textColor}`}>
       <div className="fixed inset-0 z-0 pointer-events-none">
-        {forceBlackBackdrop ? <div className="absolute inset-0 bg-black" /> : null}
+        <div className="absolute inset-0 bg-black" />
         {!forceBlackBackdrop && !globalBgImageUrl ? (
           <div className={`absolute inset-0 ${baseBg}`} />
         ) : null}
-        {!forceBlackBackdrop && globalBgImageUrl ? (
+        {!forceBlackBackdrop && loadedGlobalBgImageUrl ? (
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: `url("${globalBgImageUrl}")`,
+              backgroundImage: `url("${loadedGlobalBgImageUrl}")`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat'
@@ -202,7 +207,7 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
           />
         ) : null}
 
-        {!forceBlackBackdrop ? (
+        {!forceBlackBackdrop && !isGlobalImageLoading ? (
           <>
             <div
               className={`absolute inset-0 ${
@@ -251,11 +256,12 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
         {/* Stage-only background for core screens (prevents duplicate full-page image) */}
         {!useGlobalBackgroundLayer ? (
           <div className="absolute inset-0 z-0 pointer-events-none">
-            {stageBgImageUrl ? (
+            <div className="absolute inset-0 bg-black" />
+            {loadedStageBgImageUrl ? (
               <div
                 className="absolute inset-0"
                 style={{
-                  backgroundImage: `url("${stageBgImageUrl}")`,
+                  backgroundImage: `url("${loadedStageBgImageUrl}")`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   backgroundRepeat: 'no-repeat',
@@ -264,28 +270,32 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
               />
             ) : null}
 
-            <div
-              className={`absolute inset-0 ${
-                stageBgImageUrl
-                  ? (
+            {!isStageImageLoading ? (
+              <>
+                <div
+                  className={`absolute inset-0 ${
+                    loadedStageBgImageUrl
+                      ? (
+                        theme === 'light'
+                          ? 'bg-white/56'
+                          : 'bg-gradient-to-b from-black/48 via-black/36 to-black/58'
+                      )
+                      : (
+                        theme === 'light'
+                          ? 'bg-white/68'
+                          : 'bg-gradient-to-b from-slate-950/44 via-black/32 to-black/54'
+                      )
+                  }`}
+                />
+                <div
+                  className={`absolute inset-0 ${
                     theme === 'light'
-                      ? 'bg-white/56'
-                      : 'bg-gradient-to-b from-black/48 via-black/36 to-black/58'
-                  )
-                  : (
-                    theme === 'light'
-                      ? 'bg-white/68'
-                      : 'bg-gradient-to-b from-slate-950/44 via-black/32 to-black/54'
-                  )
-              }`}
-            />
-            <div
-              className={`absolute inset-0 ${
-                theme === 'light'
-                  ? 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.08),transparent_55%)]'
-                  : 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.10),transparent_55%)]'
-              }`}
-            />
+                      ? 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.08),transparent_55%)]'
+                      : 'bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.10),transparent_55%)]'
+                  }`}
+                />
+              </>
+            ) : null}
           </div>
         ) : null}
 

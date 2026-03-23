@@ -43,7 +43,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
           <p className="text-center">
             <span className={`font-semibold ${contentText}`}>"The Kingdom of Heaven is at hand"</span>
             <br />
-            These Practices are about providing concrete tools to help with shifting your vibrational alignment to match that of all the good that is all around you - right here, right now.
+            These Practices are about providing concrete tools to help with shifting your vibrational alignment to match that of the good that is all around you.
           </p>
           <p>Chances are if you are not experiencing this then you are simply in alignment with something else. And The Divine, the Ancestors want to bring you back.</p>
           <p>In that light the I Am morning practice is an adjustment, a tuning, a frequency shift from saying no to your good to saying yes to your good!</p>
@@ -63,10 +63,13 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
       ),
     },
     {
-      title: 'Sonic Alchemy',
+      title: 'Sound Alchemy',
       content: (
         <div className={`space-y-3 text-left text-xs leading-relaxed ${contentText}`}>
-          <p>Your environment matters. The default background sound is designed to hold space for you, but you are the creator.</p>
+          <p>
+            Sound is a powerful tool. The default background sound is designed to hold space for you.
+          </p>
+          <p>Once inside you will have control over the sounds you listen to.</p>
           <p>Go to <strong className={contentEmerald}>Settings &gt; Audio</strong> to:</p>
           <ul className={`list-disc pl-4 space-y-1 ${contentMuted}`}>
              <li>Change the default background ambience.</li>
