@@ -4,6 +4,7 @@ import { PracticeType, Soundscape, PracticeSessionConfig } from '../types';
 import { apiService } from '../services/apiService';
 import { audioManager } from '../services/audioManager';
 import { buttonSoundService } from '../services/buttonSoundService';
+import { href } from '../services/base';
 import {
   INNER_PAGE_SHELL,
   INNER_PRIMARY_BUTTON,
@@ -33,6 +34,7 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
   availableSoundscapes,
   initialDuration = 15,
 }) => {
+  const meditationCompanionHref = href('companion-pages/meditation.html');
   const [duration, setDuration] = useState(initialDuration);
   const [showCustomTime, setShowCustomTime] = useState(false);
   const [selectedSound, setSelectedSound] = useState<Soundscape | null>(null);
@@ -251,6 +253,14 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
             <p className="text-center text-[11px] leading-relaxed text-white">
               Set your intention, then breathe with the visual rhythm.
             </p>
+            <a
+              href={meditationCompanionHref}
+              target="_blank"
+              rel="noreferrer"
+              className={`${secondaryButton} block text-center`}
+            >
+              Open Meditation Companion Page
+            </a>
             <button
               onClick={handleBegin}
               disabled={!selectedSound || loading}

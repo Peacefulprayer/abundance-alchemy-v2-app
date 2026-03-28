@@ -43,6 +43,11 @@ export const PrayerGuide: React.FC<PrayerGuideProps> = ({
   const sectionKicker = innerSectionKicker(theme);
   const backButton = innerBackButton(theme);
   const secondaryButton = innerSecondaryButton(theme);
+  const prayerGuideSectionWrap = theme === 'light' ? 'space-y-3' : sectionFrame;
+  const prayerGuideSectionCard =
+    theme === 'light'
+      ? 'rounded-[24px] border border-amber-200/70 bg-slate-100 p-4 shadow-sm'
+      : surfaceCard;
   const formatToken = (value: string) =>
     value
       .split('_')
@@ -138,15 +143,15 @@ export const PrayerGuide: React.FC<PrayerGuideProps> = ({
           </div>
         </div>
 
-        <div className={sectionFrame}>
+        <div className={prayerGuideSectionWrap}>
           <div className="px-1">
             <h2 className={INNER_TITLE_PILL}>Prayer Profile</h2>
           </div>
-          <div className={`mt-3 space-y-4 ${surfaceCard}`}>
+          <div className={`mt-3 space-y-4 ${prayerGuideSectionCard}`}>
             <p className={sectionKicker}>Current Settings</p>
             <div className="grid grid-cols-2 gap-3">
               {[
-                ['Intent', formatToken(prayerProfile.intent)],
+                ['Intention', formatToken(prayerProfile.intent)],
                 ['Tone', formatToken(prayerProfile.tone)],
                 ['Language', formatToken(prayerProfile.language)],
                 ['Style', formatToken(prayerProfile.style)],
@@ -167,11 +172,11 @@ export const PrayerGuide: React.FC<PrayerGuideProps> = ({
           </div>
         </div>
 
-        <div className={sectionFrame}>
+        <div className={prayerGuideSectionWrap}>
           <div className="px-1">
             <h2 className={INNER_TITLE_PILL}>Guide Steps</h2>
           </div>
-          <div className={`mt-3 space-y-3 ${surfaceCard}`}>
+          <div className={`mt-3 space-y-3 ${prayerGuideSectionCard}`}>
             <p className={sectionKicker}>How to Pray in This Flow</p>
             {isLoadingSteps ? (
               <p className={`text-sm ${subTextColor}`}>Loading prayer guidance...</p>
@@ -194,8 +199,8 @@ export const PrayerGuide: React.FC<PrayerGuideProps> = ({
           </div>
         </div>
 
-        <div className={sectionFrame}>
-          <div className={`${surfaceCard} space-y-3`}>
+        <div className={prayerGuideSectionWrap}>
+          <div className={`${prayerGuideSectionCard} space-y-3`}>
             <button
               onClick={() => {
                 buttonSoundService.play('confirm');

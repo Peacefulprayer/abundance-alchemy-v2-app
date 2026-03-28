@@ -1,5 +1,21 @@
 # Changelog (human-readable)
 
+## 2026-03-27 checkpoint-public-asset-cleanup
+- Removed the remaining macOS `._*` sidecar files from `app/public/`
+- Cleared the same metadata files from the current `app/dist/`
+- Rebuilt the frontend so the clean asset tree is reflected in production output
+
+## 2026-03-26 checkpoint-companion-pages-integrated
+- Added the companion pages to the Vite multi-page build so they now ship as standalone static outputs under `dist/companion-pages/`
+- Linked the companion pages from:
+  - `PrayerSetup`
+  - `MeditationSetup`
+- Replaced hard-coded `/abundance-alchemy/` companion-page app links with relative app-root links so the pages work in local preview and under the deployed base path
+- Cleaned the macOS `._*` sidecar files from `app/companion-pages/`
+- Prayer backend/runtime verification remains partially blocked in local CLI:
+  - endpoint files lint clean
+  - direct local DB bootstrap still returns `Database connection error`
+
 ## 2026-03-20 checkpoint-handoff-refresh-and-companion-pages
 - Refreshed handoff docs to match the actual working tree after the interrupted session/restart.
 - Documented the existing standalone companion pages under `app/companion-pages/`:

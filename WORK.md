@@ -1,6 +1,6 @@
 # Abundance Alchemy Work Log
 
-Last updated: 2026-03-20
+Last updated: 2026-03-27
 
 ## Why this file exists
 This is a checkpoint record so work can resume quickly if a session drops.
@@ -47,24 +47,24 @@ This is a checkpoint record so work can resume quickly if a session drops.
   - `app/companion-pages/meditation.html`
   - `app/companion-pages/assets/companion-pages.css`
 - These pages are real editorial/static content, not placeholders.
+- They are now linked from the prayer and meditation setup flows.
+- The Vite build now emits them as standalone static outputs under:
+  - `app/dist/companion-pages/prayer.html`
+  - `app/dist/companion-pages/meditation.html`
 - Image folder scaffolding also exists for prayer and meditation under:
   - `app/companion-pages/assets/images/prayer/`
   - `app/companion-pages/assets/images/meditation/`
 - At the moment, the image folders mostly contain placeholder `.gitkeep` files.
 
 ### Important caveat
-- The companion pages are not yet wired into the React app or linked from the active app code.
-- `app/companion-pages/` also contains macOS `._*` sidecar files that should be removed before commit/deploy.
+- Local CLI verification still cannot confirm live DB bootstrap because the configured PHP DB connection returns `Database connection error` outside the app runtime.
+- The app build now includes a cleanup step for macOS `._*` metadata so `dist/` does not retain stale AppleDouble files across rebuilds.
 
 ### Best next steps from here
 1. Verify the prayer tables/endpoints/admin UI against the live runtime/database.
-2. Decide whether the companion pages are meant to be:
-   - committed as standalone static pages
-   - integrated into the app/site navigation
-   - deployed separately from the React app
-3. Clean the macOS sidecar files from `app/companion-pages/`.
-4. Run final Safari/real-device QA on the signed-in routes.
-5. Resolve the intentionally deferred flow glitch, then checkpoint/commit/deploy.
+2. Confirm the deploy target publishes `app/dist/companion-pages/` alongside the main app entry.
+3. Run final Safari/real-device QA on the signed-in routes.
+4. Resolve the intentionally deferred flow glitch, then checkpoint/commit/deploy.
 
 ## Major changes completed
 

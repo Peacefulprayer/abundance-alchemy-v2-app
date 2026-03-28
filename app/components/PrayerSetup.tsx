@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { HandHeart, ChevronRight } from 'lucide-react';
 import { buttonSoundService } from '../services/buttonSoundService';
+import { href } from '../services/base';
 import { PRAYER_PATHS } from './prayerContent';
 import type { PrayerPathId } from './prayerContent';
 import type { PrayerProfile, Soundscape } from '../types';
@@ -9,12 +10,12 @@ import {
   INNER_PRIMARY_BUTTON,
   INNER_TITLE_PILL,
   innerBackButton,
-  innerGlassPanel,
   innerHeroCard,
   innerInputBg,
   innerSectionFrame,
   innerSectionKicker,
   innerSecondaryButton,
+  innerSurfaceCard,
 } from '../styles/sacredInnerScreen';
 
 interface PrayerSetupProps {
@@ -40,6 +41,7 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
   onChangePrayerVolume,
   theme,
 }) => {
+  const prayerCompanionHref = href('companion-pages/prayer.html');
   const [selectedPathId, setSelectedPathId] = useState<PrayerPathId | ''>(() => {
     try {
       const value = localStorage.getItem('abundance_prayer_path') || '';
@@ -74,11 +76,24 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
   const titlePill = INNER_TITLE_PILL;
   const sectionFrame = innerSectionFrame(theme);
   const heroCard = innerHeroCard(theme);
-  const glassPanel = innerGlassPanel(theme);
+  const surfaceCard = innerSurfaceCard(theme);
   const inputBg = innerInputBg(theme);
   const sectionKicker = innerSectionKicker(theme);
   const backButton = innerBackButton(theme);
   const secondaryButton = innerSecondaryButton(theme);
+  const centeredSecondaryButton = secondaryButton.replace('w-full ', '');
+  const prayerSetupSectionWrap =
+    theme === 'light'
+      ? 'space-y-3'
+      : sectionFrame;
+  const prayerSetupSectionCard =
+    theme === 'light'
+      ? 'rounded-[24px] border border-amber-200/70 bg-slate-100 p-4 shadow-sm'
+      : surfaceCard;
+  const prayerSetupInputBg =
+    theme === 'light'
+      ? 'border-amber-200/70 bg-white text-slate-900'
+      : inputBg;
 
   const intentOptions: Array<{ value: PrayerProfile['intent']; label: string }> = [
     { value: 'guidance', label: 'Guidance' },
@@ -138,11 +153,11 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
         <div className={sectionFrame}>
           <div className={heroCard}>
             <p className={sectionKicker}>Sacred Preparation</p>
-            <div className="mt-3 flex items-center gap-3">
+            <div className="mt-3 flex items-center justify-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-full border border-amber-400/35 bg-amber-500/12">
                 <HandHeart size={18} className="text-amber-400" />
               </div>
-              <div>
+              <div className="text-center">
                 <h1 className="text-2xl font-serif font-semibold">Prayer Setup</h1>
                 <p className={`mt-1 text-sm ${subTextColor}`}>
                   Choose the path, atmosphere, and prayer profile you want this session to carry.
@@ -152,11 +167,11 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
           </div>
         </div>
 
-        <div className={sectionFrame}>
+        <div className={prayerSetupSectionWrap}>
           <div className="px-1">
             <h2 className={titlePill}>Prayer Path</h2>
           </div>
-          <div className={`mt-3 space-y-3 ${glassPanel}`}>
+          <div className={`mt-3 space-y-3 ${prayerSetupSectionCard}`}>
             <p className={sectionKicker}>Choose Your Tradition</p>
             {PRAYER_PATHS.map((path) => {
               const active = path.id === selectedPathId;
@@ -193,21 +208,21 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
           </div>
         </div>
 
-        <div className={sectionFrame}>
+        <div className={prayerSetupSectionWrap}>
           <div className="px-1">
             <h2 className={titlePill}>Prayer Profile</h2>
           </div>
-          <div className={`mt-3 space-y-4 ${glassPanel}`}>
-            <p className={sectionKicker}>Intent, Tone, Language, Style</p>
+          <div className={`mt-3 space-y-4 ${prayerSetupSectionCard}`}>
+            <p className={sectionKicker}>Intention, Tone, Language, Style</p>
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className={`mb-1 block text-xs font-semibold ${subTextColor}`}>Intent</label>
+                <label className={`mb-1 block text-xs font-semibold ${subTextColor}`}>Intention</label>
             <select
               value={profile.intent}
               onChange={(e) =>
                 setProfile((prev) => ({ ...prev, intent: e.target.value as PrayerProfile['intent'] }))
               }
-                  className={`w-full rounded-[18px] border px-3 py-3 text-sm ${inputBg}`}
+                  className={`w-full rounded-[18px] border px-3 py-3 text-sm ${prayerSetupInputBg}`}
             >
               {intentOptions.map((item) => (
                 <option key={item.value} value={item.value}>
@@ -224,7 +239,7 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
               onChange={(e) =>
                 setProfile((prev) => ({ ...prev, tone: e.target.value as PrayerProfile['tone'] }))
               }
-                  className={`w-full rounded-[18px] border px-3 py-3 text-sm ${inputBg}`}
+                  className={`w-full rounded-[18px] border px-3 py-3 text-sm ${prayerSetupInputBg}`}
             >
               {toneOptions.map((item) => (
                 <option key={item.value} value={item.value}>
@@ -241,7 +256,7 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
               onChange={(e) =>
                 setProfile((prev) => ({ ...prev, language: e.target.value as PrayerProfile['language'] }))
               }
-                  className={`w-full rounded-[18px] border px-3 py-3 text-sm ${inputBg}`}
+                  className={`w-full rounded-[18px] border px-3 py-3 text-sm ${prayerSetupInputBg}`}
             >
               {languageOptions.map((item) => (
                 <option key={item.value} value={item.value}>
@@ -258,7 +273,7 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
               onChange={(e) =>
                 setProfile((prev) => ({ ...prev, style: e.target.value as PrayerProfile['style'] }))
               }
-                  className={`w-full rounded-[18px] border px-3 py-3 text-sm ${inputBg}`}
+                  className={`w-full rounded-[18px] border px-3 py-3 text-sm ${prayerSetupInputBg}`}
             >
               {styleOptions.map((item) => (
                 <option key={item.value} value={item.value}>
@@ -271,11 +286,11 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
           </div>
         </div>
 
-        <div className={sectionFrame}>
+        <div className={prayerSetupSectionWrap}>
           <div className="px-1">
             <h2 className={titlePill}>Prayer Ambience</h2>
           </div>
-          <div className={`mt-3 space-y-4 ${glassPanel}`}>
+          <div className={`mt-3 space-y-4 ${prayerSetupSectionCard}`}>
             <p className={sectionKicker}>Sound and Volume</p>
             <div>
               <label className={`mb-1 block text-xs font-semibold ${subTextColor}`}>Prayer Sound</label>
@@ -285,7 +300,7 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
                 buttonSoundService.play('click');
                 onChangeSoundscape(e.target.value);
               }}
-                className={`w-full rounded-[18px] border px-3 py-3 text-sm ${inputBg}`}
+                className={`w-full rounded-[18px] border px-3 py-3 text-sm ${prayerSetupInputBg}`}
             >
               {prayerTracks.length === 0 ? (
                 <option value="">Default Prayer Ambience</option>
@@ -318,8 +333,16 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
           </div>
         </div>
 
-        <div className={sectionFrame}>
-          <div className={`${glassPanel} space-y-3`}>
+        <div className={prayerSetupSectionWrap}>
+          <div className={`${prayerSetupSectionCard} space-y-3`}>
+            <a
+              href={prayerCompanionHref}
+              target="_blank"
+              rel="noreferrer"
+              className={`${centeredSecondaryButton} inline-flex items-center justify-center px-6 text-center`}
+            >
+              Open Prayer Companion Page
+            </a>
             <button
               onClick={handleSavePath}
               disabled={!selectedPath}

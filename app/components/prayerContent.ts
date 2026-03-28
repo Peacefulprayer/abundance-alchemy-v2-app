@@ -1,4 +1,4 @@
-export type PrayerPathId = 'christian' | 'muslim' | 'traditional' | 'science_of_mind' | 'universal';
+export type PrayerPathId = 'christian' | 'muslim' | 'buddhist' | 'traditional' | 'science_of_mind' | 'universal';
 
 export interface PrayerPath {
   id: PrayerPathId;
@@ -19,6 +19,12 @@ export const PRAYER_PATHS: PrayerPath[] = [
     label: 'Muslim',
     swahili: 'Kiislamu',
     description: 'Respectful guidance language aligned with Islamic prayer tone.',
+  },
+  {
+    id: 'buddhist',
+    label: 'Buddhist',
+    swahili: 'Kibudha',
+    description: 'Mindfulness-centered prayer language rooted in compassion, awareness, and inner steadiness.',
   },
   {
     id: 'traditional',
@@ -53,6 +59,12 @@ export const PRAYER_GUIDE_STEPS: Record<PrayerPathId, string[]> = {
     'Pray for family, community, and righteous action.',
     'Close in gratitude and remain in calm remembrance.',
   ],
+  buddhist: [
+    'Begin by settling the breath and resting attention in the present moment.',
+    'Name the intention to cultivate clarity, compassion, and wise action.',
+    'Offer loving-kindness for yourself, for others, and for all beings.',
+    'Close in mindfulness, returning gently to the next right step.',
+  ],
   traditional: [
     'Ground yourself and honor the Creator and your ancestors.',
     'Speak your gratitude and name what you seek direction in.',
@@ -81,9 +93,14 @@ export const PRAYER_TEXTS: Record<PrayerPathId, string[]> = {
     'God, bless my home, my relationships, and my calling. Let Your favor rest on my steps, and let my life reflect Your goodness.',
   ],
   muslim: [
-    'O Allah, I begin with gratitude for Your mercy and care. Guide me on the straight path and grant me wisdom in every decision today.',
-    'O Allah, purify my heart, forgive my shortcomings, and strengthen my character. Let my actions be sincere and beneficial to others.',
+    'Bismillah al-Rahman al-Raheem. In the name of God, the Most Merciful, the Beneficent. O Allah, guide me on the straight path and grant me wisdom in every decision today.',
+    'Bismillah al-Rahman al-Raheem. In the name of God, the Most Merciful, the Beneficent. O Allah, purify my heart, forgive my shortcomings, and strengthen my character. Let my actions be sincere and beneficial to others.',
     'O Allah, bless my family, protect my livelihood, and increase me in patience, gratitude, and steadfast faith.',
+  ],
+  buddhist: [
+    'May this mind become calm, clear, and awake. May I meet this moment with mindfulness, compassion, and wise understanding.',
+    'May I release grasping and return to the steady rhythm of the breath. May clarity guide my thoughts, speech, and actions.',
+    'May I be rooted in loving-kindness. May others be safe and peaceful. May all beings be held in compassion and freedom from suffering.',
   ],
   traditional: [
     'Creator of life, I give thanks for breath, family, and another day. Ancestors of light, guide my path with wisdom and courage.',

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "clean:mac-metadata": "find public companion-pages dist -name '._*' -delete 2>/dev/null || true",
+    "build": "npm run clean:mac-metadata && tsc -b && vite build && npm run clean:mac-metadata",
     "preview": "vite preview"
   },
   "dependencies": {

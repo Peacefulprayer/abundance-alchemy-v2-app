@@ -171,9 +171,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     window.setTimeout(() => setJournalStatus(''), 2200);
   };
 
-  const greeting = user.lastPracticeDate
-    ? `Welcome back, ${user.name}`
-    : `Greetings, ${user.name}`;
+  const greeting = user.lastPracticeDate ? 'Welcome back' : 'Greetings';
 
   const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
   const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
@@ -264,7 +262,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div
             className={`mt-4 rounded-[20px] border px-4 py-3 text-center shadow-sm ${
               theme === 'light'
-                ? 'border-amber-200/70 bg-white/82'
+                ? 'border-amber-200/70 bg-white/96'
                 : 'border-amber-400/15 bg-slate-950/72'
             }`}
           >

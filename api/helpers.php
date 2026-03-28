@@ -116,7 +116,7 @@ function aa_resolve_owner_binding(PDO $conn, string $table, int $userId, string 
 
 function aa_allowed_prayer_paths(): array
 {
-    return ['christian', 'muslim', 'traditional', 'universal'];
+    return ['christian', 'muslim', 'buddhist', 'traditional', 'science_of_mind', 'universal'];
 }
 
 function aa_normalize_prayer_path(string $value): string
@@ -149,9 +149,22 @@ function aa_default_prayer_catalog(): array
                 'Close in gratitude and remain in calm remembrance.',
             ],
             'sessionPrayers' => [
-                'O Allah, I begin with gratitude for Your mercy and care. Guide me on the straight path and grant me wisdom in every decision today.',
-                'O Allah, purify my heart, forgive my shortcomings, and strengthen my character. Let my actions be sincere and beneficial to others.',
+                'Bismillah al-Rahman al-Raheem. In the name of God, the Most Merciful, the Beneficent. O Allah, guide me on the straight path and grant me wisdom in every decision today.',
+                'Bismillah al-Rahman al-Raheem. In the name of God, the Most Merciful, the Beneficent. O Allah, purify my heart, forgive my shortcomings, and strengthen my character. Let my actions be sincere and beneficial to others.',
                 'O Allah, bless my family, protect my livelihood, and increase me in patience, gratitude, and steadfast faith.',
+            ],
+        ],
+        'buddhist' => [
+            'guideSteps' => [
+                'Begin by settling the breath and resting attention in the present moment.',
+                'Name the intention to cultivate clarity, compassion, and wise action.',
+                'Offer loving-kindness for yourself, for others, and for all beings.',
+                'Close in mindfulness, returning gently to the next right step.',
+            ],
+            'sessionPrayers' => [
+                'May this mind become calm, clear, and awake. May I meet this moment with mindfulness, compassion, and wise understanding.',
+                'May I release grasping and return to the steady rhythm of the breath. May clarity guide my thoughts, speech, and actions.',
+                'May I be rooted in loving-kindness. May others be safe and peaceful. May all beings be held in compassion and freedom from suffering.',
             ],
         ],
         'traditional' => [
@@ -165,6 +178,22 @@ function aa_default_prayer_catalog(): array
                 'Creator of life, I give thanks for breath, family, and another day. Ancestors of light, guide my path with wisdom and courage.',
                 'May my words be clean, my heart be steady, and my hands be useful. Keep me aligned with truth, dignity, and service.',
                 'I pray for protection over my home and strength for my purpose. Let what I build bring healing, honor, and abundance.',
+            ],
+        ],
+        'science_of_mind' => [
+            'guideSteps' => [
+                'Recognition: Acknowledge the Presence, Power, and intelligence of the Divine.',
+                'Unification: Remember that the same Divine life lives and moves through you now.',
+                'Realization: Speak your desired truth as already active, whole, guided, and unfolding.',
+                'Thanksgiving: Give thanks that the prayer is already answered in Spirit.',
+                'Release: Let go, trust the law in motion, and rest in calm expectancy.',
+            ],
+            'sessionPrayers' => [
+                'There is one Life, one Presence, one boundless Intelligence expressing as all things. I recognize that this Divine life is here now.',
+                'I am one with this Presence. Its wisdom guides my mind, its peace steadies my heart, and its abundance moves freely through my life.',
+                'I speak the word for clarity, healing, love, and right action. What I need is already being revealed, organized, and fulfilled.',
+                'I give thanks that the answer is active now, even before I can see every detail. I rest in trust and spiritual certainty.',
+                'I release this word into the creative law of life, knowing it is done. And so it is.',
             ],
         ],
         'universal' => [
@@ -205,35 +234,48 @@ function aa_seed_default_prayer_content(PDO $conn): void
 {
     aa_ensure_prayer_content_table($conn);
 
-    $count = (int)$conn->query('SELECT COUNT(*) FROM prayer_content')->fetchColumn();
-    if ($count > 0) {
-        return;
-    }
-
     $insert = $conn->prepare(
         'INSERT INTO prayer_content (path_key, content_type, sort_order, title, body, is_active)
          VALUES (:path_key, :content_type, :sort_order, :title, :body, 1)'
     );
 
+    $exists = $conn->prepare(
+        'SELECT COUNT(*) FROM prayer_content WHERE path_key = :path_key AND content_type = :content_type'
+    );
+
     foreach (aa_default_prayer_catalog() as $pathKey => $content) {
-        foreach (($content['guideSteps'] ?? []) as $index => $body) {
-            $insert->execute([
-                ':path_key' => $pathKey,
-                ':content_type' => 'guide_step',
-                ':sort_order' => $index + 1,
-                ':title' => '',
-                ':body' => $body,
-            ]);
+        $exists->execute([
+            ':path_key' => $pathKey,
+            ':content_type' => 'guide_step',
+        ]);
+        $hasGuideSteps = (int)$exists->fetchColumn() > 0;
+        if (!$hasGuideSteps) {
+            foreach (($content['guideSteps'] ?? []) as $index => $body) {
+                $insert->execute([
+                    ':path_key' => $pathKey,
+                    ':content_type' => 'guide_step',
+                    ':sort_order' => $index + 1,
+                    ':title' => '',
+                    ':body' => $body,
+                ]);
+            }
         }
 
-        foreach (($content['sessionPrayers'] ?? []) as $index => $body) {
-            $insert->execute([
-                ':path_key' => $pathKey,
-                ':content_type' => 'session_prayer',
-                ':sort_order' => $index + 1,
-                ':title' => '',
-                ':body' => $body,
-            ]);
+        $exists->execute([
+            ':path_key' => $pathKey,
+            ':content_type' => 'session_prayer',
+        ]);
+        $hasSessionPrayers = (int)$exists->fetchColumn() > 0;
+        if (!$hasSessionPrayers) {
+            foreach (($content['sessionPrayers'] ?? []) as $index => $body) {
+                $insert->execute([
+                    ':path_key' => $pathKey,
+                    ':content_type' => 'session_prayer',
+                    ':sort_order' => $index + 1,
+                    ':title' => '',
+                    ':body' => $body,
+                ]);
+            }
         }
     }
 }
@@ -256,4 +298,3 @@ function aa_ensure_user_prayers_table(PDO $conn): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 }
-

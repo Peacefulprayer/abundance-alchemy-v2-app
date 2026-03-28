@@ -83,25 +83,20 @@ Phase 2.2 — Backend cleanup, prayer-content system, and companion-page handoff
   - admin prayer management now exists in `admin/prayers.php`
   - `PrayerGuide` and `PrayerSession` now load backend prayer content with frontend fallback
   - `PrayerSession` now supports saving and removing personal prayers
-- Standalone companion pages now exist locally for practice education/orientation:
+- Standalone companion pages now exist for practice education/orientation:
   - `app/companion-pages/prayer.html`
   - `app/companion-pages/meditation.html`
   - shared styling in `app/companion-pages/assets/companion-pages.css`
   - image folder scaffolding exists for both prayer and meditation companion pages
-- Companion pages are currently workspace-only assets:
-  - they are not yet wired into the React app shell or linked from the app code
-  - they are not reflected in the older handoff notes that existed before this refresh
+- Companion pages are now linked from the prayer and meditation setup flows and included in the Vite build as standalone static outputs under `dist/companion-pages/`
 
 ## Known issues (from prior work)
 - One user-reported flow glitch is intentionally being left for later.
 - Real-device Safari verification is still desirable before final ship, even though local headless mobile/desktop QA is now complete.
 - Live database bootstrap could not be verified from local CLI because the configured DB connection still failed outside the app runtime.
-- Companion pages currently appear as untracked local assets rather than integrated app routes/build outputs.
-- `app/companion-pages/` contains macOS `._*` sidecar files that should be cleaned before commit/deploy.
 
 ## Next actions
 1) Verify the new prayer tables/endpoints against the live database/runtime and confirm admin prayer management can seed/edit content there.
-2) Decide the integration/deployment path for the standalone companion pages and either wire them into the app/site or explicitly treat them as external/static assets.
-3) Clean `app/companion-pages/` before commit so only real source/assets remain.
-4) Run a final real-device Safari check against the signed-in routes to confirm touch/viewport behavior outside the QA harness.
-5) Resolve the intentionally deferred user-reported flow glitch, then commit/checkpoint/deploy.
+2) Run one deploy-target verification to confirm `dist/companion-pages/` is published alongside the main app entry.
+3) Run a final real-device Safari check against the signed-in routes to confirm touch/viewport behavior outside the QA harness.
+4) Resolve the intentionally deferred user-reported flow glitch, then commit/checkpoint/deploy.

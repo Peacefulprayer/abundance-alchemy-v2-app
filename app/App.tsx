@@ -526,6 +526,7 @@ function App() {
       if (
         value === 'christian' ||
         value === 'muslim' ||
+        value === 'buddhist' ||
         value === 'traditional' ||
         value === 'science_of_mind' ||
         value === 'universal'

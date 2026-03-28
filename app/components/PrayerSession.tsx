@@ -10,12 +10,12 @@ import {
   INNER_PRIMARY_BUTTON,
   INNER_TITLE_PILL,
   innerBackButton,
-  innerGlassPanel,
   innerHeroCard,
   innerInputBg,
   innerSectionFrame,
   innerSectionKicker,
   innerSecondaryButton,
+  innerSurfaceCard,
 } from '../styles/sacredInnerScreen';
 
 interface PrayerSessionProps {
@@ -54,11 +54,20 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
   const pageShell = INNER_PAGE_SHELL;
   const sectionFrame = innerSectionFrame(theme);
   const heroCard = innerHeroCard(theme);
-  const glassPanel = innerGlassPanel(theme);
+  const surfaceCard = innerSurfaceCard(theme);
   const sectionKicker = innerSectionKicker(theme);
   const backButton = innerBackButton(theme);
   const secondaryButton = innerSecondaryButton(theme);
   const inputBg = innerInputBg(theme);
+  const prayerSessionSectionWrap = theme === 'light' ? 'space-y-3' : sectionFrame;
+  const prayerSessionSectionCard =
+    theme === 'light'
+      ? 'rounded-[24px] border border-amber-200/70 bg-slate-100 p-4 shadow-sm'
+      : surfaceCard;
+  const prayerSessionInputBg =
+    theme === 'light'
+      ? 'border-amber-200/70 bg-white text-slate-900'
+      : inputBg;
   const readLocalUserPrayers = (pathId: PrayerPathId): UserPrayer[] => {
     try {
       const raw = localStorage.getItem(LOCAL_USER_PRAYERS_KEY);
@@ -278,8 +287,8 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
           </div>
         </div>
 
-        <div className={sectionFrame}>
-          <div className={`${glassPanel} min-h-[240px] flex items-center`}>
+        <div className={prayerSessionSectionWrap}>
+          <div className={`${prayerSessionSectionCard} min-h-[240px] flex items-center`}>
             <div className="w-full">
               {prayerEntry?.isUserPrayer && prayerEntry.title ? (
                 <p className="mb-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-emerald-300">
@@ -291,12 +300,12 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
           </div>
         </div>
 
-        <div className={sectionFrame}>
-          <div className={`space-y-4 ${glassPanel}`}>
+        <div className={prayerSessionSectionWrap}>
+          <div className={`space-y-4 ${prayerSessionSectionCard}`}>
             <p className={sectionKicker}>Prayer Profile</p>
             <div className="grid grid-cols-2 gap-3">
               {[
-                ['Intent', formatToken(prayerProfile.intent)],
+                ['Intention', formatToken(prayerProfile.intent)],
                 ['Tone', formatToken(prayerProfile.tone)],
                 ['Language', formatToken(prayerProfile.language)],
                 ['Style', formatToken(prayerProfile.style)],
@@ -320,8 +329,8 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
           </div>
         </div>
 
-        <div className={sectionFrame}>
-          <div className={`${glassPanel} space-y-4`}>
+        <div className={prayerSessionSectionWrap}>
+          <div className={`${prayerSessionSectionCard} space-y-4`}>
             <p className={sectionKicker}>Sacred Flow</p>
             <div className="space-y-3">
               {guideSteps.map((step, stepIndex) => (
@@ -343,22 +352,22 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
           </div>
         </div>
 
-        <div className={sectionFrame}>
-          <div className={`${glassPanel} space-y-4`}>
+        <div className={prayerSessionSectionWrap}>
+          <div className={`${prayerSessionSectionCard} space-y-4`}>
             <p className={sectionKicker}>Add Your Own Prayer</p>
             <input
               type="text"
               value={customTitle}
               onChange={(event) => setCustomTitle(event.target.value)}
               placeholder="Optional title"
-              className={`w-full rounded-[18px] border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-amber-500 ${inputBg}`}
+              className={`w-full rounded-[18px] border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-amber-500 ${prayerSessionInputBg}`}
             />
             <textarea
               value={customText}
               onChange={(event) => setCustomText(event.target.value)}
               placeholder="Write your personal prayer here."
               rows={5}
-              className={`w-full resize-none rounded-[18px] border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-amber-500 ${inputBg}`}
+              className={`w-full resize-none rounded-[18px] border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-amber-500 ${prayerSessionInputBg}`}
             />
             {saveError ? <p className="text-sm text-rose-300">{saveError}</p> : null}
             <button
@@ -372,8 +381,8 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
         </div>
 
         {userPrayers.length > 0 ? (
-          <div className={sectionFrame}>
-            <div className={`${glassPanel} space-y-3`}>
+          <div className={prayerSessionSectionWrap}>
+            <div className={`${prayerSessionSectionCard} space-y-3`}>
               <p className={sectionKicker}>Saved Personal Prayers</p>
               {userPrayers.map((item) => (
                 <div
@@ -407,8 +416,8 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
           </div>
         ) : null}
 
-        <div className={sectionFrame}>
-          <div className={`${glassPanel} space-y-3`}>
+        <div className={prayerSessionSectionWrap}>
+          <div className={`${prayerSessionSectionCard} space-y-3`}>
             <button
               onClick={nextPrayer}
               className={`${INNER_PRIMARY_BUTTON} flex items-center justify-center gap-2`}
