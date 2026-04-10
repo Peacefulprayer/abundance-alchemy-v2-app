@@ -15,8 +15,7 @@ interface FocusConfirmationProps {
 export const FocusConfirmation: React.FC<FocusConfirmationProps> = ({
   focus,
   userName,
-  onComplete,
-  theme
+  onComplete
 }) => {
   const handleComplete = () => {
     buttonSoundService.play('confirm');

@@ -1,5 +1,5 @@
 // components/Dashboard.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   UserProfile,
   PracticeType,
@@ -7,7 +7,7 @@ import {
   GratitudeLog,
   CycleType,
   FocusArea,
-} from '../types';
+} from '../types'
 import {
   Sun,
   Moon,
@@ -18,33 +18,33 @@ import {
   ChevronDown,
   BookOpen,
   Sparkles as SparklesIcon,
-  Wind
-} from 'lucide-react';
-import { AlchemistAvatar } from './AlchemistAvatar';
-import { ProfileImage } from './ProfileImage';
-import { apiService } from '../services/apiService';
-import { playBell } from '../services/audioService';
+  Wind,
+} from 'lucide-react'
+import { AlchemistAvatar } from './AlchemistAvatar'
+import { ProfileImage } from './ProfileImage'
+import { apiService } from '../services/apiService'
+import { playBell } from '../services/audioService'
 
 // Helper to extract string from FocusArea union type
 const getFocusAreaLabel = (focusArea: FocusArea | undefined): string => {
-  if (!focusArea) return '';
-  return typeof focusArea === 'string' ? focusArea : focusArea.label;
-};
+  if (!focusArea) return ''
+  return typeof focusArea === 'string' ? focusArea : focusArea.label
+}
 
 interface DashboardProps {
-  user: UserProfile;
-  onStartPractice: (type: PracticeType, duration: number) => void;
-  onOpenMeditation?: () => void;
-  onOpenSettings: () => void;
-  onOpenProfile?: () => void;
-  musicOn: boolean;
-  ambienceVolume: number;
-  onToggleMusic: () => void;
-  onVolumeChange: (volume: number) => void;
-  onSignOut: () => void;
-  theme: 'light' | 'dark';
-  userAudioFile?: File | null;
-  activeSoundscape: Soundscape;
+  user: UserProfile
+  onStartPractice: (type: PracticeType, duration: number) => void
+  onOpenMeditation?: () => void
+  onOpenSettings: () => void
+  onOpenProfile?: () => void
+  musicOn: boolean
+  ambienceVolume: number
+  onToggleMusic: () => void
+  onVolumeChange: (volume: number) => void
+  onSignOut: () => void
+  theme: 'light' | 'dark'
+  userAudioFile?: File | null
+  activeSoundscape: Soundscape
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -63,57 +63,59 @@ export const Dashboard: React.FC<DashboardProps> = ({
   activeSoundscape,
 }) => {
   const [wisdom, setWisdom] = useState(
-    'Your thoughts are the seeds of your reality. Plant them with intention.'
-  );
-  const [mode, setMode] = useState<PracticeType>(PracticeType.MORNING_IAM);
-  const [showCustomTime, setShowCustomTime] = useState(false);
-  const [customTime, setCustomTime] = useState(20);
-  const [showJournal, setShowJournal] = useState(false);
-  const [journalEntry, setJournalEntry] = useState('');
-  const [journalStatus, setJournalStatus] = useState<string>('');
+    'Your thoughts are the seeds of your reality. Plant them with intention.',
+  )
+  const [mode, setMode] = useState<PracticeType>(PracticeType.MORNING_IAM)
+  const [showCustomTime, setShowCustomTime] = useState(false)
+  const [customTime, setCustomTime] = useState(20)
+  const [showJournal, setShowJournal] = useState(false)
+  const [journalEntry, setJournalEntry] = useState('')
+  const [journalStatus, setJournalStatus] = useState<string>('')
 
   useEffect(() => {
     apiService.getWisdom('GENERAL').then((text) => {
       if (text) {
-        setWisdom(text);
+        setWisdom(text)
       }
-    });
-  }, []);
+    })
+  }, [])
 
   useEffect(() => {
-    const hour = new Date().getHours();
+    const hour = new Date().getHours()
     if (hour < 18) {
-      setMode(PracticeType.MORNING_IAM);
+      setMode(PracticeType.MORNING_IAM)
     } else {
-      setMode(PracticeType.EVENING_ILOVE);
+      setMode(PracticeType.EVENING_ILOVE)
     }
-  }, []);
+  }, [])
 
   const getCyclePeriodLabel = (cycle: CycleType): string => {
     switch (cycle) {
       case 'DAILY':
-        return 'Daily';
+        return 'Daily'
       case 'WEEKLY':
-        return 'Weekly';
+        return 'Weekly'
       case 'MONTHLY':
-        return 'Monthly';
+        return 'Monthly'
       default:
-        return 'Current';
+        return 'Current'
     }
-  };
+  }
 
-  const getDaysRemaining = (cycle: CycleType, lastDate: string | null): number => {
-    if (!lastDate)
-      return cycle === 'DAILY' ? 1 : cycle === 'WEEKLY' ? 7 : 30;
-    const last = new Date(lastDate);
-    const now = new Date();
+  const getDaysRemaining = (
+    cycle: CycleType,
+    lastDate: string | null,
+  ): number => {
+    if (!lastDate) return cycle === 'DAILY' ? 1 : cycle === 'WEEKLY' ? 7 : 30
+    const last = new Date(lastDate)
+    const now = new Date()
     const daysPassed = Math.floor(
-      (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    if (cycle === 'DAILY') return 1;
-    if (cycle === 'WEEKLY') return Math.max(0, 7 - daysPassed);
-    return Math.max(0, 30 - daysPassed);
-  };
+      (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24),
+    )
+    if (cycle === 'DAILY') return 1
+    if (cycle === 'WEEKLY') return Math.max(0, 7 - daysPassed)
+    return Math.max(0, 30 - daysPassed)
+  }
 
   const getFocusDescription = (focus: string): string => {
     const descriptions: Record<string, string> = {
@@ -143,87 +145,87 @@ export const Dashboard: React.FC<DashboardProps> = ({
         'Embracing your divine perfection exactly as you are. You are enough, always.',
       'Self-Love Worthiness':
         'Embracing your divine perfection exactly as you are. You are enough, always.',
-    };
+    }
     return (
       descriptions[focus] ||
       'You are on a transformative journey of growth and self-discovery.'
-    );
-  };
+    )
+  }
 
   const saveJournalEntry = () => {
-    if (!journalEntry.trim()) return;
-    playBell();
+    if (!journalEntry.trim()) return
+    playBell()
     const newLog: GratitudeLog = {
       id: `journal_${Date.now()}`,
       date: new Date().toISOString(),
       sessionType: PracticeType.MORNING_IAM,
       focusArea: getFocusAreaLabel(user.focusAreas[0]) || 'General',
       text: journalEntry,
-    };
+    }
     const updatedUser = {
       ...user,
       gratitudeLogs: [...user.gratitudeLogs, newLog],
-    };
-    localStorage.setItem('abundance_user', JSON.stringify(updatedUser));
-    setJournalEntry('');
-    setShowJournal(false);
-    setJournalStatus('Reflection saved.');
-    window.setTimeout(() => setJournalStatus(''), 2200);
-  };
+    }
+    localStorage.setItem('abundance_user', JSON.stringify(updatedUser))
+    setJournalEntry('')
+    setShowJournal(false)
+    setJournalStatus('Reflection saved.')
+    window.setTimeout(() => setJournalStatus(''), 2200)
+  }
 
-  const greeting = user.lastPracticeDate ? 'Welcome back' : 'Greetings';
+  const greeting = user.lastPracticeDate ? 'Welcome back' : 'Greetings'
 
-  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
+  const textColor = theme === 'light' ? 'text-slate-700' : 'text-white'
+  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-300'
   const whitePill =
-    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm';
+    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm'
   const headerPill =
-    'inline-flex items-center rounded-full border border-amber-300/45 bg-gradient-to-r from-slate-950/82 to-slate-900/76 px-3 py-1.5 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)] backdrop-blur-sm';
+    'inline-flex items-center rounded-full border border-amber-300/45 bg-gradient-to-r from-slate-950/82 to-slate-900/76 px-3 py-1.5 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)] backdrop-blur-sm'
   const streakPill =
-    'inline-flex items-center gap-2 rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm';
+    'inline-flex items-center gap-2 rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm'
   const glassCard =
     theme === 'light'
-      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-amber-200/60 shadow-sm'
-      : 'bg-gradient-to-br from-slate-900/70 to-slate-950/75 border-amber-500/20 shadow-xl';
+      ? 'bg-white/85 border-white/60 shadow-sm'
+      : 'bg-gradient-to-br from-slate-900/70 to-slate-950/75 border-white/10 shadow-xl'
   const buttonBg =
     theme === 'light'
       ? 'bg-slate-100 hover:bg-amber-100 border-slate-200'
-      : 'bg-slate-800/60 hover:bg-slate-700/60 border-white/5';
-  const sectionTitleChip = whitePill;
+      : 'bg-slate-800/60 hover:bg-slate-700/60 border-white/5'
+  const sectionTitleChip = whitePill
   const daysLeftChip =
-    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm';
+    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm'
   const infoCardBg =
     theme === 'light'
-      ? 'rounded-2xl border border-amber-200/60 bg-white/85 p-3 shadow-sm'
-      : 'rounded-2xl border border-amber-500/20 bg-slate-950/85 p-3 shadow-xl';
-  const pageShell = 'mx-auto w-full max-w-[440px] space-y-5';
+      ? 'rounded-2xl border border-slate-200/60 bg-white/85 p-3 shadow-sm'
+      : 'rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-xl'
+  const pageShell = 'mx-auto w-full max-w-[440px] space-y-5'
   const sectionFrame =
     theme === 'light'
-      ? 'rounded-[28px] border border-amber-200/60 bg-white/70 p-3 shadow-sm'
-      : 'rounded-[28px] border border-amber-500/18 bg-slate-950/45 p-3 shadow-[0_16px_40px_rgba(0,0,0,0.28)]';
+      ? 'rounded-[28px] border border-slate-200/40 bg-white/60 p-3 shadow-sm'
+      : 'rounded-[28px] border border-white/10 bg-slate-900/50 p-3 shadow-[0_16px_40px_rgba(0,0,0,0.28)]'
   const sectionKicker =
     theme === 'light'
       ? 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-700'
-      : 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/90';
+      : 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/90'
   const toggleShell =
     theme === 'light'
-      ? 'relative p-1 rounded-full flex border border-amber-200/70 bg-white/90 shadow-sm'
-      : 'relative p-1 rounded-full flex border border-amber-500/20 bg-slate-950/80 shadow-xl';
+      ? 'relative p-1 rounded-full flex border border-slate-200/70 bg-white/90 shadow-sm'
+      : 'relative p-1 rounded-full flex border border-white/10 bg-slate-900/80 shadow-xl'
   const journalToggleBg =
     theme === 'light'
-      ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-200/60'
-      : 'bg-slate-900/60 hover:bg-slate-900 text-amber-300 border border-amber-500/20';
-  const lowerSectionTitle = `${sectionTitleChip} mx-auto`;
-  
+      ? 'bg-slate-100 hover:bg-amber-100 text-slate-800 border border-slate-200/60'
+      : 'bg-slate-900/60 hover:bg-slate-900 text-slate-100 border border-white/10'
+  const lowerSectionTitle = `${sectionTitleChip} mx-auto`
+
   const getAvatarMood = () => {
-    if (mode === PracticeType.MORNING_IAM) return 'active';
-    return 'calm';
-  };
+    if (mode === PracticeType.MORNING_IAM) return 'active'
+    return 'calm'
+  }
 
   const currentTrackName = userAudioFile
     ? `File: ${userAudioFile.name}`
-    : activeSoundscape.label;
-  const displayName = (user.preferredName || user.name || 'Initiate').trim();
+    : activeSoundscape.label
+  const displayName = (user.preferredName || user.name || 'Initiate').trim()
 
   return (
     <div className="h-full w-full overflow-y-auto overflow-x-hidden pb-24">
@@ -238,13 +240,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 className="rounded-full transition-transform hover:scale-[1.02]"
                 aria-label="Open profile"
               >
-                <ProfileImage name={displayName} imageUrl={user.profileImage} size="md" />
+                <ProfileImage
+                  name={displayName}
+                  imageUrl={user.profileImage}
+                  size="md"
+                />
               </button>
               <div className="space-y-1">
-                <div className={headerPill}>
-                  {greeting}
-                </div>
-                <p className={`text-base font-semibold ${textColor}`}>
+                <div className={headerPill}>{greeting}</div>
+                <p
+                  className={`text-base font-semibold ${theme === 'light' ? textColor : 'text-white'}`}
+                >
                   {displayName}
                 </p>
               </div>
@@ -259,35 +265,36 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
 
-          <div
-            className={`mt-4 rounded-[20px] border px-4 py-3 text-center shadow-sm ${
-              theme === 'light'
-                ? 'border-amber-200/70 bg-white/96'
-                : 'border-amber-400/15 bg-slate-950/72'
-            }`}
-          >
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-amber-400">
+          <div className="mt-4 rounded-[20px] bg-gradient-to-r from-amber-400/90 to-orange-500/90 px-4 py-3 text-center shadow-lg">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-white">
               Dashibodi
             </p>
-            <p className={`mt-2 text-sm font-semibold ${textColor}`}>
+            <p className="mt-2 text-sm font-medium text-white">
               Your sacred hub for today&apos;s practices.
             </p>
           </div>
 
           {/* Wisdom card */}
-          <div className={`mt-4 relative p-4 rounded-2xl border overflow-hidden group ${glassCard}`}>
+          <div
+            className={`mt-4 relative p-4 rounded-2xl border overflow-hidden group ${glassCard}`}
+          >
             <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
               <SparklesIcon size={40} className="text-amber-500" />
             </div>
             <div className="relative z-10 flex flex-col items-center justify-start text-center gap-3 pt-1">
               <span className={sectionKicker}>Today&apos;s Wisdom</span>
               <div className="flex-shrink-0">
-                <AlchemistAvatar size="sm" mood={getAvatarMood()} speaking={false} className="mx-auto" />
+                <AlchemistAvatar
+                  size="sm"
+                  mood={getAvatarMood()}
+                  speaking={false}
+                  className="mx-auto"
+                />
               </div>
               <div className="w-full">
                 <p
                   className={`text-sm italic leading-relaxed font-medium ${
-                    theme === 'light' ? 'text-slate-700' : 'text-slate-200'
+                    theme === 'light' ? 'text-slate-600' : 'text-white'
                   }`}
                 >
                   "{wisdom}"
@@ -310,13 +317,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <span className={daysLeftChip}>
                   {getDaysRemaining(
                     user.cyclePreference,
-                    user.lastPracticeDate
+                    user.lastPracticeDate,
                   )}{' '}
                   days left
                 </span>
               </div>
 
-              <div className={`p-4 rounded-2xl border transition-all ${glassCard}`}>
+              <div
+                className={`p-4 rounded-2xl border transition-all ${glassCard}`}
+              >
                 <div className="flex justify-between items-start mb-2">
                   <div className="space-y-1">
                     <p className={sectionKicker}>Current Intention</p>
@@ -327,21 +336,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
 
                 <p className={`text-xs leading-relaxed ${subTextColor}`}>
-                  {getFocusDescription(getFocusAreaLabel(user.focusAreas[0]) || 'focus')}
+                  {getFocusDescription(
+                    getFocusAreaLabel(user.focusAreas[0]) || 'focus',
+                  )}
                 </p>
 
                 <div className="mt-4 pt-4 border-t border-amber-500/20">
                   <button
                     onClick={() => {
-                      playBell();
-                      setShowJournal(!showJournal);
+                      playBell()
+                      setShowJournal(!showJournal)
                     }}
                     className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${journalToggleBg}`}
                   >
                     <div className="flex items-center space-x-2">
                       <BookOpen size={16} />
                       <span className="text-xs font-bold">
-                        How is your {getFocusAreaLabel(user.focusAreas[0]) || 'focus'} journey going?
+                        How is your{' '}
+                        {getFocusAreaLabel(user.focusAreas[0]) || 'focus'}{' '}
+                        journey going?
                       </span>
                     </div>
                     <ChevronDown
@@ -394,8 +407,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className={toggleShell}>
                 <button
                   onClick={() => {
-                    playBell();
-                    setMode(PracticeType.MORNING_IAM);
+                    playBell()
+                    setMode(PracticeType.MORNING_IAM)
                   }}
                   className={`flex-1 py-3 rounded-full flex items-center justify-center relative z-10 transition-colors ${
                     mode === PracticeType.MORNING_IAM
@@ -410,8 +423,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </button>
                 <button
                   onClick={() => {
-                    playBell();
-                    setMode(PracticeType.EVENING_ILOVE);
+                    playBell()
+                    setMode(PracticeType.EVENING_ILOVE)
                   }}
                   className={`flex-1 py-3 rounded-full flex items-center justify-center relative z-10 transition-colors ${
                     mode === PracticeType.EVENING_ILOVE
@@ -422,7 +435,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   }`}
                 >
                   <Moon size={16} className="mr-2" />
-                  <span className="text-xs font-bold tracking-wide">I Love</span>
+                  <span className="text-xs font-bold tracking-wide">
+                    I Love
+                  </span>
                 </button>
                 <div
                   className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full shadow-md transition-all duration-500 ease-out ${
@@ -449,21 +464,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
 
                 <div className="relative z-10 text-center">
-                  <p className={`text-[10px] font-extrabold uppercase tracking-[0.18em] mb-2 ${
-                    mode === PracticeType.MORNING_IAM ? 'text-black/65' : 'text-white/70'
-                  }`}>
+                  <p
+                    className={`text-[10px] font-extrabold uppercase tracking-[0.18em] mb-2 ${
+                      mode === PracticeType.MORNING_IAM
+                        ? 'text-black/65'
+                        : 'text-white/70'
+                    }`}
+                  >
                     Guided Session
                   </p>
-                  <h2 className={`text-base font-normal mb-1 ${
-                    mode === PracticeType.MORNING_IAM ? 'text-black' : 'text-white'
-                  }`}>
+                  <h2
+                    className={`text-base font-normal mb-1 ${
+                      mode === PracticeType.MORNING_IAM
+                        ? 'text-black'
+                        : 'text-white'
+                    }`}
+                  >
                     {mode === PracticeType.MORNING_IAM
                       ? 'Begin I Am Practice'
                       : 'Begin I Love Practice'}
                   </h2>
-                  <p className={`text-[11px] mb-4 leading-snug ${
-                    mode === PracticeType.MORNING_IAM ? 'text-black/70' : 'text-white/80'
-                  }`}>
+                  <p
+                    className={`text-[11px] mb-4 leading-snug ${
+                      mode === PracticeType.MORNING_IAM
+                        ? 'text-black/70'
+                        : 'text-white/80'
+                    }`}
+                  >
                     {mode === PracticeType.MORNING_IAM
                       ? 'Align your vibration with your highest self through powerful affirmations.'
                       : 'Release the day and return to love through gratitude and forgiveness.'}
@@ -475,21 +502,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <button
                           key={dur}
                           onClick={() => {
-                            playBell();
-                            onStartPractice(mode, dur);
+                            playBell()
+                            onStartPractice(mode, dur)
                           }}
                           className={`h-16 rounded-xl backdrop-blur-md border transition-all flex flex-col items-center justify-center space-y-0.5 group shadow-md ${buttonBg} hover:scale-105`}
                         >
                           <span
                             className={`text-xl font-bold ${
-                              theme === 'light' ? 'text-slate-800' : 'text-white'
+                              theme === 'light'
+                                ? 'text-slate-800'
+                                : 'text-white'
                             }`}
                           >
                             {dur}
                           </span>
                           <span
                             className={`text-[9px] font-bold uppercase tracking-wider ${
-                              theme === 'light' ? 'text-slate-500' : 'text-slate-300'
+                              theme === 'light'
+                                ? 'text-slate-500'
+                                : 'text-slate-300'
                             }`}
                           >
                             MIN
@@ -500,10 +531,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   ) : (
                     <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl p-5 border border-white/10 animate-in fade-in zoom-in-95 duration-300">
                       <div className="flex justify-between items-center mb-4 text-white">
-                        <span className="text-xs font-bold uppercase tracking-wider">Duration</span>
+                        <span className="text-xs font-bold uppercase tracking-wider">
+                          Duration
+                        </span>
                         <span className="text-xl font-bold text-amber-400">
                           {customTime}{' '}
-                          <span className="text-xs text-white/60 font-normal">MIN</span>
+                          <span className="text-xs text-white/60 font-normal">
+                            MIN
+                          </span>
                         </span>
                       </div>
                       <input
@@ -516,8 +551,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       />
                       <button
                         onClick={() => {
-                          playBell();
-                          onStartPractice(mode, customTime);
+                          playBell()
+                          onStartPractice(mode, customTime)
                         }}
                         className="w-full bg-amber-500 text-white font-bold py-3 rounded-xl hover:bg-amber-400 transition-colors"
                       >
@@ -525,8 +560,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </button>
                       <button
                         onClick={() => {
-                          playBell();
-                          setShowCustomTime(false);
+                          playBell()
+                          setShowCustomTime(false)
                         }}
                         className="w-full mt-3 py-2 rounded-xl border border-white/30 text-white text-xs font-semibold hover:bg-white/10 transition-colors"
                       >
@@ -538,19 +573,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   {!showCustomTime && (
                     <button
                       onClick={() => {
-                        playBell();
-                        setShowCustomTime(true);
+                        playBell()
+                        setShowCustomTime(true)
                       }}
                       className="w-full text-center px-4 leading-relaxed group mt-4"
                     >
-                      <span className={`block text-[10px] font-bold uppercase tracking-widest group-hover:opacity-100 opacity-70 transition-opacity ${
-                        mode === PracticeType.MORNING_IAM ? 'text-black' : 'text-white'
-                      }`}>
+                      <span
+                        className={`block text-[10px] font-bold uppercase tracking-widest group-hover:opacity-100 opacity-70 transition-opacity ${
+                          mode === PracticeType.MORNING_IAM
+                            ? 'text-black'
+                            : 'text-white'
+                        }`}
+                      >
                         Prefer A Longer Experience?
                       </span>
-                      <span className={`block text-[10px] opacity-50 group-hover:opacity-70 transition-opacity ${
-                        mode === PracticeType.MORNING_IAM ? 'text-black' : 'text-white'
-                      }`}>
+                      <span
+                        className={`block text-[10px] opacity-50 group-hover:opacity-70 transition-opacity ${
+                          mode === PracticeType.MORNING_IAM
+                            ? 'text-black'
+                            : 'text-white'
+                        }`}
+                      >
                         Click to choose a custom time.
                       </span>
                     </button>
@@ -574,30 +617,41 @@ export const Dashboard: React.FC<DashboardProps> = ({
               >
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'light'
-                        ? 'bg-violet-100 border border-violet-300/50 text-violet-600'
-                        : 'bg-violet-500/15 border border-violet-500/30 text-violet-300'
-                    }`}>
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        theme === 'light'
+                          ? 'bg-violet-100 border border-violet-300/50 text-violet-600'
+                          : 'bg-violet-500/15 border border-violet-500/30 text-violet-300'
+                      }`}
+                    >
                       <Wind size={20} />
                     </div>
                     <div>
-                      <h3 className={`font-bold text-sm ${
-                        theme === 'light' ? 'text-violet-900' : 'text-violet-100'
-                      }`}>
+                      <h3
+                        className={`font-bold text-sm ${
+                          theme === 'light'
+                            ? 'text-violet-900'
+                            : 'text-violet-100'
+                        }`}
+                      >
                         Meditation Practice
                       </h3>
-                      <p className={`text-[10px] ${
-                        theme === 'light' ? 'text-violet-700' : 'text-violet-300'
-                      }`}>
-                        Guided Stillness: Choose duration and soundscape for silent meditation
+                      <p
+                        className={`text-[10px] ${
+                          theme === 'light'
+                            ? 'text-violet-700'
+                            : 'text-violet-300'
+                        }`}
+                      >
+                        Guided Stillness: Choose duration and soundscape for
+                        silent meditation
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => {
-                      playBell();
-                      onOpenMeditation();
+                      playBell()
+                      onOpenMeditation()
                     }}
                     className={`py-2 rounded-lg font-bold text-sm transition-all px-4 ${
                       theme === 'light'
@@ -624,14 +678,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <Music size={12} />
                     <span>Now Playing</span>
                   </div>
-                  <span className={`mt-1 block text-xs font-medium truncate ${textColor}`}>
+                  <span
+                    className={`mt-1 block text-xs font-medium truncate ${textColor}`}
+                  >
                     {currentTrackName}
                   </span>
                 </div>
                 <button
                   onClick={() => {
-                    playBell();
-                    onOpenSettings();
+                    playBell()
+                    onOpenSettings()
                   }}
                   className="shrink-0 text-[10px] font-bold text-amber-500 hover:underline"
                 >
@@ -644,16 +700,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Music size={12} className="text-amber-500" />
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                    theme === 'light' ? 'text-slate-600' : 'text-slate-200'
-                  }`}>
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider ${
+                      theme === 'light' ? 'text-slate-600' : 'text-slate-200'
+                    }`}
+                  >
                     Music
                   </span>
                 </div>
                 <button
                   onClick={() => {
-                    playBell();
-                    onToggleMusic();
+                    playBell()
+                    onToggleMusic()
                   }}
                   className={`relative h-5 w-9 rounded-full transition-colors ${
                     musicOn ? 'bg-emerald-600' : 'bg-slate-600'
@@ -668,9 +726,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </button>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`shrink-0 text-[10px] font-bold uppercase tracking-wider ${
-                  theme === 'light' ? 'text-slate-600' : 'text-slate-200'
-                }`}>
+                <span
+                  className={`shrink-0 text-[10px] font-bold uppercase tracking-wider ${
+                    theme === 'light' ? 'text-slate-600' : 'text-slate-200'
+                  }`}
+                >
                   Vol
                 </span>
                 <input
@@ -709,8 +769,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="pt-1">
               <button
                 onClick={() => {
-                  playBell();
-                  onSignOut();
+                  playBell()
+                  onSignOut()
                 }}
                 className="inline-flex items-center space-x-1 text-red-400 hover:text-red-500 text-xs font-medium"
               >
@@ -722,5 +782,5 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

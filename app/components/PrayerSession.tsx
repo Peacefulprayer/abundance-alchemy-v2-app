@@ -1,30 +1,31 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { RotateCcw, CheckCircle2, Trash2 } from 'lucide-react';
-import { buttonSoundService } from '../services/buttonSoundService';
-import { api } from '../services/api';
-import { getPrayerPathById, PRAYER_GUIDE_STEPS, PRAYER_TEXTS } from './prayerContent';
-import type { PrayerPathId } from './prayerContent';
-import type { PrayerProfile, UserPrayer } from '../types';
+import React, { useEffect, useMemo, useState } from 'react'
+import { RotateCcw, CheckCircle2, Trash2 } from 'lucide-react'
+import { buttonSoundService } from '../services/buttonSoundService'
+import { api } from '../services/api'
+import {
+  getPrayerPathById,
+  PRAYER_GUIDE_STEPS,
+  PRAYER_TEXTS,
+} from './prayerContent'
+import type { PrayerPathId } from './prayerContent'
+import type { PrayerProfile, UserPrayer } from '../types'
 import {
   INNER_PAGE_SHELL,
   INNER_PRIMARY_BUTTON,
   INNER_TITLE_PILL,
   innerBackButton,
-  innerHeroCard,
   innerInputBg,
-  innerSectionFrame,
   innerSectionKicker,
   innerSecondaryButton,
-  innerSurfaceCard,
-} from '../styles/sacredInnerScreen';
+} from '../styles/sacredInnerScreen'
 
 interface PrayerSessionProps {
-  prayerPathId: PrayerPathId | null;
-  prayerProfile: PrayerProfile;
-  onBack: () => void;
-  onComplete: () => void;
-  onChangePath: () => void;
-  theme: 'light' | 'dark';
+  prayerPathId: PrayerPathId | null
+  prayerProfile: PrayerProfile
+  onBack: () => void
+  onComplete: () => void
+  onChangePath: () => void
+  theme: 'light' | 'dark'
 }
 
 export const PrayerSession: React.FC<PrayerSessionProps> = ({
@@ -35,120 +36,159 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
   onChangePath,
   theme,
 }) => {
-  const LOCAL_USER_PRAYERS_KEY = 'abundance_local_user_prayers';
-  const [index, setIndex] = useState(0);
+  const LOCAL_USER_PRAYERS_KEY = 'abundance_local_user_prayers'
+  const [index, setIndex] = useState(0)
   const [curatedPrayers, setCuratedPrayers] = useState<string[]>(() =>
-    prayerPathId ? PRAYER_TEXTS[prayerPathId] || [] : []
-  );
-  const [userPrayers, setUserPrayers] = useState<UserPrayer[]>([]);
+    prayerPathId ? PRAYER_TEXTS[prayerPathId] || [] : [],
+  )
+  const [userPrayers, setUserPrayers] = useState<UserPrayer[]>([])
   const [guideSteps, setGuideSteps] = useState<string[]>(() =>
-    prayerPathId ? PRAYER_GUIDE_STEPS[prayerPathId] || [] : []
-  );
-  const [customTitle, setCustomTitle] = useState('');
-  const [customText, setCustomText] = useState('');
-  const [isLoadingContent, setIsLoadingContent] = useState(false);
-  const [isSavingPrayer, setIsSavingPrayer] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
-  const pageShell = INNER_PAGE_SHELL;
-  const sectionFrame = innerSectionFrame(theme);
-  const heroCard = innerHeroCard(theme);
-  const surfaceCard = innerSurfaceCard(theme);
-  const sectionKicker = innerSectionKicker(theme);
-  const backButton = innerBackButton(theme);
-  const secondaryButton = innerSecondaryButton(theme);
-  const inputBg = innerInputBg(theme);
-  const prayerSessionSectionWrap = theme === 'light' ? 'space-y-3' : sectionFrame;
-  const prayerSessionSectionCard =
+    prayerPathId ? PRAYER_GUIDE_STEPS[prayerPathId] || [] : [],
+  )
+  const [customTitle, setCustomTitle] = useState('')
+  const [customText, setCustomText] = useState('')
+  const [isLoadingContent, setIsLoadingContent] = useState(false)
+  const [isSavingPrayer, setIsSavingPrayer] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const textColor = theme === 'light' ? 'text-slate-700' : 'text-white'
+  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-300'
+  const pageShell = `${INNER_PAGE_SHELL} max-w-[408px] space-y-3.5`
+  const sectionFrame =
     theme === 'light'
-      ? 'rounded-[24px] border border-amber-200/70 bg-slate-100 p-4 shadow-sm'
-      : surfaceCard;
+      ? 'rounded-[24px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-2.5 shadow-[0_8px_24px_rgba(180,140,80,0.12)]'
+      : 'rounded-[24px] bg-gradient-to-br from-slate-900/90 to-slate-950/95 border border-white/10 p-2.5 shadow-[0_14px_34px_rgba(0,0,0,0.4)]'
+  const heroCard =
+    theme === 'light'
+      ? 'rounded-[20px] bg-gradient-to-br from-amber-50/50 to-white/90 border border-amber-200/40 p-4 shadow-[0_12px_32px_rgba(180,140,80,0.15)]'
+      : 'rounded-[20px] bg-gradient-to-br from-slate-900/90 to-slate-950/95 border border-amber-500/20 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.4)]'
+  const sectionKicker = innerSectionKicker(theme)
+  const backButton = innerBackButton(theme)
+  const secondaryButton = innerSecondaryButton(theme)
+  const inputBg = innerInputBg(theme)
+  const prayerSessionSectionWrap = 'space-y-2'
+  const prayerProfileCard =
+    theme === 'light'
+      ? 'rounded-[18px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-3 shadow-[0_8px_24px_rgba(180,140,80,0.12)]'
+      : 'rounded-[18px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
+  const sacredFlowCard =
+    theme === 'light'
+      ? 'rounded-[18px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-3 shadow-[0_8px_24px_rgba(180,140,80,0.12)]'
+      : 'rounded-[18px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
+  const customPrayerCard =
+    theme === 'light'
+      ? 'rounded-[18px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-3 shadow-[0_8px_24px_rgba(180,140,80,0.12)]'
+      : 'rounded-[18px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
+  const savedPrayerCard =
+    theme === 'light'
+      ? 'rounded-[18px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-3 shadow-[0_8px_24px_rgba(180,140,80,0.12)]'
+      : 'rounded-[18px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
+  const actionCard =
+    theme === 'light'
+      ? 'rounded-[18px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-3 shadow-[0_8px_24px(180,140,80,0.12)]'
+      : 'rounded-[18px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
   const prayerSessionInputBg =
     theme === 'light'
-      ? 'border-amber-200/70 bg-white text-slate-900'
-      : inputBg;
+      ? 'border-amber-200/50 bg-white/90 text-slate-800'
+      : inputBg
+  const prayerTextCard =
+    'relative overflow-hidden rounded-[18px] border border-white/12 bg-black px-4 py-4 text-white shadow-[0_22px_48px_rgba(0,0,0,0.42)]'
   const readLocalUserPrayers = (pathId: PrayerPathId): UserPrayer[] => {
     try {
-      const raw = localStorage.getItem(LOCAL_USER_PRAYERS_KEY);
-      const parsed = raw ? JSON.parse(raw) : {};
-      const prayers = Array.isArray(parsed?.[pathId]) ? parsed[pathId] : [];
-      return prayers.filter((item: UserPrayer) => item && item.body);
+      const raw = localStorage.getItem(LOCAL_USER_PRAYERS_KEY)
+      const parsed = raw ? JSON.parse(raw) : {}
+      const prayers = Array.isArray(parsed?.[pathId]) ? parsed[pathId] : []
+      return prayers.filter((item: UserPrayer) => item && item.body)
     } catch {
-      return [];
+      return []
     }
-  };
-  const writeLocalUserPrayers = (pathId: PrayerPathId, prayers: UserPrayer[]) => {
+  }
+  const writeLocalUserPrayers = (
+    pathId: PrayerPathId,
+    prayers: UserPrayer[],
+  ) => {
     try {
-      const raw = localStorage.getItem(LOCAL_USER_PRAYERS_KEY);
-      const parsed = raw ? JSON.parse(raw) : {};
-      parsed[pathId] = prayers;
-      localStorage.setItem(LOCAL_USER_PRAYERS_KEY, JSON.stringify(parsed));
+      const raw = localStorage.getItem(LOCAL_USER_PRAYERS_KEY)
+      const parsed = raw ? JSON.parse(raw) : {}
+      parsed[pathId] = prayers
+      localStorage.setItem(LOCAL_USER_PRAYERS_KEY, JSON.stringify(parsed))
     } catch {
       // ignore storage errors
     }
-  };
+  }
   const formatToken = (value: string) =>
     value
       .split('_')
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
+      .join(' ')
 
   useEffect(() => {
-    let isMounted = true;
-    setSaveError(null);
-    setIndex(0);
+    let isMounted = true
+    setSaveError(null)
+    setIndex(0)
 
     if (!prayerPathId) {
-      setCuratedPrayers([]);
-      setUserPrayers([]);
-      setGuideSteps([]);
+      setCuratedPrayers([])
+      setUserPrayers([])
+      setGuideSteps([])
       return () => {
-        isMounted = false;
-      };
+        isMounted = false
+      }
     }
 
-    setIsLoadingContent(true);
-    setCuratedPrayers(PRAYER_TEXTS[prayerPathId] || []);
-    setGuideSteps(PRAYER_GUIDE_STEPS[prayerPathId] || []);
-    const localPrayers = readLocalUserPrayers(prayerPathId);
+    setIsLoadingContent(true)
+    setCuratedPrayers(PRAYER_TEXTS[prayerPathId] || [])
+    setGuideSteps(PRAYER_GUIDE_STEPS[prayerPathId] || [])
+    const localPrayers = readLocalUserPrayers(prayerPathId)
 
     void Promise.allSettled([
       api.getPrayerContent(prayerPathId),
       api.getUserPrayers(prayerPathId),
-    ]).then((results) => {
-      if (!isMounted) return;
+    ])
+      .then((results) => {
+        if (!isMounted) return
 
-      const contentResult = results[0];
-      if (contentResult.status === 'fulfilled' && contentResult.value.sessionPrayers.length > 0) {
-        setCuratedPrayers(contentResult.value.sessionPrayers);
-        if (contentResult.value.guideSteps.length > 0) {
-          setGuideSteps(contentResult.value.guideSteps);
+        const contentResult = results[0]
+        if (
+          contentResult.status === 'fulfilled' &&
+          contentResult.value.sessionPrayers.length > 0
+        ) {
+          setCuratedPrayers(contentResult.value.sessionPrayers)
+          if (contentResult.value.guideSteps.length > 0) {
+            setGuideSteps(contentResult.value.guideSteps)
+          }
+        } else {
+          setCuratedPrayers(PRAYER_TEXTS[prayerPathId] || [])
+          setGuideSteps(PRAYER_GUIDE_STEPS[prayerPathId] || [])
         }
-      } else {
-        setCuratedPrayers(PRAYER_TEXTS[prayerPathId] || []);
-        setGuideSteps(PRAYER_GUIDE_STEPS[prayerPathId] || []);
-      }
 
-      const userPrayerResult = results[1];
-      if (userPrayerResult.status === 'fulfilled') {
-        setUserPrayers([...userPrayerResult.value, ...localPrayers]);
-      } else {
-        setUserPrayers(localPrayers);
-      }
-    }).finally(() => {
-      if (isMounted) setIsLoadingContent(false);
-    });
+        const userPrayerResult = results[1]
+        if (userPrayerResult.status === 'fulfilled') {
+          setUserPrayers([...userPrayerResult.value, ...localPrayers])
+        } else {
+          setUserPrayers(localPrayers)
+        }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingContent(false)
+      })
 
     return () => {
-      isMounted = false;
-    };
-  }, [prayerPathId]);
+      isMounted = false
+    }
+  }, [prayerPathId])
 
-  const path = useMemo(() => (prayerPathId ? getPrayerPathById(prayerPathId) : null), [prayerPathId]);
+  const path = useMemo(
+    () => (prayerPathId ? getPrayerPathById(prayerPathId) : null),
+    [prayerPathId],
+  )
   const prayerEntries = useMemo(
     () => [
-      ...curatedPrayers.map((text) => ({ id: `curated-${text}`, text, isUserPrayer: false, title: '' })),
+      ...curatedPrayers.map((text) => ({
+        id: `curated-${text}`,
+        text,
+        isUserPrayer: false,
+        title: '',
+      })),
       ...userPrayers.map((item) => ({
         id: `user-${item.id}`,
         text: item.body,
@@ -157,58 +197,65 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
         userPrayerId: item.id,
       })),
     ],
-    [curatedPrayers, userPrayers]
-  );
-  const prayerEntry = prayerEntries[index] || null;
+    [curatedPrayers, userPrayers],
+  )
+  const prayerEntry = prayerEntries[index] || null
 
   useEffect(() => {
     if (index >= prayerEntries.length) {
-      setIndex(0);
+      setIndex(0)
     }
-  }, [index, prayerEntries.length]);
+  }, [index, prayerEntries.length])
 
   if (prayerPathId && isLoadingContent && prayerEntries.length === 0) {
     return (
-      <div className={`h-full flex flex-col p-6 max-w-md mx-auto items-center justify-center text-center ${textColor}`}>
+      <div
+        className={`h-full flex flex-col p-6 max-w-md mx-auto items-center justify-center text-center ${textColor}`}
+      >
         <p className="mb-4 text-sm">Loading prayer content...</p>
       </div>
-    );
+    )
   }
 
   if (!prayerPathId || prayerEntries.length === 0) {
     return (
-      <div className={`h-full flex flex-col p-6 max-w-md mx-auto items-center justify-center text-center ${textColor}`}>
-        <p className="mb-4 text-sm">No prayer content loaded for this path yet.</p>
-        <button
-          onClick={onChangePath}
-          className={INNER_PRIMARY_BUTTON}
-        >
+      <div
+        className={`h-full flex flex-col p-6 max-w-md mx-auto items-center justify-center text-center ${textColor}`}
+      >
+        <p className="mb-4 text-sm">
+          No prayer content loaded for this path yet.
+        </p>
+        <button onClick={onChangePath} className={INNER_PRIMARY_BUTTON}>
           Select Prayer Path
         </button>
       </div>
-    );
+    )
   }
 
   const nextPrayer = () => {
-    buttonSoundService.play('click');
-    setIndex((prev) => (prev + 1) % prayerEntries.length);
-  };
+    buttonSoundService.play('click')
+    setIndex((prev) => (prev + 1) % prayerEntries.length)
+  }
 
   const handleSavePrayer = async () => {
-    if (!prayerPathId || !customText.trim()) return;
-    setIsSavingPrayer(true);
-    setSaveError(null);
+    if (!prayerPathId || !customText.trim()) return
+    setIsSavingPrayer(true)
+    setSaveError(null)
     try {
-      const result = await api.addUserPrayer(prayerPathId, customText.trim(), customTitle.trim());
+      const result = await api.addUserPrayer(
+        prayerPathId,
+        customText.trim(),
+        customTitle.trim(),
+      )
       if (!result?.success) {
-        throw new Error(result?.message || 'Unable to save prayer.');
+        throw new Error(result?.message || 'Unable to save prayer.')
       }
-      const refreshed = await api.getUserPrayers(prayerPathId);
-      const localPrayers = readLocalUserPrayers(prayerPathId);
-      setUserPrayers([...refreshed, ...localPrayers]);
-      setCustomTitle('');
-      setCustomText('');
-      setIndex(curatedPrayers.length);
+      const refreshed = await api.getUserPrayers(prayerPathId)
+      const localPrayers = readLocalUserPrayers(prayerPathId)
+      setUserPrayers([...refreshed, ...localPrayers])
+      setCustomTitle('')
+      setCustomText('')
+      setIndex(curatedPrayers.length)
     } catch (error) {
       const localPrayer: UserPrayer = {
         id: `local-${Date.now()}`,
@@ -216,50 +263,69 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
         title: customTitle.trim(),
         body: customText.trim(),
         created_at: new Date().toISOString(),
-      };
-      const nextLocal = [...readLocalUserPrayers(prayerPathId), localPrayer];
-      writeLocalUserPrayers(prayerPathId, nextLocal);
-      setUserPrayers((prev) => [...prev, localPrayer]);
-      setCustomTitle('');
-      setCustomText('');
-      setIndex(curatedPrayers.length);
+      }
+      const nextLocal = [...readLocalUserPrayers(prayerPathId), localPrayer]
+      writeLocalUserPrayers(prayerPathId, nextLocal)
+      setUserPrayers((prev) => [...prev, localPrayer])
+      setCustomTitle('')
+      setCustomText('')
+      setIndex(curatedPrayers.length)
       setSaveError(
         error instanceof Error
           ? `${error.message} Saved on this device instead.`
-          : 'Saved on this device instead.'
-      );
+          : 'Saved on this device instead.',
+      )
     } finally {
-      setIsSavingPrayer(false);
+      setIsSavingPrayer(false)
     }
-  };
+  }
 
   const handleDeletePrayer = async (id: string) => {
-    if (!prayerPathId) return;
+    if (!prayerPathId) return
     try {
       if (id.startsWith('local-')) {
-        const refreshedLocal = readLocalUserPrayers(prayerPathId).filter((item) => item.id !== id);
-        writeLocalUserPrayers(prayerPathId, refreshedLocal);
-        setUserPrayers((prev) => prev.filter((item) => item.id !== id));
+        const refreshedLocal = readLocalUserPrayers(prayerPathId).filter(
+          (item) => item.id !== id,
+        )
+        writeLocalUserPrayers(prayerPathId, refreshedLocal)
+        setUserPrayers((prev) => prev.filter((item) => item.id !== id))
       } else {
-        await api.removeUserPrayer(id);
-        const refreshed = await api.getUserPrayers(prayerPathId);
-        const localPrayers = readLocalUserPrayers(prayerPathId);
-        setUserPrayers([...refreshed, ...localPrayers]);
+        await api.removeUserPrayer(id)
+        const refreshed = await api.getUserPrayers(prayerPathId)
+        const localPrayers = readLocalUserPrayers(prayerPathId)
+        setUserPrayers([...refreshed, ...localPrayers])
       }
-      setIndex((prev) => Math.max(0, Math.min(prev, prayerEntries.length - 2)));
+      setIndex((prev) => Math.max(0, Math.min(prev, prayerEntries.length - 2)))
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Unable to remove prayer.');
+      setSaveError(
+        error instanceof Error ? error.message : 'Unable to remove prayer.',
+      )
     }
-  };
+  }
+
+  const profileChipClass =
+    theme === 'light'
+      ? 'rounded-[14px] border border-amber-200/70 bg-white/82 px-2.5 py-2 text-[10px] text-slate-700'
+      : 'rounded-[14px] border border-amber-200/16 bg-black/18 px-2.5 py-2 text-[10px] text-slate-100'
+  const flowStepClass =
+    theme === 'light'
+      ? 'flex gap-2.5 rounded-[14px] border border-emerald-200/65 bg-white/72 px-3 py-2'
+      : 'flex gap-2.5 rounded-[14px] border border-emerald-200/14 bg-black/16 px-3 py-2'
+  const savedPrayerItemClass =
+    theme === 'light'
+      ? 'rounded-[14px] border border-violet-200/70 bg-white/78 px-3 py-2.5 text-slate-700'
+      : 'rounded-[14px] border border-violet-200/14 bg-black/18 px-3 py-2.5 text-slate-100'
 
   return (
-    <div className={`h-full w-full overflow-y-auto px-4 pt-4 pb-8 custom-scrollbar ${textColor}`}>
+    <div
+      className={`h-full w-full overflow-y-auto px-4 pt-4 pb-8 custom-scrollbar ${textColor}`}
+    >
       <div className={pageShell}>
         <div className="flex items-center justify-between">
           <button
             onClick={() => {
-              buttonSoundService.play('back');
-              onBack();
+              buttonSoundService.play('back')
+              onBack()
             }}
             className={backButton}
           >
@@ -274,78 +340,81 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
         <div className={sectionFrame}>
           <div className={heroCard}>
             <p className={sectionKicker}>Prayer Session</p>
-            <h1 className="mt-3 text-2xl font-serif font-semibold">{path?.label || 'Prayer'}</h1>
+            <h1 className="mt-2.5 text-[1.7rem] font-serif font-semibold leading-tight">
+              {path?.label || 'Prayer'}
+            </h1>
             <p className="mt-2 text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400">
               Prayer {index + 1} of {prayerEntries.length}
             </p>
-            <p className={`mt-4 text-sm leading-relaxed ${subTextColor}`}>
-              Move slowly through the words. Let the language guide your breathing, posture, and attention.
+            <p className={`mt-3 text-[13px] leading-relaxed ${subTextColor}`}>
+              Move slowly through the words. Let the language guide your
+              breathing, posture, and attention.
             </p>
             {isLoadingContent ? (
-              <p className={`mt-3 text-xs ${subTextColor}`}>Loading prayer content...</p>
+              <p className={`mt-3 text-xs ${subTextColor}`}>
+                Loading prayer content...
+              </p>
             ) : null}
           </div>
         </div>
 
         <div className={prayerSessionSectionWrap}>
-          <div className={`${prayerSessionSectionCard} min-h-[240px] flex items-center`}>
-            <div className="w-full">
+          <div className={`${prayerTextCard} min-h-[180px] flex items-center`}>
+            <div className="relative z-10 w-full">
               {prayerEntry?.isUserPrayer && prayerEntry.title ? (
                 <p className="mb-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-emerald-300">
                   {prayerEntry.title}
                 </p>
               ) : null}
-              <p className="text-base leading-relaxed md:text-lg">{prayerEntry?.text || ''}</p>
+              <p className="text-[14px] leading-6 text-white md:text-[15px] md:leading-7">
+                {prayerEntry?.text || ''}
+              </p>
             </div>
           </div>
         </div>
 
         <div className={prayerSessionSectionWrap}>
-          <div className={`space-y-4 ${prayerSessionSectionCard}`}>
+          <div className={`space-y-2.5 ${prayerProfileCard}`}>
             <p className={sectionKicker}>Prayer Profile</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {[
                 ['Intention', formatToken(prayerProfile.intent)],
                 ['Tone', formatToken(prayerProfile.tone)],
                 ['Language', formatToken(prayerProfile.language)],
                 ['Style', formatToken(prayerProfile.style)],
               ].map(([label, value]) => (
-                <div
-                  key={label}
-                  className={`rounded-[18px] border px-3 py-3 text-xs ${
-                    theme === 'light'
-                      ? 'border-amber-200/60 bg-white/90 text-slate-700'
-                      : 'border-amber-500/18 bg-slate-900/75 text-slate-200'
-                  }`}
-                >
-                  <div className="font-extrabold uppercase tracking-[0.18em] text-amber-400">{label}</div>
-                  <div className="mt-2 text-sm font-semibold text-inherit">{value}</div>
+                <div key={label} className={profileChipClass}>
+                  <div className="font-extrabold uppercase tracking-[0.18em] text-amber-400">
+                    {label}
+                  </div>
+                  <div className="mt-1 text-[12px] font-semibold text-inherit">
+                    {value}
+                  </div>
                 </div>
               ))}
             </div>
-            <p className={`text-sm leading-relaxed ${subTextColor}`}>
-              Curated prayers can now be managed from the backend, and your own saved prayers can be added to this session.
+            <p className={`text-[12px] leading-relaxed ${subTextColor}`}>
+              Curated prayers can now be managed from the backend, and your own
+              saved prayers can be added to this session.
             </p>
           </div>
         </div>
 
         <div className={prayerSessionSectionWrap}>
-          <div className={`${prayerSessionSectionCard} space-y-4`}>
+          <div className={`${sacredFlowCard} space-y-2.5`}>
             <p className={sectionKicker}>Sacred Flow</p>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {guideSteps.map((step, stepIndex) => (
                 <div
                   key={`${prayerPathId}-flow-${stepIndex}`}
-                  className={`flex gap-3 rounded-[18px] border px-4 py-3 ${
-                    theme === 'light'
-                      ? 'border-amber-200/60 bg-white/88'
-                      : 'border-amber-500/18 bg-slate-900/75'
-                  }`}
+                  className={flowStepClass}
                 >
-                  <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-xs font-extrabold text-amber-300">
+                  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-[11px] font-extrabold text-amber-300">
                     {stepIndex + 1}
                   </span>
-                  <p className={`text-sm leading-relaxed ${subTextColor}`}>{step}</p>
+                  <p className={`text-[12px] leading-relaxed ${subTextColor}`}>
+                    {step}
+                  </p>
                 </div>
               ))}
             </div>
@@ -353,23 +422,25 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
         </div>
 
         <div className={prayerSessionSectionWrap}>
-          <div className={`${prayerSessionSectionCard} space-y-4`}>
+          <div className={`${customPrayerCard} space-y-2.5`}>
             <p className={sectionKicker}>Add Your Own Prayer</p>
             <input
               type="text"
               value={customTitle}
               onChange={(event) => setCustomTitle(event.target.value)}
               placeholder="Optional title"
-              className={`w-full rounded-[18px] border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-amber-500 ${prayerSessionInputBg}`}
+              className={`w-full rounded-[14px] border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 ${prayerSessionInputBg}`}
             />
             <textarea
               value={customText}
               onChange={(event) => setCustomText(event.target.value)}
               placeholder="Write your personal prayer here."
-              rows={5}
-              className={`w-full resize-none rounded-[18px] border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-amber-500 ${prayerSessionInputBg}`}
+              rows={4}
+              className={`w-full resize-none rounded-[14px] border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 ${prayerSessionInputBg}`}
             />
-            {saveError ? <p className="text-sm text-rose-300">{saveError}</p> : null}
+            {saveError ? (
+              <p className="text-sm text-rose-300">{saveError}</p>
+            ) : null}
             <button
               onClick={handleSavePrayer}
               disabled={isSavingPrayer || !customText.trim()}
@@ -382,17 +453,10 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
 
         {userPrayers.length > 0 ? (
           <div className={prayerSessionSectionWrap}>
-            <div className={`${prayerSessionSectionCard} space-y-3`}>
+            <div className={`${savedPrayerCard} space-y-2`}>
               <p className={sectionKicker}>Saved Personal Prayers</p>
               {userPrayers.map((item) => (
-                <div
-                  key={item.id}
-                  className={`rounded-[18px] border px-4 py-4 ${
-                    theme === 'light'
-                      ? 'border-amber-200/60 bg-white/90 text-slate-700'
-                      : 'border-amber-500/18 bg-slate-900/75 text-slate-200'
-                  }`}
-                >
+                <div key={item.id} className={savedPrayerItemClass}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       {item.title ? (
@@ -400,7 +464,9 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
                           {item.title}
                         </p>
                       ) : null}
-                      <p className="mt-2 text-sm leading-relaxed">{item.body}</p>
+                      <p className="mt-1 text-[12px] leading-relaxed">
+                        {item.body}
+                      </p>
                     </div>
                     <button
                       onClick={() => handleDeletePrayer(item.id)}
@@ -417,7 +483,7 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
         ) : null}
 
         <div className={prayerSessionSectionWrap}>
-          <div className={`${prayerSessionSectionCard} space-y-3`}>
+          <div className={`${actionCard} space-y-2`}>
             <button
               onClick={nextPrayer}
               className={`${INNER_PRIMARY_BUTTON} flex items-center justify-center gap-2`}
@@ -427,8 +493,8 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
             </button>
             <button
               onClick={() => {
-                buttonSoundService.play('confirm');
-                onComplete();
+                buttonSoundService.play('confirm')
+                onComplete()
               }}
               className={`${secondaryButton} flex items-center justify-center gap-2`}
             >
@@ -439,5 +505,5 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

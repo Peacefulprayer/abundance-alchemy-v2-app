@@ -8,6 +8,10 @@ define('DB_USER', 'root');
 define('DB_PASSWORD', '');
 define('DB_CHARSET', 'utf8mb4');
 
+// Optional: server-side Gemini key for AI copy generation.
+// Prefer keeping this only in local config.php or server environment variables.
+define('GEMINI_API_KEY', '');
+
 define('DEBUG_MODE', false);
 
 // Allowed origins for API CORS (must be serialized array).

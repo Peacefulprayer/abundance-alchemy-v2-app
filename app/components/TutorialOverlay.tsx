@@ -16,12 +16,11 @@ interface TutorialOverlayProps {
   theme: 'light' | 'dark';
 }
 
-export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, onChangeFocus, theme }) => {
+export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete }) => {
   const [step, setStep] = useState(0);
 
   // Tutorial is always dark + green text for sacred ceremonial path
   const textColor = 'text-emerald-200';
-  const subTextColor = 'text-emerald-300';
   const contentText = 'text-emerald-300';
   const contentMuted = 'text-emerald-200';
   const contentAccent = 'text-amber-400';

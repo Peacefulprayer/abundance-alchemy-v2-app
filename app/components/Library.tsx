@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { PracticeType } from '../types';
-import type { Affirmation, GratitudeLog, Soundscape } from '../types';
-import { audioManager } from '../services/audioManager';
+import React, { useMemo, useState } from 'react'
+import { PracticeType } from '../types'
+import type { Affirmation, GratitudeLog, Soundscape } from '../types'
+import { audioManager } from '../services/audioManager'
 
 const CATEGORY_OPTIONS = [
   'General',
@@ -12,24 +12,28 @@ const CATEGORY_OPTIONS = [
   'Confidence & Inner Strength',
   'Health & Wholeness',
   'Self-Love & Worthiness',
-] as const;
+] as const
 
 interface LibraryProps {
-  affirmations?: Affirmation[];
-  customAffirmations?: Affirmation[];
-  gratitudeLogs?: GratitudeLog[];
+  affirmations?: Affirmation[]
+  customAffirmations?: Affirmation[]
+  gratitudeLogs?: GratitudeLog[]
   onAdd: (
     text: string,
     type: PracticeType,
-    category?: string
-  ) => Promise<{ ok: boolean; message?: string }> | { ok: boolean; message?: string };
-  onRemove: (id: string) => Promise<void> | void;
-  onAudioUpload: React.Dispatch<React.SetStateAction<File | null>> | ((file: File) => void);
-  userAudioFile: File | null;
-  theme: 'light' | 'dark';
-  soundscapes?: Soundscape[];
-  activeSoundscapeId?: string;
-  onSetActiveSoundscape?: (id: string) => void;
+    category?: string,
+  ) =>
+    | Promise<{ ok: boolean; message?: string }>
+    | { ok: boolean; message?: string }
+  onRemove: (id: string) => Promise<void> | void
+  onAudioUpload:
+    | React.Dispatch<React.SetStateAction<File | null>>
+    | ((file: File) => void)
+  userAudioFile: File | null
+  theme: 'light' | 'dark'
+  soundscapes?: Soundscape[]
+  activeSoundscapeId?: string
+  onSetActiveSoundscape?: (id: string) => void
 }
 
 export const Library: React.FC<LibraryProps> = (props) => {
@@ -43,90 +47,102 @@ export const Library: React.FC<LibraryProps> = (props) => {
     soundscapes = [],
     activeSoundscapeId,
     onSetActiveSoundscape,
-  } = props;
+  } = props
 
   const affirmations = useMemo(
     () => props.affirmations ?? props.customAffirmations ?? [],
-    [props.affirmations, props.customAffirmations]
-  );
+    [props.affirmations, props.customAffirmations],
+  )
 
-  const [previewingId, setPreviewingId] = useState<string>('');
-  const [newAffirmationText, setNewAffirmationText] = useState('');
-  const [newAffirmationType, setNewAffirmationType] = useState<PracticeType>(PracticeType.MORNING_IAM);
-  const [newAffirmationCategory, setNewAffirmationCategory] = useState<string>('General');
-  const [isSavingAffirmation, setIsSavingAffirmation] = useState(false);
+  const [previewingId, setPreviewingId] = useState<string>('')
+  const [newAffirmationText, setNewAffirmationText] = useState('')
+  const [newAffirmationType, setNewAffirmationType] = useState<PracticeType>(
+    PracticeType.MORNING_IAM,
+  )
+  const [newAffirmationCategory, setNewAffirmationCategory] =
+    useState<string>('General')
+  const [isSavingAffirmation, setIsSavingAffirmation] = useState(false)
   const [affirmationStatus, setAffirmationStatus] = useState<{
-    kind: 'success' | 'error';
-    message: string;
-  } | null>(null);
+    kind: 'success' | 'error'
+    message: string
+  } | null>(null)
 
-  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
+  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100'
+  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300'
   const titlePill =
-    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm';
+    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm'
   const sectionFrame =
     theme === 'light'
       ? 'rounded-[28px] border border-amber-200/60 bg-white/78 p-3 shadow-sm'
-      : 'rounded-[28px] border border-amber-500/18 bg-slate-950/45 p-3 shadow-[0_16px_40px_rgba(0,0,0,0.28)]';
+      : 'rounded-[28px] border border-amber-500/18 bg-slate-950/45 p-3 shadow-[0_16px_40px_rgba(0,0,0,0.28)]'
   const cardBg =
     theme === 'light'
       ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-amber-200/60 text-slate-900'
-      : 'bg-gradient-to-br from-slate-900/70 to-slate-950/75 border-amber-500/20 text-slate-100';
+      : 'bg-gradient-to-br from-slate-900/70 to-slate-950/75 border-amber-500/20 text-slate-100'
   const itemBorder =
     theme === 'light'
       ? 'border-amber-200/55 bg-white/92'
-      : 'border-amber-500/15 bg-slate-950/82';
+      : 'border-amber-500/15 bg-slate-950/82'
   const inputBg =
     theme === 'light'
       ? 'border-amber-200/70 bg-white/92 text-slate-900'
-      : 'border-amber-500/20 bg-slate-950/75 text-slate-100';
-  const pageShell = 'mx-auto w-full max-w-[440px] space-y-5 pb-24';
+      : 'border-amber-500/20 bg-slate-950/75 text-slate-100'
+  const pageShell = 'mx-auto w-full max-w-[440px] space-y-5 pb-24'
   const sectionKicker =
     theme === 'light'
       ? 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-700'
-      : 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/90';
+      : 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/90'
 
   const handleAddAffirmation = async () => {
-    const text = newAffirmationText.trim();
-    if (!text || isSavingAffirmation) return;
+    const text = newAffirmationText.trim()
+    if (!text || isSavingAffirmation) return
 
-    setIsSavingAffirmation(true);
-    setAffirmationStatus(null);
+    setIsSavingAffirmation(true)
+    setAffirmationStatus(null)
     try {
-      const result = await onAdd(text, newAffirmationType, newAffirmationCategory);
+      const result = await onAdd(
+        text,
+        newAffirmationType,
+        newAffirmationCategory,
+      )
       if (!result?.ok) {
         setAffirmationStatus({
           kind: 'error',
           message: result?.message || 'Unable to save affirmation right now.',
-        });
-        return;
+        })
+        return
       }
 
-      setNewAffirmationText('');
-      setNewAffirmationCategory('General');
+      setNewAffirmationText('')
+      setNewAffirmationCategory('General')
       setAffirmationStatus({
         kind: 'success',
         message: 'Affirmation added.',
-      });
+      })
     } catch {
       setAffirmationStatus({
         kind: 'error',
         message: 'Unable to save affirmation right now.',
-      });
+      })
     } finally {
-      setIsSavingAffirmation(false);
+      setIsSavingAffirmation(false)
     }
-  };
+  }
 
   return (
-    <div className={`h-full w-full overflow-y-auto px-4 pt-4 custom-scrollbar ${textColor}`}>
+    <div
+      className={`h-full w-full overflow-y-auto px-4 pt-4 custom-scrollbar ${textColor}`}
+    >
       <div className={pageShell}>
         <div className={sectionFrame}>
           <div className={`rounded-[24px] border p-5 shadow-lg ${cardBg}`}>
             <span className={titlePill}>Maktaba</span>
-            <h2 className="mt-4 text-2xl font-serif font-semibold">Sacred Library (Maktaba) Space</h2>
+            <h2 className="mt-4 text-2xl font-serif font-medium">
+              Sacred Library (Maktaba) Space
+            </h2>
             <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
-              Keep your sound, affirmations, and gratitude reflections gathered in one place for easy return.
+              Keep your sound, affirmations, and gratitude reflections gathered
+              in one place for easy return.
             </p>
           </div>
         </div>
@@ -136,13 +152,15 @@ export const Library: React.FC<LibraryProps> = (props) => {
             <div className="px-1">
               <h3 className={titlePill}>Soundscapes</h3>
             </div>
-            <div className={`mt-3 rounded-[24px] border p-4 shadow-lg ${cardBg}`}>
+            <div
+              className={`mt-3 rounded-[24px] border p-4 shadow-lg ${cardBg}`}
+            >
               <p className={sectionKicker}>Available Atmospheres</p>
               <div className="mt-3 space-y-3">
                 {soundscapes.map((s) => {
-                  const id = String(s.id);
-                  const previewing = previewingId === id;
-                  const isActive = activeSoundscapeId === id;
+                  const id = String(s.id)
+                  const previewing = previewingId === id
+                  const isActive = activeSoundscapeId === id
                   return (
                     <div
                       key={id}
@@ -150,8 +168,12 @@ export const Library: React.FC<LibraryProps> = (props) => {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="text-sm font-semibold truncate">{s.label}</div>
-                          <div className={`mt-1 text-[11px] ${subTextColor} truncate`}>
+                          <div className="text-sm font-medium truncate">
+                            {s.label}
+                          </div>
+                          <div
+                            className={`mt-1 text-[11px] ${subTextColor} truncate`}
+                          >
                             {s.category || 'Sacred ambience'}
                           </div>
                         </div>
@@ -161,14 +183,14 @@ export const Library: React.FC<LibraryProps> = (props) => {
                       </div>
                       <div className="mt-3 flex gap-2">
                         <button
-                          className={`flex-1 rounded-full border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors ${
+                          className={`flex-1 rounded-full border px-3 py-2 text-[11px] font-medium uppercase tracking-[0.18em] transition-colors ${
                             theme === 'light'
                               ? 'border-amber-200/70 bg-white/90 hover:bg-white'
                               : 'border-amber-500/20 bg-slate-950/75 hover:bg-slate-950'
                           }`}
                           onClick={() => {
-                            setPreviewingId(id);
-                            audioManager.previewSoundscape(s);
+                            setPreviewingId(id)
+                            audioManager.previewSoundscape(s)
                           }}
                         >
                           {previewing ? 'Previewing' : 'Preview'}
@@ -183,7 +205,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
                         ) : null}
                       </div>
                     </div>
-                  );
+                  )
                 })}
               </div>
             </div>
@@ -208,24 +230,27 @@ export const Library: React.FC<LibraryProps> = (props) => {
                 accept="audio/*"
                 className="hidden"
                 onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
+                  const f = e.target.files?.[0]
+                  if (!f) return
                   if (typeof onAudioUpload === 'function') {
                     // Works for both a React state setter and a direct callback.
                     // @ts-ignore
-                    onAudioUpload(f);
+                    onAudioUpload(f)
                   }
                 }}
               />
               <div>
-                <p className="text-sm font-semibold">Choose an audio file</p>
+                <p className="text-sm font-medium">Choose an audio file</p>
                 <p className={`mt-1 text-xs ${subTextColor}`}>
-                  Add a personal meditation or ambience track to your sacred space.
+                  Add a personal meditation or ambience track to your sacred
+                  space.
                 </p>
               </div>
             </label>
             {userAudioFile ? (
-              <div className={`mt-3 rounded-[20px] border px-4 py-3 text-sm shadow-sm ${itemBorder}`}>
+              <div
+                className={`mt-3 rounded-[20px] border px-4 py-3 text-sm shadow-sm ${itemBorder}`}
+              >
                 {userAudioFile.name}
               </div>
             ) : null}
@@ -249,8 +274,10 @@ export const Library: React.FC<LibraryProps> = (props) => {
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,120px)_minmax(0,1fr)_auto]">
                 <select
                   value={newAffirmationType}
-                  onChange={(e) => setNewAffirmationType(e.target.value as PracticeType)}
-                  className={`rounded-full border px-3 py-2 text-xs font-semibold ${inputBg}`}
+                  onChange={(e) =>
+                    setNewAffirmationType(e.target.value as PracticeType)
+                  }
+                  className={`rounded-full border px-3 py-2 text-xs font-medium ${inputBg}`}
                 >
                   <option value={PracticeType.MORNING_IAM}>I Am</option>
                   <option value={PracticeType.EVENING_ILOVE}>I Love</option>
@@ -258,7 +285,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
                 <select
                   value={newAffirmationCategory}
                   onChange={(e) => setNewAffirmationCategory(e.target.value)}
-                  className={`min-w-0 rounded-full border px-3 py-2 text-xs font-semibold ${inputBg}`}
+                  className={`min-w-0 rounded-full border px-3 py-2 text-xs font-medium ${inputBg}`}
                 >
                   {CATEGORY_OPTIONS.map((option) => (
                     <option key={option} value={option}>
@@ -289,23 +316,30 @@ export const Library: React.FC<LibraryProps> = (props) => {
 
             <div className="mt-4 space-y-3">
               {affirmations.length === 0 ? (
-                <div className={`rounded-[20px] border px-4 py-5 text-sm ${itemBorder}`}>
+                <div
+                  className={`rounded-[20px] border px-4 py-5 text-sm ${itemBorder}`}
+                >
                   No affirmations yet.
                 </div>
               ) : (
                 affirmations.map((a) => (
-                  <div key={a.id} className={`rounded-[20px] border p-3 ${itemBorder}`}>
+                  <div
+                    key={a.id}
+                    className={`rounded-[20px] border p-3 ${itemBorder}`}
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-sm leading-relaxed">{a.text}</div>
                         {a.category ? (
-                          <div className={`mt-2 text-[10px] font-extrabold uppercase tracking-[0.22em] ${subTextColor}`}>
+                          <div
+                            className={`mt-2 text-[10px] font-extrabold uppercase tracking-[0.22em] ${subTextColor}`}
+                          >
                             {a.category}
                           </div>
                         ) : null}
                       </div>
                       <button
-                        className="text-[11px] font-semibold uppercase tracking-[0.18em] text-red-400 hover:text-red-300"
+                        className="text-[11px] font-medium uppercase tracking-[0.18em] text-red-400 hover:text-red-300"
                         onClick={() => onRemove(a.id)}
                       >
                         Remove
@@ -324,7 +358,9 @@ export const Library: React.FC<LibraryProps> = (props) => {
           </div>
           <div className={`mt-3 rounded-[24px] border p-4 shadow-lg ${cardBg}`}>
             {gratitudeLogs.length === 0 ? (
-              <div className={`rounded-[20px] border px-4 py-5 text-sm ${itemBorder}`}>
+              <div
+                className={`rounded-[20px] border px-4 py-5 text-sm ${itemBorder}`}
+              >
                 No gratitude logs yet.
               </div>
             ) : (
@@ -333,11 +369,16 @@ export const Library: React.FC<LibraryProps> = (props) => {
                   .slice()
                   .reverse()
                   .map((g) => (
-                    <div key={g.id} className={`rounded-[20px] border p-3 ${itemBorder}`}>
+                    <div
+                      key={g.id}
+                      className={`rounded-[20px] border p-3 ${itemBorder}`}
+                    >
                       <div className={`text-[11px] ${subTextColor}`}>
                         {new Date(g.date).toLocaleDateString()} • {g.focusArea}
                       </div>
-                      <div className="mt-2 text-sm italic leading-relaxed">"{g.text}"</div>
+                      <div className="mt-2 text-sm italic leading-relaxed">
+                        "{g.text}"
+                      </div>
                     </div>
                   ))}
               </div>
@@ -346,5 +387,5 @@ export const Library: React.FC<LibraryProps> = (props) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

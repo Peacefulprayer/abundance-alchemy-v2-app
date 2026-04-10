@@ -19,10 +19,9 @@ type Step = 'prelude' | 'naming' | 'affirmation';
 
 export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
   onComplete,
-  theme = 'dark',
 }) => {
   const [name, setName] = useState('');
-  const [hasSpiritualName, setHasSpiritualName] = useState(false);
+  const [hasSpiritualName] = useState(false);
   const [step, setStep] = useState<Step>('prelude');
   const [showPreludeNext, setShowPreludeNext] = useState(false);
 
@@ -49,11 +48,6 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
       onComplete({ name: name.trim() });
     }, 3000);
   };
-
-  // S1–S4 ceremonial path is always dark regardless of user theme preference
-  const textColor = 'text-slate-100';
-  const subTextColor = 'text-slate-200';
-  const inputBg = 'bg-slate-800/80 border-slate-600 text-white placeholder-slate-400';
 
   const stepsForIndicator: Step[] = ['prelude', 'naming', 'affirmation'];
 

@@ -10,12 +10,12 @@ if ($userId <= 0) {
 }
 
 try {
-    $userCols = aa_table_columns($pdo, 'users');
+    $userCols = aa_table_columns($conn, 'users');
     $lastPracticeSelect = aa_has_col($userCols, 'last_practice_date')
         ? ', last_practice_date'
         : ', NULL AS last_practice_date';
 
-    $stmt = $pdo->prepare("
+    $stmt = $conn->prepare("
         SELECT id, name, email, level, streak, focus_area, affirmations_completed{$lastPracticeSelect}
         FROM users
         WHERE id = ?

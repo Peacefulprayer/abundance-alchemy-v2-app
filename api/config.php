@@ -138,8 +138,6 @@ try {
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]
     );
-    // Back-compat alias for endpoints still using $pdo.
-    $pdo = $conn;
 } catch (PDOException $e) {
     // Never expose database internals in API responses.
     error_log('[api/config.php] DB connection failed: ' . $e->getMessage());

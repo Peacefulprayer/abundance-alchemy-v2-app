@@ -1,5 +1,5 @@
 // components/PreSplash.tsx - FIXED UNIVERSAL DESIGN
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { ThemeMode } from '../types';
 import { buttonSoundService } from '../services/buttonSoundService';
 import { unlockAudio } from '../services/audioService';

@@ -1,32 +1,31 @@
-// src/services/buttonSoundService.ts - WITH DEBUGGING
-import { playButtonTap, unlockAudio } from './audioService';
+import { playButtonTap, unlockAudio } from './audioService'
 
-export type ButtonSoundVariant = 'click' | 'confirm' | 'back';
+export type ButtonSoundVariant = 'click' | 'confirm' | 'back'
 
-let lastPlayMs = 0;
-const MIN_GAP_MS = 80;
+let lastPlayMs = 0
+const MIN_GAP_MS = 80
 
-function play(_variant: ButtonSoundVariant = 'click') {
-  const now = Date.now();
-  
+async function play(_variant: ButtonSoundVariant = 'click') {
+  const now = Date.now()
+
   if (now - lastPlayMs < MIN_GAP_MS) {
-    return;
+    return
   }
-  lastPlayMs = now;
-  
+  lastPlayMs = now
+
   try {
-    unlockAudio();
-    playButtonTap();
+    await unlockAudio()
+    playButtonTap()
   } catch (error) {
-    console.error('Button tone: Error playing tone:', error);
+    console.error('Button tone: Error playing tone:', error)
   }
 }
 
 function playClick() {
-  play('click');
+  play('click')
 }
 
 export const buttonSoundService = {
   play,
-  playClick
-};
+  playClick,
+}

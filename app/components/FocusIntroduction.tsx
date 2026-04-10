@@ -11,8 +11,7 @@ interface FocusIntroductionProps {
 
 export const FocusIntroduction: React.FC<FocusIntroductionProps> = ({
   userName,
-  onContinue,
-  theme
+  onContinue
 }) => {
   const handleContinue = () => {
     buttonSoundService.play();

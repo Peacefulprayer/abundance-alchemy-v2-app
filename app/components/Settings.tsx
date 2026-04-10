@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { AppSettings, ReminderPractice, Soundscape } from '../types';
+import React, { useState } from 'react'
+import { AppSettings, ReminderPractice, Soundscape } from '../types'
 import {
   ArrowLeft,
   Sun,
@@ -11,23 +11,23 @@ import {
   Palette,
   Clock,
   Upload,
-} from 'lucide-react';
-import { buttonSoundService } from '../services/buttonSoundService';
+} from 'lucide-react'
+import { buttonSoundService } from '../services/buttonSoundService'
 
 interface SettingsProps {
-  settings: AppSettings;
-  onChangeSettings: (settings: AppSettings) => void;
-  onRequestReminderPermission?: () => void;
-  onPreviewSoundscape?: (id: string) => void;
-  onChangeFocus: () => void;
-  onBack: () => void;
-  onSignOut: () => void;
-  onReplayTutorial: () => void;
-  onReplayWelcomeInvocation: () => void;
-  onAudioUpload: (file: File, category: string) => void;
-  theme: 'light' | 'dark';
-  userAudioFile: File | null;
-  availableSoundscapes: Soundscape[];
+  settings: AppSettings
+  onChangeSettings: (settings: AppSettings) => void
+  onRequestReminderPermission?: () => void
+  onPreviewSoundscape?: (id: string) => void
+  onChangeFocus: () => void
+  onBack: () => void
+  onSignOut: () => void
+  onReplayTutorial: () => void
+  onReplayWelcomeInvocation: () => void
+  onAudioUpload: (file: File, category: string) => void
+  theme: 'light' | 'dark'
+  userAudioFile: File | null
+  availableSoundscapes: Soundscape[]
 }
 
 export const Settings: React.FC<SettingsProps> = ({
@@ -45,109 +45,125 @@ export const Settings: React.FC<SettingsProps> = ({
   userAudioFile,
   availableSoundscapes,
 }) => {
-  const [uploadCategory, setUploadCategory] = useState('MEDITATION');
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadCategory, setUploadCategory] = useState('MEDITATION')
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
 
-  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
+  const textColor = theme === 'light' ? 'text-slate-700' : 'text-white'
+  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-300'
   const titlePill =
-    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm';
-  const pageShell = 'mx-auto w-full max-w-[440px] space-y-5 pb-24';
+    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm'
+  const pageShell = 'mx-auto w-full max-w-[440px] space-y-5 pb-24'
   const sectionFrame =
     theme === 'light'
-      ? 'rounded-[28px] border border-amber-200/60 bg-white/78 p-3 shadow-sm'
-      : 'rounded-[28px] border border-amber-500/18 bg-slate-950/45 p-3 shadow-[0_16px_40px_rgba(0,0,0,0.28)]';
+      ? 'rounded-[28px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-3 shadow-[0_8px_24px_rgba(180,140,80,0.12)]'
+      : 'rounded-[28px] bg-gradient-to-br from-slate-900/90 to-slate-950/95 border border-white/10 p-3 shadow-[0_16px_40px_rgba(0,0,0,0.4)]'
   const cardBg =
     theme === 'light'
-      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-amber-200/60'
-      : 'bg-gradient-to-br from-slate-900/70 to-slate-950/75 border-amber-500/20';
+      ? 'bg-gradient-to-br from-amber-50/50 to-white/90 border border-amber-200/40'
+      : 'bg-gradient-to-br from-slate-900/90 to-slate-950/95 border border-white/10'
   const actionCardBg =
     theme === 'light'
-      ? 'bg-gradient-to-br from-slate-900/90 to-slate-800/88 border-slate-700'
-      : 'bg-gradient-to-br from-slate-950/90 to-slate-900/88 border-slate-700';
+      ? 'bg-gradient-to-br from-slate-900/90 to-slate-800/88 border border-slate-700'
+      : 'bg-gradient-to-br from-slate-950/90 to-slate-900/88 border border-slate-700'
   const surfaceCard =
     theme === 'light'
-      ? 'rounded-[22px] border border-amber-200/55 bg-white/92 p-4 shadow-sm'
-      : 'rounded-[22px] border border-amber-500/15 bg-slate-950/82 p-4 shadow-xl';
+      ? 'rounded-[22px] bg-gradient-to-br from-amber-50/30 to-white/85 border border-amber-200/30 p-4 shadow-[0_8px_24px_rgba(180,140,80,0.1)]'
+      : 'rounded-[22px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-4 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
   const inputBg =
     theme === 'light'
-      ? 'border-amber-200/70 bg-white/92 text-slate-900'
-      : 'border-amber-500/20 bg-slate-950/75 text-slate-100';
+      ? 'border-amber-200/50 bg-white/90 text-slate-800'
+      : 'border-white/10 bg-slate-900/70 text-white'
   const sectionKicker =
     theme === 'light'
       ? 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-700'
-      : 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/90';
+      : 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/90'
   const actionRow =
     theme === 'light'
       ? 'border border-amber-200/60 bg-white/85 text-slate-900 hover:bg-white'
-      : 'border border-amber-500/20 bg-slate-950/78 text-white hover:bg-slate-950';
+      : 'border border-amber-500/20 bg-slate-950/78 text-white hover:bg-slate-950'
   const reminderRows: Array<{ id: ReminderPractice; label: string }> = [
     { id: 'MORNING_IAM', label: 'I Am' },
     { id: 'EVENING_ILOVE', label: 'I Love' },
     { id: 'MEDITATION', label: 'Meditation' },
     { id: 'PRAYER', label: 'Omba (Prayer)' },
-  ];
+  ]
 
-  const normalize = (cat: string | undefined) => (cat || '').toUpperCase();
+  const normalize = (cat: string | undefined) => (cat || '').toUpperCase()
 
   const ambienceTracks = availableSoundscapes.filter((s) => {
-    const cat = normalize(s.category as string);
-    return !['MEDITATION', 'MORNING_IAM', 'EVENING_ILOVE', 'CHANT', 'OM'].includes(cat);
-  });
+    const cat = normalize(s.category as string)
+    return ![
+      'MEDITATION',
+      'MORNING_IAM',
+      'EVENING_ILOVE',
+      'CHANT',
+      'OM',
+    ].includes(cat)
+  })
 
   const iAmTracks = availableSoundscapes.filter((s) =>
-    ['MORNING_IAM', 'MUSIC', 'GENERAL'].includes(normalize(s.category as string))
-  );
+    ['MORNING_IAM', 'MUSIC', 'GENERAL'].includes(
+      normalize(s.category as string),
+    ),
+  )
 
   const iLoveTracks = availableSoundscapes.filter((s) =>
-    ['EVENING_ILOVE', 'MUSIC', 'GENERAL'].includes(normalize(s.category as string))
-  );
+    ['EVENING_ILOVE', 'MUSIC', 'GENERAL'].includes(
+      normalize(s.category as string),
+    ),
+  )
 
   const meditationTracks = availableSoundscapes.filter((s) =>
-    ['MEDITATION', 'MUSIC'].includes(normalize(s.category as string))
-  );
+    ['MEDITATION', 'MUSIC'].includes(normalize(s.category as string)),
+  )
 
   const toggleTheme = () => {
-    buttonSoundService.play('click');
-    onChangeSettings({ ...settings, theme: theme === 'light' ? 'dark' : 'light' });
-  };
-
-  const toggleSoundEffects = () => {
-    buttonSoundService.play('click');
-    onChangeSettings({ ...settings, soundEffectsOn: !settings.soundEffectsOn });
-  };
-
-  const toggleMusic = () => {
-    buttonSoundService.play('click');
-    onChangeSettings({ ...settings, musicOn: !settings.musicOn });
-  };
-
-  const updateVolume = (volume: number) => {
-    onChangeSettings({ ...settings, ambienceVolume: volume });
-  };
-
-  const updateSpecificSoundscape = (key: keyof AppSettings, id: string) => {
-    buttonSoundService.play('click');
-    onChangeSettings({ ...settings, [key]: id });
-    if (id && onPreviewSoundscape) {
-      onPreviewSoundscape(id);
-    }
-  };
-
-  const toggleReminders = () => {
-    buttonSoundService.play('click');
+    buttonSoundService.play('click')
     onChangeSettings({
       ...settings,
-      reminders: { ...settings.reminders, enabled: !settings.reminders.enabled },
-    });
-  };
+      theme: theme === 'light' ? 'dark' : 'light',
+    })
+  }
+
+  const toggleSoundEffects = () => {
+    buttonSoundService.play('click')
+    onChangeSettings({ ...settings, soundEffectsOn: !settings.soundEffectsOn })
+  }
+
+  const toggleMusic = () => {
+    buttonSoundService.play('click')
+    onChangeSettings({ ...settings, musicOn: !settings.musicOn })
+  }
+
+  const updateVolume = (volume: number) => {
+    onChangeSettings({ ...settings, ambienceVolume: volume })
+  }
+
+  const updateSpecificSoundscape = (key: keyof AppSettings, id: string) => {
+    buttonSoundService.play('click')
+    onChangeSettings({ ...settings, [key]: id })
+    if (id && onPreviewSoundscape) {
+      onPreviewSoundscape(id)
+    }
+  }
+
+  const toggleReminders = () => {
+    buttonSoundService.play('click')
+    onChangeSettings({
+      ...settings,
+      reminders: {
+        ...settings.reminders,
+        enabled: !settings.reminders.enabled,
+      },
+    })
+  }
 
   const updatePracticeReminder = (
     practice: ReminderPractice,
-    patch: Partial<{ enabled: boolean; time: string }>
+    patch: Partial<{ enabled: boolean; time: string }>,
   ) => {
-    buttonSoundService.play('click');
-    const current = settings.reminders.practiceTimes[practice];
+    buttonSoundService.play('click')
+    const current = settings.reminders.practiceTimes[practice]
     onChangeSettings({
       ...settings,
       reminders: {
@@ -160,61 +176,63 @@ export const Settings: React.FC<SettingsProps> = ({
           },
         },
       },
-    });
-  };
+    })
+  }
 
   const updateSnoozeMinutes = (minutes: 15 | 30 | 60) => {
-    buttonSoundService.play('click');
+    buttonSoundService.play('click')
     onChangeSettings({
       ...settings,
       reminders: { ...settings.reminders, snoozeMinutes: minutes },
-    });
-  };
+    })
+  }
 
   const applyDeviceTimezone = () => {
-    buttonSoundService.play('click');
-    let timezone = settings.reminders.timezone;
+    buttonSoundService.play('click')
+    let timezone = settings.reminders.timezone
     try {
-      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || timezone;
+      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || timezone
     } catch {
       // keep current timezone
     }
     onChangeSettings({
       ...settings,
       reminders: { ...settings.reminders, timezone },
-    });
-  };
+    })
+  }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    buttonSoundService.play('click');
+    buttonSoundService.play('click')
     if (e.target.files && e.target.files[0]) {
-      setUploadFile(e.target.files[0]);
+      setUploadFile(e.target.files[0])
     }
-  };
+  }
 
   const handleUploadSubmit = () => {
     if (uploadFile) {
-      buttonSoundService.play('confirm');
-      onAudioUpload(uploadFile, uploadCategory);
-      setUploadFile(null);
+      buttonSoundService.play('confirm')
+      onAudioUpload(uploadFile, uploadCategory)
+      setUploadFile(null)
     }
-  };
+  }
 
   const getSourceLabel = (s: Soundscape) => {
-    const isCloud = !isNaN(Number(s.id)) || s.url?.includes('user_');
-    return isCloud ? `${s.label} (Uploaded)` : `${s.label} (Included)`;
-  };
+    const isCloud = !isNaN(Number(s.id)) || s.url?.includes('user_')
+    return isCloud ? `${s.label} (Uploaded)` : `${s.label} (Included)`
+  }
 
   return (
-    <div className={`h-full w-full overflow-y-auto px-4 pt-4 custom-scrollbar ${textColor}`}>
+    <div
+      className={`h-full w-full overflow-y-auto px-4 pt-4 custom-scrollbar ${textColor}`}
+    >
       <div className={pageShell}>
         <div className="flex items-center justify-between">
           <button
             onClick={() => {
-              buttonSoundService.play('back');
-              onBack();
+              buttonSoundService.play('back')
+              onBack()
             }}
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] transition-colors ${
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-medium uppercase tracking-[0.22em] transition-colors ${
               theme === 'light'
                 ? 'border-amber-200/70 bg-white/85 text-slate-700 hover:bg-white'
                 : 'border-amber-500/20 bg-slate-950/70 text-slate-100 hover:bg-slate-950'
@@ -229,9 +247,12 @@ export const Settings: React.FC<SettingsProps> = ({
         <div className={sectionFrame}>
           <div className={`rounded-[24px] border p-5 shadow-lg ${cardBg}`}>
             <p className={sectionKicker}>Personalize Your Sacred Space</p>
-            <h1 className="mt-3 text-2xl font-serif font-semibold">Shape the Atmosphere Around You</h1>
+            <h1 className="mt-3 text-2xl font-serif">
+              Shape the Atmosphere Around You
+            </h1>
             <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
-              Adjust the look, sound, reminders, and support tools that hold your daily practice together.
+              Adjust the look, sound, reminders, and support tools that hold
+              your daily practice together.
             </p>
           </div>
         </div>
@@ -244,12 +265,13 @@ export const Settings: React.FC<SettingsProps> = ({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className={sectionKicker}>Visual Mode</p>
-                <h3 className="mt-2 flex items-center gap-2 text-lg font-semibold">
+                <h3 className="mt-2 flex items-center gap-2 text-lg font-medium">
                   <Palette size={18} className="text-amber-500" />
                   <span>{theme === 'light' ? 'Day Mode' : 'Night Mode'}</span>
                 </h3>
                 <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
-                  Keep the space bright and clear, or move into a deeper night atmosphere.
+                  Keep the space bright and clear, or move into a deeper night
+                  atmosphere.
                 </p>
               </div>
               <button
@@ -283,8 +305,12 @@ export const Settings: React.FC<SettingsProps> = ({
                 <Volume2 size={18} className="mt-1 text-emerald-500" />
                 <div className="flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold uppercase tracking-[0.18em]">Master Volume</span>
-                    <span className="text-xs font-bold text-amber-500">{settings.ambienceVolume}%</span>
+                    <span className="text-sm font-medium uppercase tracking-[0.18em]">
+                      Master Volume
+                    </span>
+                    <span className="text-xs font-medium text-amber-500">
+                      {settings.ambienceVolume}%
+                    </span>
                   </div>
                   <input
                     type="range"
@@ -304,13 +330,17 @@ export const Settings: React.FC<SettingsProps> = ({
                 <div className={surfaceCard}>
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold">Sound Effects</p>
-                      <p className={`mt-1 text-xs ${subTextColor}`}>Clicks, confirmations, and transitions</p>
+                      <p className="text-sm font-medium">Sound Effects</p>
+                      <p className={`mt-1 text-xs ${subTextColor}`}>
+                        Clicks, confirmations, and transitions
+                      </p>
                     </div>
                     <button
                       onClick={toggleSoundEffects}
                       className={`relative h-7 w-12 rounded-full transition-colors ${
-                        settings.soundEffectsOn ? 'bg-amber-500' : 'bg-slate-500'
+                        settings.soundEffectsOn
+                          ? 'bg-amber-500'
+                          : 'bg-slate-500'
                       }`}
                     >
                       <div
@@ -325,8 +355,10 @@ export const Settings: React.FC<SettingsProps> = ({
                 <div className={surfaceCard}>
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold">Music</p>
-                      <p className={`mt-1 text-xs ${subTextColor}`}>Background tracks during practice</p>
+                      <p className="text-sm font-medium">Music</p>
+                      <p className={`mt-1 text-xs ${subTextColor}`}>
+                        Background tracks during practice
+                      </p>
                     </div>
                     <button
                       onClick={toggleMusic}
@@ -354,7 +386,9 @@ export const Settings: React.FC<SettingsProps> = ({
                   </label>
                   <select
                     value={settings.soundscapeId}
-                    onChange={(e) => updateSpecificSoundscape('soundscapeId', e.target.value)}
+                    onChange={(e) =>
+                      updateSpecificSoundscape('soundscapeId', e.target.value)
+                    }
                     className={`mt-2 w-full rounded-full border px-3 py-2 text-sm ${inputBg}`}
                   >
                     <option value="">Select Ambience</option>
@@ -372,7 +406,12 @@ export const Settings: React.FC<SettingsProps> = ({
                   </label>
                   <select
                     value={settings.iAmSoundscapeId}
-                    onChange={(e) => updateSpecificSoundscape('iAmSoundscapeId', e.target.value)}
+                    onChange={(e) =>
+                      updateSpecificSoundscape(
+                        'iAmSoundscapeId',
+                        e.target.value,
+                      )
+                    }
                     className={`mt-2 w-full rounded-full border px-3 py-2 text-sm ${inputBg}`}
                   >
                     <option value="">Use Default</option>
@@ -390,7 +429,12 @@ export const Settings: React.FC<SettingsProps> = ({
                   </label>
                   <select
                     value={settings.iLoveSoundscapeId}
-                    onChange={(e) => updateSpecificSoundscape('iLoveSoundscapeId', e.target.value)}
+                    onChange={(e) =>
+                      updateSpecificSoundscape(
+                        'iLoveSoundscapeId',
+                        e.target.value,
+                      )
+                    }
                     className={`mt-2 w-full rounded-full border px-3 py-2 text-sm ${inputBg}`}
                   >
                     <option value="">Use Default</option>
@@ -408,7 +452,12 @@ export const Settings: React.FC<SettingsProps> = ({
                   </label>
                   <select
                     value={settings.meditationSoundscapeId}
-                    onChange={(e) => updateSpecificSoundscape('meditationSoundscapeId', e.target.value)}
+                    onChange={(e) =>
+                      updateSpecificSoundscape(
+                        'meditationSoundscapeId',
+                        e.target.value,
+                      )
+                    }
                     className={`mt-2 w-full rounded-full border px-3 py-2 text-sm ${inputBg}`}
                   >
                     <option value="">Use Default</option>
@@ -426,12 +475,17 @@ export const Settings: React.FC<SettingsProps> = ({
               <p className={sectionKicker}>Upload Your Music</p>
               <div className="mt-4 space-y-4">
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {['MORNING_IAM', 'EVENING_ILOVE', 'MEDITATION', 'AMBIENCE'].map((cat) => (
+                  {[
+                    'MORNING_IAM',
+                    'EVENING_ILOVE',
+                    'MEDITATION',
+                    'AMBIENCE',
+                  ].map((cat) => (
                     <button
                       key={cat}
                       onClick={() => {
-                        buttonSoundService.play('click');
-                        setUploadCategory(cat);
+                        buttonSoundService.play('click')
+                        setUploadCategory(cat)
                       }}
                       className={`rounded-full border px-2 py-2 text-[10px] font-extrabold uppercase tracking-[0.18em] transition-colors ${
                         uploadCategory === cat
@@ -460,12 +514,22 @@ export const Settings: React.FC<SettingsProps> = ({
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Music size={18} className={uploadFile ? 'text-emerald-400' : 'text-amber-500'} />
+                    <Music
+                      size={18}
+                      className={
+                        uploadFile ? 'text-emerald-400' : 'text-amber-500'
+                      }
+                    />
                     <span className="text-sm font-medium">
                       {uploadFile ? uploadFile.name : 'Choose audio file'}
                     </span>
                   </div>
-                  <input type="file" accept="audio/*" onChange={handleFileSelect} className="hidden" />
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
                   <span className={`text-xs ${subTextColor}`}>Browse</span>
                 </label>
 
@@ -481,8 +545,12 @@ export const Settings: React.FC<SettingsProps> = ({
 
                 {userAudioFile ? (
                   <div className={surfaceCard}>
-                    <p className="text-sm font-semibold">Current uploaded track</p>
-                    <p className={`mt-1 text-xs ${subTextColor}`}>{userAudioFile.name}</p>
+                    <p className="text-sm font-medium">
+                      Current uploaded track
+                    </p>
+                    <p className={`mt-1 text-xs ${subTextColor}`}>
+                      {userAudioFile.name}
+                    </p>
                   </div>
                 ) : null}
               </div>
@@ -513,7 +581,8 @@ export const Settings: React.FC<SettingsProps> = ({
               <div>
                 <p className={sectionKicker}>Gentle Structure</p>
                 <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
-                  Set times for each practice and let your browser support the rhythm of your day.
+                  Set times for each practice and let your browser support the
+                  rhythm of your day.
                 </p>
               </div>
             </div>
@@ -521,12 +590,16 @@ export const Settings: React.FC<SettingsProps> = ({
             {settings.reminders.enabled ? (
               <div className="mt-4 space-y-3">
                 <div className={surfaceCard}>
-                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-500">Timezone</p>
+                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-500">
+                    Timezone
+                  </p>
                   <div className="mt-3 flex items-center justify-between gap-3">
-                    <p className={`text-sm break-all ${subTextColor}`}>{settings.reminders.timezone}</p>
+                    <p className={`text-sm break-all ${subTextColor}`}>
+                      {settings.reminders.timezone}
+                    </p>
                     <button
                       onClick={applyDeviceTimezone}
-                      className={`rounded-full border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] ${actionRow}`}
+                      className={`rounded-full border px-3 py-2 text-[11px] font-medium uppercase tracking-[0.18em] ${actionRow}`}
                     >
                       Use Device
                     </button>
@@ -539,13 +612,23 @@ export const Settings: React.FC<SettingsProps> = ({
                   </p>
                   <div className="mt-3 space-y-3">
                     {reminderRows.map((row) => {
-                      const rowSetting = settings.reminders.practiceTimes[row.id];
+                      const rowSetting =
+                        settings.reminders.practiceTimes[row.id]
                       return (
-                        <div key={row.id} className="flex items-center gap-3 rounded-[18px] border border-amber-200/25 p-3">
+                        <div
+                          key={row.id}
+                          className="flex items-center gap-3 rounded-[18px] border border-amber-200/25 p-3"
+                        >
                           <button
-                            onClick={() => updatePracticeReminder(row.id, { enabled: !rowSetting.enabled })}
+                            onClick={() =>
+                              updatePracticeReminder(row.id, {
+                                enabled: !rowSetting.enabled,
+                              })
+                            }
                             className={`relative h-6 w-11 rounded-full transition-colors ${
-                              rowSetting.enabled ? 'bg-amber-500' : 'bg-slate-500'
+                              rowSetting.enabled
+                                ? 'bg-amber-500'
+                                : 'bg-slate-500'
                             }`}
                           >
                             <div
@@ -555,17 +638,21 @@ export const Settings: React.FC<SettingsProps> = ({
                             />
                           </button>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold">{row.label}</p>
+                            <p className="text-sm font-medium">{row.label}</p>
                           </div>
                           <input
                             type="time"
                             value={rowSetting.time}
-                            onChange={(e) => updatePracticeReminder(row.id, { time: e.target.value })}
+                            onChange={(e) =>
+                              updatePracticeReminder(row.id, {
+                                time: e.target.value,
+                              })
+                            }
                             disabled={!rowSetting.enabled}
                             className={`rounded-full border px-3 py-2 text-xs ${rowSetting.enabled ? inputBg : 'border-slate-700 bg-slate-800/60 text-slate-500'}`}
                           />
                         </div>
-                      );
+                      )
                     })}
                   </div>
                 </div>
@@ -578,7 +665,9 @@ export const Settings: React.FC<SettingsProps> = ({
                     {[15, 30, 60].map((minutes) => (
                       <button
                         key={minutes}
-                        onClick={() => updateSnoozeMinutes(minutes as 15 | 30 | 60)}
+                        onClick={() =>
+                          updateSnoozeMinutes(minutes as 15 | 30 | 60)
+                        }
                         className={`flex-1 rounded-full border px-3 py-2 text-xs font-extrabold uppercase tracking-[0.18em] transition-colors ${
                           settings.reminders.snoozeMinutes === minutes
                             ? 'border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 text-slate-950'
@@ -596,32 +685,40 @@ export const Settings: React.FC<SettingsProps> = ({
                     Notification Permission
                   </p>
                   <p className={`mt-2 text-sm ${subTextColor}`}>
-                    {settings.reminders.notificationPermission === 'granted' && 'Allowed'}
-                    {settings.reminders.notificationPermission === 'default' && 'Not requested yet'}
-                    {settings.reminders.notificationPermission === 'denied' && 'Blocked in browser or device settings'}
-                    {settings.reminders.notificationPermission === 'unsupported' && 'Not supported on this device or browser'}
+                    {settings.reminders.notificationPermission === 'granted' &&
+                      'Allowed'}
+                    {settings.reminders.notificationPermission === 'default' &&
+                      'Not requested yet'}
+                    {settings.reminders.notificationPermission === 'denied' &&
+                      'Blocked in browser or device settings'}
+                    {settings.reminders.notificationPermission ===
+                      'unsupported' &&
+                      'Not supported on this device or browser'}
                   </p>
                   {settings.reminders.notificationPermission !== 'granted' &&
-                  settings.reminders.notificationPermission !== 'unsupported' ? (
+                  settings.reminders.notificationPermission !==
+                    'unsupported' ? (
                     <button
                       onClick={() => {
-                        buttonSoundService.play('click');
-                        onRequestReminderPermission?.();
+                        buttonSoundService.play('click')
+                        onRequestReminderPermission?.()
                       }}
-                      className={`mt-3 rounded-full border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] ${actionRow}`}
+                      className={`mt-3 rounded-full border px-3 py-2 text-[11px] font-medium uppercase tracking-[0.18em] ${actionRow}`}
                     >
                       Request Permission
                     </button>
                   ) : null}
                   <p className={`mt-3 text-xs ${subTextColor}`}>
-                    Reminders stay aligned with your local timezone and each practice schedule.
+                    Reminders stay aligned with your local timezone and each
+                    practice schedule.
                   </p>
                 </div>
               </div>
             ) : (
               <div className={`${surfaceCard} mt-4`}>
                 <p className={`text-sm leading-relaxed ${subTextColor}`}>
-                  Turn reminders on when you want the app to gently call you back into practice.
+                  Turn reminders on when you want the app to gently call you
+                  back into practice.
                 </p>
               </div>
             )}
@@ -632,49 +729,57 @@ export const Settings: React.FC<SettingsProps> = ({
           <div className="px-1">
             <h2 className={titlePill}>Actions</h2>
           </div>
-          <div className={`mt-3 rounded-[24px] border p-5 shadow-lg ${actionCardBg}`}>
+          <div
+            className={`mt-3 rounded-[24px] border p-5 shadow-lg ${actionCardBg}`}
+          >
             <div className="space-y-3">
               <button
                 onClick={() => {
-                  buttonSoundService.play('click');
-                  onChangeFocus();
+                  buttonSoundService.play('click')
+                  onChangeFocus()
                 }}
                 className="flex w-full items-center justify-between rounded-[20px] border border-amber-500/25 bg-amber-500/10 px-4 py-3 transition-colors hover:bg-amber-500/18"
               >
-                <span className="text-sm font-semibold text-amber-300">Change Focus Area</span>
+                <span className="text-sm font-medium text-amber-300">
+                  Change Focus Area
+                </span>
                 <RefreshCw size={16} className="text-amber-300" />
               </button>
 
               <button
                 onClick={() => {
-                  buttonSoundService.play('click');
-                  onReplayWelcomeInvocation();
+                  buttonSoundService.play('click')
+                  onReplayWelcomeInvocation()
                 }}
                 className={`flex w-full items-center justify-between rounded-[20px] px-4 py-3 transition-colors ${actionRow}`}
               >
-                <span className="text-sm font-semibold">Replay Welcome Invocation</span>
+                <span className="text-sm font-medium">
+                  Replay Welcome Invocation
+                </span>
                 <Music size={16} />
               </button>
 
               <button
                 onClick={() => {
-                  buttonSoundService.play('click');
-                  onReplayTutorial();
+                  buttonSoundService.play('click')
+                  onReplayTutorial()
                 }}
                 className={`flex w-full items-center justify-between rounded-[20px] px-4 py-3 transition-colors ${actionRow}`}
               >
-                <span className="text-sm font-semibold">Replay Tutorial</span>
+                <span className="text-sm font-medium">Replay Tutorial</span>
                 <RefreshCw size={16} />
               </button>
 
               <button
                 onClick={() => {
-                  buttonSoundService.play('back');
-                  onSignOut();
+                  buttonSoundService.play('back')
+                  onSignOut()
                 }}
                 className="flex w-full items-center justify-between rounded-[20px] border border-red-500/25 bg-red-500/10 px-4 py-3 transition-colors hover:bg-red-500/18"
               >
-                <span className="text-sm font-semibold text-red-300">Sign Out</span>
+                <span className="text-sm font-medium text-red-300">
+                  Sign Out
+                </span>
                 <LogOut size={16} className="text-red-300" />
               </button>
             </div>
@@ -682,17 +787,18 @@ export const Settings: React.FC<SettingsProps> = ({
         </div>
 
         <div className={sectionFrame}>
-          <div className={`rounded-[24px] border p-5 text-center shadow-lg ${cardBg}`}>
+          <div
+            className={`rounded-[24px] border p-5 text-center shadow-lg ${cardBg}`}
+          >
             <p className={`text-xs leading-relaxed ${subTextColor}`}>
               Abundance Alchemy v1.0.0
               <br />
               Based on "I Am Practice" by Michael Soaries
-              <br />
-              © 2024 Abundant Thought - Michael Soaries
+              <br />© 2024 Abundant Thought - Michael Soaries
             </p>
           </div>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

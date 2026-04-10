@@ -12,11 +12,11 @@ if ($email === '' || $password === '') {
 }
 
 try {
-    $userCols = aa_table_columns($pdo, 'users');
+    $userCols = aa_table_columns($conn, 'users');
     $lastPracticeSelect = aa_has_col($userCols, 'last_practice_date')
         ? ', last_practice_date'
         : ', NULL AS last_practice_date';
-    $stmt = $pdo->prepare("
+    $stmt = $conn->prepare("
         SELECT id, name, email, password_hash, level, streak, focus_area, affirmations_completed{$lastPracticeSelect}
         FROM users
         WHERE email = ?
@@ -29,7 +29,7 @@ try {
         aa_error_response('Invalid email or password', 401);
     }
 
-    $update = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
+    $update = $conn->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
     $update->execute([$user['id']]);
 
     session_regenerate_id(true);

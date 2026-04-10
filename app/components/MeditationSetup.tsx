@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Clock, Music, Loader, PlayCircle } from 'lucide-react';
-import { PracticeType, Soundscape, PracticeSessionConfig } from '../types';
-import { apiService } from '../services/apiService';
-import { audioManager } from '../services/audioManager';
-import { buttonSoundService } from '../services/buttonSoundService';
-import { href } from '../services/base';
+import React, { useState, useEffect } from 'react'
+import { Clock, Music, Loader, PlayCircle } from 'lucide-react'
+import { PracticeType, Soundscape, PracticeSessionConfig } from '../types'
+import { apiService } from '../services/apiService'
+import { audioManager } from '../services/audioManager'
+import { buttonSoundService } from '../services/buttonSoundService'
+import { href } from '../services/base'
 import {
   INNER_PAGE_SHELL,
   INNER_PRIMARY_BUTTON,
@@ -14,18 +14,17 @@ import {
   innerSectionFrame,
   innerSectionKicker,
   innerSecondaryButton,
-  innerSurfaceCard,
-} from '../styles/sacredInnerScreen';
+} from '../styles/sacredInnerScreen'
 
 interface MeditationSetupProps {
-  onBack: () => void;
-  onBegin: (config: PracticeSessionConfig) => void;
-  theme: 'light' | 'dark';
-  availableSoundscapes: Soundscape[];
-  initialDuration?: number;
+  onBack: () => void
+  onBegin: (config: PracticeSessionConfig) => void
+  theme: 'light' | 'dark'
+  availableSoundscapes: Soundscape[]
+  initialDuration?: number
 }
 
-const DURATIONS = [1, 5, 15, 30, 60];
+const DURATIONS = [1, 5, 15, 30, 60]
 
 export const MeditationSetup: React.FC<MeditationSetupProps> = ({
   onBack,
@@ -34,93 +33,99 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
   availableSoundscapes,
   initialDuration = 15,
 }) => {
-  const meditationCompanionHref = href('companion-pages/meditation.html');
-  const [duration, setDuration] = useState(initialDuration);
-  const [showCustomTime, setShowCustomTime] = useState(false);
-  const [selectedSound, setSelectedSound] = useState<Soundscape | null>(null);
-  const [meditationTracks, setMeditationTracks] = useState<Soundscape[]>([]);
-  const [loading, setLoading] = useState(true);
+  const meditationCompanionHref = href('companion-pages/meditation.html')
+  const [duration, setDuration] = useState(initialDuration)
+  const [showCustomTime, setShowCustomTime] = useState(false)
+  const [selectedSound, setSelectedSound] = useState<Soundscape | null>(null)
+  const [meditationTracks, setMeditationTracks] = useState<Soundscape[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
-  const pageShell = INNER_PAGE_SHELL;
-  const sectionFrame = innerSectionFrame(theme);
-  const heroCard = innerHeroCard(theme);
-  const surfaceCard = innerSurfaceCard(theme);
-  const sectionKicker = innerSectionKicker(theme);
-  const backButton = innerBackButton(theme);
-  const secondaryButton = innerSecondaryButton(theme);
+  const textColor = theme === 'light' ? 'text-slate-700' : 'text-white'
+  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-300'
+  const pageShell = INNER_PAGE_SHELL
+  const sectionFrame = innerSectionFrame(theme)
+  const heroCard = innerHeroCard(theme)
+  const sectionKicker = innerSectionKicker(theme)
+  const backButton = innerBackButton(theme)
+  const secondaryButton = innerSecondaryButton(theme)
+  const companionButton = secondaryButton.replace('w-full ', '')
   const meditationGlassCard =
-    'rounded-[22px] border border-white/12 bg-slate-950/78 p-4 text-white shadow-[0_22px_44px_rgba(0,0,0,0.32)] backdrop-blur-xl';
+    theme === 'light'
+      ? 'rounded-[22px] bg-gradient-to-br from-emerald-50/40 to-white/80 border border-emerald-200/30 p-4 shadow-[0_8px_24px_rgba(16,140,100,0.12)]'
+      : 'rounded-[22px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-4 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
   const meditationGlassButton =
-    'rounded-[18px] border border-white/14 bg-white/8 text-white transition-colors hover:bg-white/12';
+    theme === 'light'
+      ? 'rounded-[18px] border border-emerald-200/50 bg-white/70 text-slate-800 transition-colors hover:bg-emerald-50/50'
+      : 'rounded-[18px] border border-white/14 bg-white/8 text-white transition-colors hover:bg-white/12'
 
   useEffect(() => {
-    let mounted = true;
+    let mounted = true
     const fetchTracks = async () => {
       try {
-        const tracks = await apiService.getMeditationTracks();
+        const tracks = await apiService.getMeditationTracks()
 
         if (mounted) {
           if (tracks && tracks.length > 0) {
-            setMeditationTracks(tracks);
-            setSelectedSound(tracks[0]);
+            setMeditationTracks(tracks)
+            setSelectedSound(tracks[0])
           } else {
-            const fallbacks = availableSoundscapes || [];
-            setMeditationTracks(fallbacks);
-            setSelectedSound(fallbacks[0] || null);
+            const fallbacks = availableSoundscapes || []
+            setMeditationTracks(fallbacks)
+            setSelectedSound(fallbacks[0] || null)
           }
         }
       } catch (error) {
-        console.error('Error loading meditation tracks:', error);
+        console.error('Error loading meditation tracks:', error)
         if (mounted) {
-          const fallbacks = availableSoundscapes || [];
-          setMeditationTracks(fallbacks);
-          setSelectedSound(fallbacks[0] || null);
+          const fallbacks = availableSoundscapes || []
+          setMeditationTracks(fallbacks)
+          setSelectedSound(fallbacks[0] || null)
         }
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) setLoading(false)
       }
-    };
+    }
 
-    fetchTracks();
+    fetchTracks()
     return () => {
-      mounted = false;
-    };
-  }, [availableSoundscapes]);
+      mounted = false
+    }
+  }, [availableSoundscapes])
 
   const handleSoundSelect = (sound: Soundscape) => {
-    buttonSoundService.play('click');
-    setSelectedSound(sound);
-    audioManager.previewSoundscape(sound);
-  };
+    buttonSoundService.play('click')
+    setSelectedSound(sound)
+    audioManager.previewSoundscape(sound)
+  }
 
   const handleBegin = () => {
-    if (!selectedSound) return;
-    
-    buttonSoundService.play('confirm');
+    if (!selectedSound) return
+
+    buttonSoundService.play('confirm')
     onBegin({
       type: PracticeType.MEDITATION,
       duration,
       soundscape: selectedSound,
       focusAreas: [],
-    });
-  };
+    })
+  }
 
   return (
-    <div className={`h-full w-full overflow-y-auto px-4 pt-4 pb-8 custom-scrollbar ${textColor}`}>
+    <div
+      className={`h-full w-full overflow-y-auto px-4 pt-4 pb-8 custom-scrollbar ${textColor}`}
+    >
       <div className={pageShell}>
         <div className="flex items-center justify-between">
-        <button
-          onClick={() => {
-            buttonSoundService.play('back');
-            onBack();
-          }}
-          className={backButton}
-        >
-          <span>←</span>
-          <span className="font-semibold tracking-wide uppercase">Back</span>
-        </button>
+          <button
+            onClick={() => {
+              buttonSoundService.play('back')
+              onBack()
+            }}
+            className={backButton}
+          >
+            <span>←</span>
+            <span className="font-semibold tracking-wide uppercase">Back</span>
+          </button>
           <span className={INNER_TITLE_PILL}>Meditation Setup</span>
         </div>
 
@@ -132,7 +137,9 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
                 <Clock className="text-emerald-400" size={18} />
               </div>
               <div>
-                <h1 className="text-2xl font-serif font-semibold">Choose Your Duration</h1>
+                <h1 className="text-2xl font-serif font-semibold">
+                  Choose Your Duration
+                </h1>
                 <p className={`mt-1 text-sm ${subTextColor}`}>
                   Set the rhythm and the atmosphere before you begin.
                 </p>
@@ -151,12 +158,12 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
                     <button
                       key={d}
                       onClick={() => {
-                        buttonSoundService.play('click');
-                        setDuration(d);
+                        buttonSoundService.play('click')
+                        setDuration(d)
                       }}
                       className={`h-11 text-xs font-semibold ${
                         duration === d
-                          ? 'rounded-[18px] border border-amber-400/80 bg-amber-500/12 text-amber-200'
+                          ? 'rounded-[18px] border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)]'
                           : meditationGlassButton
                       }`}
                     >
@@ -167,10 +174,10 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    buttonSoundService.play('click');
-                    setShowCustomTime(true);
+                    buttonSoundService.play('click')
+                    setShowCustomTime(true)
                   }}
-                  className="text-left text-[11px] text-white underline transition-colors hover:text-amber-100"
+                  className="mx-auto block text-center text-xs font-semibold tracking-[0.04em] text-amber-100 underline decoration-amber-200/70 underline-offset-4 transition-colors hover:text-white"
                 >
                   Prefer a custom timer? Choose your own meditation length.
                 </button>
@@ -179,7 +186,9 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-white">Custom duration</span>
-                  <span className="font-bold text-amber-400">{duration} min</span>
+                  <span className="font-bold text-amber-400">
+                    {duration} min
+                  </span>
                 </div>
                 <input
                   type="range"
@@ -193,8 +202,8 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    buttonSoundService.play('back');
-                    setShowCustomTime(false);
+                    buttonSoundService.play('back')
+                    setShowCustomTime(false)
                   }}
                   className={`${meditationGlassButton} w-full px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em]`}
                 >
@@ -211,21 +220,23 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
               <Music className="text-emerald-400" size={18} />
               <div>
                 <p className={sectionKicker}>Soundscape</p>
-                <h2 className="mt-1 text-lg font-semibold text-white">Choose the Atmosphere</h2>
+                <h2 className="mt-1 text-lg font-semibold text-white">
+                  Choose the Atmosphere
+                </h2>
               </div>
             </div>
 
             {loading ? (
               <div className="flex min-h-[140px] flex-col items-center justify-center space-y-2">
                 <Loader className="animate-spin text-amber-400" size={24} />
-                <p className="text-xs text-white">Loading tracks...</p>
+                <p className={`text-xs ${textColor}`}>Loading tracks...</p>
               </div>
             ) : (
               <div className="max-h-[280px] space-y-2 overflow-y-auto custom-scrollbar">
                 {meditationTracks.length === 0 ? (
                   <div className="flex min-h-[140px] flex-col items-center justify-center space-y-2 rounded-[18px] border border-dashed border-amber-500/20 text-center">
                     <Music className="text-slate-500" size={32} />
-                    <p className="text-sm text-white">No tracks found</p>
+                    <p className={`text-sm ${textColor}`}>No tracks found</p>
                   </div>
                 ) : (
                   meditationTracks.map((s) => (
@@ -234,12 +245,16 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
                       onClick={() => handleSoundSelect(s)}
                       className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm ${
                         selectedSound?.id === s.id
-                          ? 'rounded-[18px] border border-emerald-400/55 bg-emerald-500/12 text-white'
+                          ? theme === 'light'
+                            ? 'rounded-[18px] border border-emerald-400/55 bg-emerald-100 text-emerald-800'
+                            : 'rounded-[18px] border border-emerald-400/55 bg-emerald-500/12 text-white'
                           : meditationGlassButton
                       }`}
                     >
                       <span className="truncate font-medium">{s.label}</span>
-                      {selectedSound?.id === s.id ? <PlayCircle size={14} className="animate-pulse" /> : null}
+                      {selectedSound?.id === s.id ? (
+                        <PlayCircle size={14} className="animate-pulse" />
+                      ) : null}
                     </button>
                   ))
                 )}
@@ -250,17 +265,11 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
 
         <div className={sectionFrame}>
           <div className={`${meditationGlassCard} space-y-3`}>
-            <p className="text-center text-[11px] leading-relaxed text-white">
+            <p
+              className={`text-center text-[11px] leading-relaxed ${textColor}`}
+            >
               Set your intention, then breathe with the visual rhythm.
             </p>
-            <a
-              href={meditationCompanionHref}
-              target="_blank"
-              rel="noreferrer"
-              className={`${secondaryButton} block text-center`}
-            >
-              Open Meditation Companion Page
-            </a>
             <button
               onClick={handleBegin}
               disabled={!selectedSound || loading}
@@ -268,9 +277,17 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
             >
               Begin {duration} Minute Meditation
             </button>
+            <a
+              href={meditationCompanionHref}
+              target="_blank"
+              rel="noreferrer"
+              className={`${companionButton} mx-auto inline-flex items-center justify-center px-4 py-2 text-[10px] tracking-[0.14em]`}
+            >
+              Open Meditation Companion Page
+            </a>
           </div>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

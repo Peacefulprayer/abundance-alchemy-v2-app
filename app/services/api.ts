@@ -1,23 +1,25 @@
-import { Affirmation, PrayerContent, PracticeType, Soundscape, UserPrayer } from '../types';
-
-export type BackgroundMap = Record<string, { imageUrl: string; creatorName?: string }>;
-
-export type MeUser = {
-  id: number;
-  name: string;
-  email: string;
-  streak: number;
-  level: number;
-  focusAreas: string[];
-  affirmationsCompleted: number;
-};
-
-export type MeditationTrack = Record<string, any>;
-type AddAffirmationResponse = { success: boolean; id: string | number; message?: string };
-type DeleteAffirmationResponse = { success: boolean; deleted?: boolean };
-type RandomAffirmationResponse = { text?: string };
-type AddPrayerResponse = { success: boolean; id: string | number; message?: string };
-type DeletePrayerResponse = { success: boolean; deleted?: boolean };
+import { PrayerContent, PracticeType } from '../types';
+import type {
+  AddAffirmationResponse,
+  AddPrayerResponse,
+  Affirmation,
+  AiCopyResponse,
+  BackgroundMap,
+  DeleteAffirmationResponse,
+  DeletePrayerResponse,
+  LoginResponse,
+  MeUser,
+  RandomAffirmationResponse,
+  RegisterResponse,
+  RequestPasswordResetResponse,
+  Soundscape,
+  UpdateProgressResponse,
+  UploadUserAudioResponse,
+  UserAffirmationRow,
+  UserPrayer,
+  UserPrayerRow,
+  LogoutResponse,
+} from '../types/api';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy-api';
@@ -166,20 +168,20 @@ export const api = {
 
   // Maps to your ACTUAL PHP files
   login: (email: string, password?: string) => 
-    client<MeUser>('login.php', { body: { email, password } }),
+    client<LoginResponse>('login.php', { body: { email, password } }),
 
   // CHANGED: signup.php -> register.php to match your file
   register: (name: string, email: string, password?: string) => 
-    client<MeUser>('register.php', { body: { name, email, password } }),
+    client<RegisterResponse>('register.php', { body: { name, email, password } }),
 
   requestPasswordReset: (email: string) =>
-    client<{ message?: string }>('request-password-reset.php', {
+    client<RequestPasswordResetResponse>('request-password-reset.php', {
       body: { email },
       method: 'POST',
     }),
 
   updateProgress: (payload: { userId: string | number; type: string; duration?: number; itemId?: string }) => 
-    client<{ ok: boolean }>('sync-progress.php', { body: payload }),
+    client<UpdateProgressResponse>('sync-progress.php', { body: payload }),
 
   getSoundscapes: (email?: string) => client<Soundscape[]>('get-soundscapes.php' + (email ? `?email=${encodeURIComponent(email)}` : '')),
 
@@ -187,8 +189,8 @@ export const api = {
     client<PrayerContent>(`get-prayer-content.php?path=${encodeURIComponent(pathId)}`),
 
   getUserPrayers: async (pathId: string): Promise<UserPrayer[]> => {
-    const rows = await client<any[]>(`get-user-prayers.php?path=${encodeURIComponent(pathId)}`);
-    return (rows || []).map((item: any) => ({
+    const rows = await client<UserPrayerRow[]>(`get-user-prayers.php?path=${encodeURIComponent(pathId)}`);
+    return (rows || []).map((item: UserPrayerRow) => ({
       id: String(item.id),
       path_key: String(item.path_key ?? pathId),
       title: String(item.title ?? ''),
@@ -227,9 +229,20 @@ export const api = {
     return typeof data?.text === 'string' && data.text.trim() ? data.text.trim() : null;
   },
 
+  generateAiCopy: (
+    payload:
+      | { type: 'alchemist_wisdom' }
+      | { type: 'meditation_wisdom'; focusArea?: string }
+      | { type: 'personalized_affirmation'; focusArea?: string; practiceType: 'MORNING_IAM' | 'EVENING_ILOVE' }
+  ) =>
+    client<AiCopyResponse>('generate-ai-copy.php', {
+      body: payload,
+      method: 'POST',
+    }),
+
   getUserAffirmations: async (): Promise<Affirmation[]> => {
-    const rows = await client<any[]>('get-user-affirmations.php');
-    return (rows || []).map((item: any) => ({
+    const rows = await client<UserAffirmationRow[]>('get-user-affirmations.php');
+    return (rows || []).map((item: UserAffirmationRow) => ({
       id: String(item.id),
       text: String(item.text ?? ''),
       type: item.type as PracticeType,
@@ -252,12 +265,12 @@ export const api = {
     const formData = new FormData();
     formData.append('audio_file', file);
     formData.append('category', category);
-    return client<{ url: string }>('user-upload-audio.php', { body: formData });
+    return client<UploadUserAudioResponse>('user-upload-audio.php', { body: formData });
   },
 
   syncProgress: (data: any) => client('sync-progress.php', { body: data }),
 
-  logout: () => client<{ success: boolean }>('logout.php', { method: 'POST' }),
+  logout: () => client<LogoutResponse>('logout.php', { method: 'POST' }),
 };
 
 // ALIAS for backward compatibility with your App.tsx
