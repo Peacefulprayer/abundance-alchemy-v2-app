@@ -77,6 +77,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const [isLoadingContent, setIsLoadingContent] = useState(true)
   const [volume, setVolume] = useState(50)
   const [isMuted, setIsMuted] = useState(false)
+  const [affirmationCount, setAffirmationCount] = useState(1)
 
   const audioInitialized = useRef(false)
   const isAdvancingRef = useRef(false)
@@ -119,6 +120,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   const loadSessionContent = async () => {
     setIsLoadingContent(true)
+    setAffirmationCount(1)
     recentAffirmationsRef.current = []
 
     const focusAreaRaw = config.focusAreas?.[0] || 'General'
@@ -219,6 +221,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
       if (nextAffirmation) {
         setCurrentAffirmation(nextAffirmation)
+        setAffirmationCount((c) => c + 1)
         recentAffirmationsRef.current = [
           ...recentAffirmationsRef.current,
           normalizeAffirmation(nextAffirmation),
@@ -248,6 +251,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
         const pickedText = fallbackQueue[pickedIndex]
         setFallbackIndex(pickedIndex)
         setCurrentAffirmation(pickedText)
+        setAffirmationCount((c) => c + 1)
         recentAffirmationsRef.current = [
           ...recentAffirmationsRef.current,
           normalizeAffirmation(pickedText),
@@ -328,8 +332,18 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const inputBg = innerInputBg(theme)
   const sectionKicker = innerSectionKicker(theme)
   const secondaryButton = innerSecondaryButton(theme)
-  const practiceGlassCard =
-    'rounded-[22px] border border-white/12 bg-slate-950/78 p-4 text-white shadow-[0_22px_44px_rgba(0,0,0,0.32)] backdrop-blur-xl'
+
+  const getPracticeCardClass = () => {
+    if (isMeditation) {
+      return 'rounded-[22px] border p-4 shadow-[0_22px_44px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-700 bg-gradient-to-br from-emerald-600 to-emerald-800 border-emerald-400/30 text-white'
+    }
+    if (isMorning) {
+      return 'rounded-[22px] border p-4 shadow-[0_22px_44px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-700 bg-gradient-to-br from-amber-400 to-orange-500 border-amber-500/50 text-slate-900 shadow-lg shadow-amber-500/30'
+    }
+    return 'rounded-[22px] border p-4 shadow-[0_22px_44px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-700 bg-gradient-to-br from-yellow-200 to-amber-300 border-amber-400/50 text-slate-900 shadow-lg shadow-amber-500/30'
+  }
+
+  const practiceCard = getPracticeCardClass()
   const practiceGlassControl =
     'inline-flex items-center justify-center rounded-full border border-white/14 bg-white/8 text-white transition-colors hover:bg-white/12'
   const practiceLabel = isMeditation
@@ -337,48 +351,35 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     : isMorning
       ? 'I Am Practice'
       : 'I Love Practice'
-  const practiceSubtitle = isMeditation
-    ? 'Let the stillness settle around your breath and attention.'
-    : isMorning
-      ? 'Speak with certainty and let the words reshape your inner state.'
-      : 'Move slowly, receive the words, and let gratitude lead the tone.'
   const accent = isMeditation
     ? {
         icon: 'text-emerald-400',
         softBorder:
           theme === 'light'
-            ? 'border-emerald-300/60 bg-emerald-100/80 text-emerald-950'
-            : 'border-emerald-400/35 bg-emerald-500/12 text-emerald-100',
-        stops: ['#34d399', '#10b981'],
+            ? 'border-emerald-400/70 bg-emerald-200/80 text-emerald-900'
+            : 'border-emerald-400/50 bg-emerald-500/25 text-emerald-100',
+        stops: ['#34d399', '#059669'],
+        textColor: 'text-white',
       }
     : isMorning
       ? {
-          icon: 'text-amber-400',
+          icon: 'text-slate-800',
           softBorder:
             theme === 'light'
-              ? 'border-amber-300/60 bg-amber-100/80 text-amber-950'
-              : 'border-amber-400/35 bg-amber-500/12 text-amber-100',
-          stops: ['#fbbf24', '#f59e0b'],
+              ? 'border-amber-500/70 bg-amber-300/80 text-slate-900'
+              : 'border-slate-800/50 bg-slate-900/40 text-slate-900',
+          stops: ['#fbbf24', '#ea580c'],
+          textColor: 'text-slate-900',
         }
       : {
-          icon: 'text-rose-300',
+          icon: 'text-slate-800',
           softBorder:
             theme === 'light'
-              ? 'border-rose-300/60 bg-rose-100/80 text-rose-950'
-              : 'border-rose-400/35 bg-rose-500/12 text-rose-100',
-          stops: ['#fb7185', '#f43f5e'],
+              ? 'border-amber-400/70 bg-amber-200/80 text-slate-900'
+              : 'border-slate-800/50 bg-slate-900/40 text-slate-900',
+          stops: ['#fcd34d', '#f59e0b'],
+          textColor: 'text-slate-900',
         }
-  const progressGradientId = `practice-progress-${config.type.toLowerCase()}`
-
-  const getInstructionText = () => {
-    if (isMeditation) {
-      return 'Take 3 slow deep breaths. Release the day and all it carried. Let silence settle over you, then begin the timer when you are ready.'
-    }
-    if (isMorning) {
-      return 'Speak these affirmations out loud and rapidly. Let the vibration of your voice shift your frequency. Tap the text to advance.'
-    }
-    return 'Bring your awareness to gratitude. Speak slowly and allow each phrase to root itself in your subconscious. Tap to advance when ready.'
-  }
 
   if (showGratitude) {
     return (
@@ -455,17 +456,18 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
         </div>
 
         <div className={sectionFrame}>
-          <div className={heroCard}>
-            <p className={sectionKicker}>Sacred Session</p>
-            <h1 className="mt-3 text-2xl font-serif font-semibold">
+          <div className={`${heroCard} text-center`}>
+            <h1
+              className={`text-xl font-serif font-semibold text-center ${accent.textColor}`}
+            >
               {practiceLabel}
             </h1>
             <p
-              className={`mt-2 text-sm leading-relaxed ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}
+              className={`mt-1 text-[10px] font-medium ${accent.textColor} opacity-70`}
             >
-              {practiceSubtitle}
+              {meditationFocusLabel}
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap justify-center gap-2">
               <span
                 className={`rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] ${accent.softBorder}`}
               >
@@ -483,91 +485,60 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
                 {isRunning ? 'In Progress' : 'Ready to Begin'}
               </span>
             </div>
+            <p
+              className={`mt-3 text-[10px] leading-relaxed ${accent.textColor} opacity-80`}
+            >
+              To begin session start timer. Speak as many Affirmations aloud as
+              you can. You want to feel the vibration of your voice in your
+              body. Tap the Affirmation to advance to the next - the faster the
+              better.
+            </p>
           </div>
         </div>
 
         <div className={sectionFrame}>
-          <div className={`${practiceGlassCard} text-center`}>
-            <p className={sectionKicker}>Timer</p>
-            <div className="relative mt-4">
-              <svg
-                className="mx-auto h-32 w-32 md:h-36 md:w-36"
-                viewBox="0 0 120 120"
-              >
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="54"
-                  fill="none"
-                  stroke={
-                    theme === 'light'
-                      ? 'rgba(148,163,184,0.25)'
-                      : 'rgba(255,255,255,0.12)'
-                  }
-                  strokeWidth="4"
-                />
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="54"
-                  fill="none"
-                  stroke={`url(#${progressGradientId})`}
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 54}`}
-                  strokeDashoffset={`${2 * Math.PI * 54 * (1 - progress / 100)}`}
-                  transform="rotate(-90 60 60)"
-                  className="transition-all duration-1000"
-                />
-                <defs>
-                  <linearGradient
-                    id={progressGradientId}
-                    x1="0%"
-                    y1="0%"
-                    x2="100%"
-                    y2="100%"
-                  >
-                    <stop offset="0%" stopColor={accent.stops[0]} />
-                    <stop offset="100%" stopColor={accent.stops[1]} />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400">
-                  Remaining
-                </p>
-                <p className="mt-2 text-[2rem] font-semibold tabular-nums tracking-wider text-white md:text-[2.3rem]">
-                  {formatTime(timeLeft)}
-                </p>
-              </div>
-            </div>
-            <div className="mt-5 flex justify-center gap-3">
-              <button
-                onClick={toggleTimer}
-                className={`inline-flex h-12 w-12 items-center justify-center rounded-full border ${accent.softBorder}`}
-              >
-                {isRunning ? (
-                  <Pause size={18} className="fill-current" />
-                ) : (
-                  <Play size={18} className="fill-current" />
-                )}
-              </button>
+          <div className={`${practiceCard} text-center`}>
+            <div className="flex items-center justify-center gap-4">
               <button
                 onClick={resetTimer}
-                className={`${practiceGlassControl} h-12 w-12`}
+                className={`${practiceGlassControl} h-8 w-8`}
               >
-                <RotateCcw size={18} />
+                <RotateCcw size={14} />
+              </button>
+              <div className="flex flex-col items-center">
+                <p
+                  className={`text-[1.5rem] font-semibold tabular-nums tracking-wider ${accent.textColor}`}
+                >
+                  {formatTime(timeLeft)}
+                </p>
+                <p
+                  className={`text-[7px] font-extrabold uppercase tracking-[0.16em] ${accent.textColor} opacity-60`}
+                >
+                  Remaining
+                </p>
+              </div>
+              <button
+                onClick={toggleTimer}
+                className={`inline-flex h-10 w-10 items-center justify-center rounded-full border ${accent.softBorder}`}
+              >
+                {isRunning ? (
+                  <Pause size={16} className="fill-current" />
+                ) : (
+                  <Play size={16} className="fill-current" />
+                )}
               </button>
             </div>
-          </div>
-        </div>
-
-        <div className={sectionFrame}>
-          <div className={`${practiceGlassCard} space-y-4`}>
-            <p className={sectionKicker}>Guidance</p>
-            <p className="text-sm leading-relaxed text-white">
-              {getInstructionText()}
-            </p>
+            <div className="mt-3 mx-2">
+              <div className="h-1.5 rounded-full bg-black/20 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-1000"
+                  style={{
+                    width: `${progress}%`,
+                    background: `linear-gradient(90deg, ${accent.stops[0]}, ${accent.stops[1]})`,
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -575,13 +546,13 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
           <button
             onClick={handleNextAffirmation}
             disabled={isMeditation || isLoadingContent || isFetchingAffirmation}
-            className={`${practiceGlassCard} min-h-[180px] w-full text-left transition-all ${
+            className={`${practiceCard} min-h-[160px] w-full text-center transition-all ${
               !isMeditation ? 'active:scale-[0.99]' : ''
             }`}
           >
             <div className="flex h-full flex-col items-center justify-center text-center">
-              <p className={sectionKicker}>
-                {isMeditation ? 'Meditation Reflection' : 'Active Reflection'}
+              <p className={`${sectionKicker} ${accent.textColor}`}>
+                {isMeditation ? 'Meditation Reflection' : 'Affirmation'}
               </p>
               {isLoadingContent ? (
                 <div className="mt-6 animate-pulse text-sm text-white">
@@ -600,7 +571,12 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
               ) : (
                 <>
                   <p
-                    className="mt-5 text-base font-medium leading-relaxed text-white md:text-lg"
+                    className={`text-[9px] font-bold uppercase tracking-widest ${accent.textColor} opacity-70`}
+                  >
+                    #{affirmationCount}
+                  </p>
+                  <p
+                    className={`mt-2 text-base font-medium leading-relaxed md:text-lg ${accent.textColor} ${isRunning ? 'animate-pulse-subtle' : ''}`}
                     style={{
                       fontFamily: 'Trebuchet MS, Trebuchet, Arial, sans-serif',
                     }}
@@ -608,9 +584,9 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
                     {currentAffirmation}
                   </p>
                   {isRunning ? (
-                    <div className="mt-4 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/80">
+                    <div className="mt-3 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.22em] text-slate-700">
                       <Zap size={10} />
-                      <span>Tap for next affirmation</span>
+                      <span>Tap to advance (the faster the better) →</span>
                     </div>
                   ) : null}
                 </>
@@ -620,10 +596,14 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
         </div>
 
         <div className={sectionFrame}>
-          <div className={`${practiceGlassCard} space-y-4`}>
+          <div className={`${practiceCard} space-y-4`}>
             <div className="flex items-center justify-between gap-3">
-              <p className={sectionKicker}>Temple Sound</p>
-              <span className="truncate text-[10px] font-extrabold uppercase tracking-[0.18em] text-white">
+              <p className={`${sectionKicker} ${accent.textColor}`}>
+                Temple Sound
+              </p>
+              <span
+                className={`truncate text-[10px] font-extrabold uppercase tracking-[0.18em] ${accent.textColor}`}
+              >
                 {userAudioFile?.name || soundscape?.label}
               </span>
             </div>

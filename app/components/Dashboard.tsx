@@ -1,5 +1,5 @@
 // components/Dashboard.tsx
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   UserProfile,
   PracticeType,
@@ -22,13 +22,54 @@ import {
 } from 'lucide-react'
 import { AlchemistAvatar } from './AlchemistAvatar'
 import { ProfileImage } from './ProfileImage'
-import { apiService } from '../services/apiService'
 import { playBell } from '../services/audioService'
+import { WISDOM_QUOTES } from '../data/wisdomQuotes'
 
-// Helper to extract string from FocusArea union type
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
+interface WisdomQuote {
+  text: string
+  author: string
+  source?: string
+}
+
 const getFocusAreaLabel = (focusArea: FocusArea | undefined): string => {
-  if (!focusArea) return ''
+  if (!focusArea) return 'GENERAL'
   return typeof focusArea === 'string' ? focusArea : focusArea.label
+}
+
+const fetchWisdomFromAPI = async (
+  category: string,
+  sessionId: string,
+): Promise<WisdomQuote | null> => {
+  try {
+    const res = await fetch(
+      `${API_BASE}/api/get-wisdom.php?category=${encodeURIComponent(category)}&session_id=${encodeURIComponent(sessionId)}`,
+    )
+    if (!res.ok) throw new Error('API error')
+    return await res.json()
+  } catch {
+    return null
+  }
+}
+
+const getFallbackQuote = (category: string): WisdomQuote => {
+  const quotes = WISDOM_QUOTES.filter(
+    (q) => q.category === category || category === 'GENERAL',
+  )
+  if (quotes.length === 0) {
+    return {
+      text: 'Your thoughts are the seeds of your reality. Plant them with intention.',
+      author: 'The Abundance Alchemist',
+    }
+  }
+  const idx = Math.floor(Math.random() * quotes.length)
+  return {
+    text: quotes[idx].text,
+    author: quotes[idx].source
+      ? `${quotes[idx].author} - ${quotes[idx].source}`
+      : quotes[idx].author,
+  }
 }
 
 interface DashboardProps {
@@ -62,29 +103,66 @@ export const Dashboard: React.FC<DashboardProps> = ({
   userAudioFile,
   activeSoundscape,
 }) => {
-  const [wisdom, setWisdom] = useState(
-    'Your thoughts are the seeds of your reality. Plant them with intention.',
-  )
+  const [wisdom, setWisdom] = useState<WisdomQuote>({
+    text: 'Your thoughts are the seeds of your reality. Plant them with intention.',
+    author: 'The Abundance Alchemist',
+  })
   const [mode, setMode] = useState<PracticeType>(PracticeType.MORNING_IAM)
   const [showCustomTime, setShowCustomTime] = useState(false)
   const [customTime, setCustomTime] = useState(20)
   const [showJournal, setShowJournal] = useState(false)
   const [journalEntry, setJournalEntry] = useState('')
   const [journalStatus, setJournalStatus] = useState<string>('')
+  const [sessionId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      let id = sessionStorage.getItem('wisdom_session_id')
+      if (!id) {
+        id = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        sessionStorage.setItem('wisdom_session_id', id)
+      }
+      return id
+    }
+    return `sess_default`
+  })
+
+  const loadWisdom = useCallback(async () => {
+    const focusLabel = getFocusAreaLabel(user.focusAreas[0]) || 'GENERAL'
+    const apiQuote = await fetchWisdomFromAPI(focusLabel, sessionId)
+    if (apiQuote) {
+      setWisdom({
+        text: apiQuote.text,
+        author: apiQuote.source
+          ? `${apiQuote.author} - ${apiQuote.source}`
+          : apiQuote.author,
+      })
+    } else {
+      const fallback = getFallbackQuote(focusLabel)
+      setWisdom(fallback)
+    }
+  }, [user.focusAreas, sessionId])
 
   useEffect(() => {
-    apiService.getWisdom('GENERAL').then((text) => {
-      if (text) {
-        setWisdom(text)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadWisdom()
+    if (typeof window === 'undefined') return
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadWisdom()
       }
-    })
-  }, [])
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [loadWisdom])
 
   useEffect(() => {
     const hour = new Date().getHours()
     if (hour < 18) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMode(PracticeType.MORNING_IAM)
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMode(PracticeType.EVENING_ILOVE)
     }
   }, [])
@@ -297,11 +375,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     theme === 'light' ? 'text-slate-600' : 'text-white'
                   }`}
                 >
-                  "{wisdom}"
+                  "{wisdom.text}"
                 </p>
                 <p className="text-[10px] text-amber-500 font-bold uppercase tracking-widest mt-2">
-                  - The Abundance Alchemist
+                  - {wisdom.author}
                 </p>
+                <button
+                  onClick={() => {
+                    playBell()
+                    loadWisdom()
+                  }}
+                  className={`mt-2 text-[9px] font-medium uppercase tracking-wider opacity-60 hover:opacity-100 transition-opacity ${
+                    theme === 'light' ? 'text-amber-700' : 'text-amber-400'
+                  }`}
+                  title="Get another wisdom"
+                >
+                  <SparklesIcon size={10} className="inline mr-1" />
+                  New Wisdom
+                </button>
               </div>
             </div>
           </div>
@@ -443,7 +534,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full shadow-md transition-all duration-500 ease-out ${
                     mode === PracticeType.MORNING_IAM
                       ? 'left-1 bg-gradient-to-r from-amber-400 to-orange-500'
-                      : 'left-[calc(50%+4px)] bg-gradient-to-r from-rose-500 to-red-600'
+                      : 'left-[calc(50%+4px)] bg-gradient-to-r from-yellow-300 to-amber-400'
                   }`}
                 />
               </div>
@@ -452,14 +543,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 className={`rounded-2xl p-3 relative overflow-hidden transition-all duration-700 border ${
                   mode === PracticeType.MORNING_IAM
                     ? 'bg-gradient-to-br from-amber-500 to-orange-600 border-amber-300/50 shadow-lg shadow-amber-500/20'
-                    : 'bg-gradient-to-br from-rose-600 to-red-700 border-rose-300/40 shadow-lg shadow-rose-500/20'
+                    : 'bg-gradient-to-br from-yellow-200 to-amber-300 border-amber-400/50 shadow-lg shadow-amber-500/20'
                 }`}
               >
                 <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
                   {mode === PracticeType.MORNING_IAM ? (
                     <Sun size={90} className="text-white rotate-12" />
                   ) : (
-                    <Moon size={90} className="text-white -rotate-12" />
+                    <Moon size={90} className="text-amber-600 -rotate-12" />
                   )}
                 </div>
 
@@ -468,7 +559,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     className={`text-[10px] font-extrabold uppercase tracking-[0.18em] mb-2 ${
                       mode === PracticeType.MORNING_IAM
                         ? 'text-black/65'
-                        : 'text-white/70'
+                        : 'text-slate-700'
                     }`}
                   >
                     Guided Session
@@ -477,7 +568,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     className={`text-base font-normal mb-1 ${
                       mode === PracticeType.MORNING_IAM
                         ? 'text-black'
-                        : 'text-white'
+                        : 'text-slate-900'
                     }`}
                   >
                     {mode === PracticeType.MORNING_IAM
@@ -488,7 +579,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     className={`text-[11px] mb-4 leading-snug ${
                       mode === PracticeType.MORNING_IAM
                         ? 'text-black/70'
-                        : 'text-white/80'
+                        : 'text-slate-700'
                     }`}
                   >
                     {mode === PracticeType.MORNING_IAM

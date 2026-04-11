@@ -15,7 +15,7 @@ View your app in AI Studio: https://ai.studio/apps/drive/1M80FNUvelG6jx7M09Yw56_
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. If you want AI-generated copy, set `GEMINI_API_KEY` in the server `config.php` or server environment
 3. Run the app:
    `npm run dev`
 # abundance-alchemy-v2-app

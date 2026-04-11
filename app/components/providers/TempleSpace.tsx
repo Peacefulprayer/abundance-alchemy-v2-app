@@ -1,5 +1,6 @@
 // components/providers/TempleSpace.tsx
 import React, { useEffect, useMemo, useState } from 'react';
+import type { BackgroundConfig, BackgroundSlot } from '../../services/apiService';
 import { useBackgrounds } from '../../services/useBackgrounds';
 
 interface TempleSpaceProps {
@@ -9,12 +10,80 @@ interface TempleSpaceProps {
   fallbackBackgroundType?: string;
 }
 
-function toSlotKey(input: string): string {
+type TempleSlotKey = BackgroundSlot | 'DEFAULT';
+
+const backgroundSlots = new Set<BackgroundSlot>([
+  'SECTION_ENTRY',
+  'SECTION_CORE',
+  'SECTION_AFFIRM_IAM',
+  'SECTION_AFFIRM_ILOVE',
+  'SECTION_MEDITATION',
+  'SECTION_PRAYER',
+  'PRE_SPLASH',
+  'SPLASH',
+  'SPLASH_WELCOME',
+  'WELCOME',
+  'NAMING_CEREMONY',
+  'AUTH',
+  'RETURN_PORTAL',
+  'ONBOARDING',
+  'TUTORIAL',
+  'DASHBOARD',
+  'LIBRARY',
+  'IAM_SETUP',
+  'IAM_PRACTICE',
+  'ILOVE_SETUP',
+  'ILOVE_PRACTICE',
+  'MEDITATION_SETUP',
+  'MEDITATION_PRACTICE',
+  'PRAYER_SETUP',
+  'PRAYER_GUIDE',
+  'PRAYER_SESSION',
+  'SETTINGS',
+  'PROFILE',
+  'STATS',
+  'PROGRESS',
+  'HOME',
+]);
+
+function isBackgroundSlot(input: string): input is BackgroundSlot {
+  return backgroundSlots.has(input as BackgroundSlot);
+}
+
+const defaultTargetCandidates: BackgroundSlot[] = [
+  'SPLASH_WELCOME',
+  'AUTH',
+  'HOME',
+  'WELCOME',
+  'SPLASH',
+];
+
+const defaultFallbackCandidates: BackgroundSlot[] = [
+  'SPLASH',
+  'SPLASH_WELCOME',
+  'WELCOME',
+  'AUTH',
+  'HOME',
+];
+
+function firstAvailableBackground(
+  backgrounds: BackgroundConfig,
+  candidates: BackgroundSlot[]
+): string | undefined {
+  for (const candidate of candidates) {
+    const imageUrl = backgrounds[candidate]?.imageUrl;
+    if (imageUrl) return imageUrl;
+  }
+
+  return undefined;
+}
+
+function toSlotKey(input: string): TempleSlotKey {
   const raw = (input || '').trim();
   if (!raw) return 'HOME';
 
   // If caller already passed a backend slot key (e.g., "WELCOME"), use it.
-  if (raw.toUpperCase() === raw && /^[A-Z0-9_]+$/.test(raw)) return raw;
+  if (raw.toUpperCase() === raw && /^[A-Z0-9_]+$/.test(raw) && isBackgroundSlot(raw)) return raw;
 
   const key = raw.toLowerCase();
 
@@ -61,13 +130,7 @@ export const TempleSpace: React.FC<TempleSpaceProps> = ({
 
     // Best-effort resolution for "DEFAULT"
     if (targetSlot === 'DEFAULT') {
-      return (
-        backgrounds['SPLASH_WELCOME']?.imageUrl ||
-        backgrounds['AUTH']?.imageUrl ||
-        backgrounds['HOME']?.imageUrl ||
-        backgrounds['WELCOME']?.imageUrl ||
-        backgrounds['SPLASH']?.imageUrl
-      );
+      return firstAvailableBackground(backgrounds, defaultTargetCandidates);
     }
 
     return backgrounds[targetSlot]?.imageUrl;
@@ -77,13 +140,7 @@ export const TempleSpace: React.FC<TempleSpaceProps> = ({
     if (!backgrounds || !fallbackSlot) return undefined;
 
     if (fallbackSlot === 'DEFAULT') {
-      return (
-        backgrounds['SPLASH']?.imageUrl ||
-        backgrounds['SPLASH_WELCOME']?.imageUrl ||
-        backgrounds['WELCOME']?.imageUrl ||
-        backgrounds['AUTH']?.imageUrl ||
-        backgrounds['HOME']?.imageUrl
-      );
+      return firstAvailableBackground(backgrounds, defaultFallbackCandidates);
     }
 
     return backgrounds[fallbackSlot]?.imageUrl;

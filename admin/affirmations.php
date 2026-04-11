@@ -246,10 +246,81 @@ $default_form_category = $category_filter !== '' ? $category_filter : 'General';
 <head>
     <title>Manage Affirmations - Abundance Alchemy</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-    body { font-family: Trebuchet MS, sans-serif; background: #fff; }
-    .btn-primary { background: #FF6600; border: none; }
-    .edit-row { background: #f5f5f5; }
+    :root {
+        --aa-primary: #ff6a1a;
+        --aa-primary-hover: #e95e16;
+    }
+    body {
+        font-family: "Trebuchet MS", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top left, #ffffff 0, #f5f6fa 45%, #eceff4 100%);
+        min-height: 100vh;
+    }
+    .btn-primary { background: var(--aa-primary); border-color: var(--aa-primary); }
+    .btn-primary:hover { background: var(--aa-primary-hover); border-color: var(--aa-primary-hover); }
+    .aa-card {
+        border-radius: 1rem;
+        border: 1px solid rgba(15,23,42,.05);
+        box-shadow: 0 4px 6px -1px rgba(15,23,42,.04), 0 18px 45px rgba(15,23,42,.08);
+        background: #ffffff;
+        overflow: hidden;
+    }
+    .aa-card-header-soft {
+        background: linear-gradient(90deg, #ffffff, #fff7f2);
+        border-bottom: 1px solid rgba(0,0,0,.02);
+        padding: 1rem 1.25rem;
+    }
+    .edit-row { background: #f8f8fc; }
+    .nav-tabs {
+        border-bottom: 2px solid #f0f0f5;
+    }
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: #6c757d;
+        font-weight: 500;
+        padding: .75rem 1rem;
+        transition: all .2s;
+    }
+    .nav-tabs .nav-link:hover {
+        color: var(--aa-primary);
+        border-color: transparent;
+    }
+    .nav-tabs .nav-link.active {
+        color: var(--aa-primary);
+        background: transparent;
+        border-bottom-color: var(--aa-primary);
+    }
+    .category-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        margin-bottom: 1.5rem;
+    }
+    .category-tab {
+        display: inline-flex;
+        align-items: center;
+        padding: .4rem .85rem;
+        border-radius: 999px;
+        font-size: .85rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all .2s ease;
+        border: 1px solid transparent;
+        background: #fff;
+        color: #6c757d;
+        box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .category-tab:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,.1);
+    }
+    .category-tab.active {
+        background: var(--aa-primary);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(255,106,26,.3);
+    }
     </style>
     <script>
     function toggleEdit(id) {

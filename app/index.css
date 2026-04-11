@@ -10,10 +10,14 @@
 
 :root {
   --app-bg: #020617; /* slate-950 */
-  --app-font-stack: 'Trebuchet MS', 'Trebuchet', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif;
+  --app-font-stack:
+    'Trebuchet MS', 'Trebuchet', 'Lucida Grande', 'Lucida Sans Unicode',
+    'Lucida Sans', Tahoma, sans-serif;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   width: 100%;
   background-color: var(--app-bg);
@@ -35,8 +39,12 @@ html, body, #root {
 
 /* Core Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .fade-in {
@@ -44,8 +52,14 @@ html, body, #root {
 }
 
 @keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .animate-in {
@@ -54,52 +68,95 @@ html, body, #root {
 
 /* Alchemist Custom Animations */
 @keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes spin-reverse-slow {
-  from { transform: rotate(360deg); }
-  to { transform: rotate(0deg); }
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
 }
 
 @keyframes breath {
-  0%, 100% { 
-    transform: scale(0.96); 
+  0%,
+  100% {
+    transform: scale(0.96);
     filter: brightness(1) contrast(1);
   }
-  50% { 
-    transform: scale(1.04); 
+  50% {
+    transform: scale(1.04);
     filter: brightness(1.2) contrast(1.1);
   }
 }
 
 @keyframes breathe {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.8; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
 }
 
 @keyframes pulse-slow {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 @keyframes completed-pulse {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes sacred-pulse {
-  0%, 100% { 
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
   }
-  50% { 
+  50% {
     box-shadow: 0 0 20px 5px rgba(251, 191, 36, 0.7);
+  }
+}
+
+@keyframes subtle-glow {
+  0%,
+  100% {
+    opacity: 0.9;
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.2);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 16px rgba(251, 191, 36, 0.5);
   }
 }
 
@@ -135,6 +192,10 @@ html, body, #root {
   animation: sacred-pulse 2s ease-in-out infinite;
 }
 
+.animate-pulse-subtle {
+  animation: subtle-glow 3s ease-in-out infinite;
+}
+
 /* Sacred glass — available for non-card elements that opt into blur.
  * NOT used on entry flow cards (those use high-opacity solid gradients
  * to avoid the Safari backdrop-filter compositing flash).
@@ -158,7 +219,7 @@ html, body, #root {
   border-radius: 10px;
 }
 
-input[type="range"] {
+input[type='range'] {
   -webkit-appearance: none;
   height: 6px;
   background: rgba(255, 255, 255, 0.1);
@@ -166,7 +227,7 @@ input[type="range"] {
   outline: none;
 }
 
-input[type="range"]::-webkit-slider-thumb {
+input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 18px;

@@ -124,10 +124,32 @@ $userPrayerRows = $pdo->query('
 <head>
     <title>Manage Prayers - Abundance Alchemy</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-    body { font-family: Trebuchet MS, sans-serif; background: #fff; }
-    .btn-primary { background: #FF6600; border: none; }
-    .edit-row { background: #f9f9f9; }
+    :root {
+        --aa-primary: #ff6a1a;
+        --aa-primary-hover: #e95e16;
+    }
+    body {
+        font-family: "Trebuchet MS", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top left, #ffffff 0, #f5f6fa 45%, #eceff4 100%);
+        min-height: 100vh;
+    }
+    .btn-primary { background: var(--aa-primary); border-color: var(--aa-primary); }
+    .btn-primary:hover { background: var(--aa-primary-hover); border-color: var(--aa-primary-hover); }
+    .aa-card {
+        border-radius: 1rem;
+        border: 1px solid rgba(15,23,42,.05);
+        box-shadow: 0 4px 6px -1px rgba(15,23,42,.04), 0 18px 45px rgba(15,23,42,.08);
+        background: #ffffff;
+        overflow: hidden;
+    }
+    .aa-card-header-soft {
+        background: linear-gradient(90deg, #ffffff, #fff7f2);
+        border-bottom: 1px solid rgba(0,0,0,.02);
+        padding: 1rem 1.25rem;
+    }
+    .edit-row { background: #f8f8fc; }
     textarea { min-height: 120px; }
     </style>
     <script>
