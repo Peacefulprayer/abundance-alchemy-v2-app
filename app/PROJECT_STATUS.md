@@ -1,15 +1,20 @@
 # Abundance Alchemy App V2 — Project Status
 
 ## Canonical repo
+
 https://github.com/Peacefulprayer/abundance-alchemy-v2-app
 
 ## Current phase
+
 Phase 2.2 — Backend cleanup, prayer-content system, and companion-page handoff refresh in progress
 
 ## Non-negotiables
-- Button tap tone is canonical and must be used across the app.
+
+- **Button Sound**: The sacred bell plays on all interactive elements. Must never be removed or disabled.
+- **Breathing Orb**: The living visual anchor used in practice sessions. Must never be removed.
 
 ## Current state
+
 - Sacred entry flow remains:
   - `PRE_SPLASH -> SPLASH -> WELCOME -> NAMING/AUTH/RETURN PORTAL -> ONBOARDING -> TUTORIAL -> DASHBOARD`
 - Shared `sacredCards` layout/card system is now applied across the core entry sequence:
@@ -91,12 +96,14 @@ Phase 2.2 — Backend cleanup, prayer-content system, and companion-page handoff
 - Companion pages are now linked from the prayer and meditation setup flows and included in the Vite build as standalone static outputs under `dist/companion-pages/`
 
 ## Known issues (from prior work)
+
 - One user-reported flow glitch is intentionally being left for later.
 - Real-device Safari verification is still desirable before final ship, even though local headless mobile/desktop QA is now complete.
 - Live database bootstrap could not be verified from local CLI because the configured DB connection still failed outside the app runtime.
 
 ## Next actions
-1) Verify the new prayer tables/endpoints against the live database/runtime and confirm admin prayer management can seed/edit content there.
-2) Run one deploy-target verification to confirm `dist/companion-pages/` is published alongside the main app entry.
-3) Run a final real-device Safari check against the signed-in routes to confirm touch/viewport behavior outside the QA harness.
-4) Resolve the intentionally deferred user-reported flow glitch, then commit/checkpoint/deploy.
+
+1. Verify the new prayer tables/endpoints against the live database/runtime and confirm admin prayer management can seed/edit content there.
+2. Run one deploy-target verification to confirm `dist/companion-pages/` is published alongside the main app entry.
+3. Run a final real-device Safari check against the signed-in routes to confirm touch/viewport behavior outside the QA harness.
+4. Resolve the intentionally deferred user-reported flow glitch, then commit/checkpoint/deploy.
