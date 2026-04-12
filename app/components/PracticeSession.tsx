@@ -18,6 +18,7 @@ import {
   Soundscape,
 } from '../types'
 import {
+  playBell,
   playCompletionSound,
   startAmbience,
   stopAmbience,
@@ -25,18 +26,7 @@ import {
 } from '../services/audioService'
 import { getMeditationWisdom } from '../services/geminiService'
 import { api } from '../services/api'
-import {
-  INNER_PAGE_SHELL,
-  INNER_PRIMARY_BUTTON,
-  INNER_TITLE_PILL,
-  innerBackButton,
-  innerHeroCard,
-  innerInputBg,
-  innerSectionFrame,
-  innerSectionKicker,
-  innerSecondaryButton,
-  innerSurfaceCard,
-} from '../styles/sacredInnerScreen'
+import BreathingOrb from './BreathingOrb'
 
 const getFocusAreaLabel = (focusArea: FocusArea | undefined): string => {
   if (!focusArea) return ''
@@ -56,7 +46,9 @@ interface PracticeSessionProps {
   soundscape: Soundscape
 }
 
-export const PracticeSession: React.FC<PracticeSessionProps> = ({
+type SessionVariant = 'iam' | 'ilove' | 'meditation'
+
+const PracticeSession: React.FC<PracticeSessionProps> = ({
   config,
   customAffirmations,
   onComplete,
@@ -78,6 +70,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const [volume, setVolume] = useState(50)
   const [isMuted, setIsMuted] = useState(false)
   const [affirmationCount, setAffirmationCount] = useState(1)
+  const [isNewAffirmation, setIsNewAffirmation] = useState(false)
 
   const audioInitialized = useRef(false)
   const isAdvancingRef = useRef(false)
@@ -85,6 +78,15 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   const isMeditation = config.type === PracticeType.MEDITATION
   const isMorning = config.type === PracticeType.MORNING_IAM
+
+  const getVariant = (): SessionVariant => {
+    if (isMeditation) return 'meditation'
+    if (isMorning) return 'iam'
+    return 'ilove'
+  }
+
+  const variant = getVariant()
+
   const meditationFocusLabel = (() => {
     const configured = getFocusAreaLabel(config.focusAreas?.[0])
     return configured.trim() || 'stillness'
@@ -96,7 +98,6 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       updateVolume(volume)
       audioInitialized.current = true
     }
-
     void loadSessionContent()
   }, [])
 
@@ -197,6 +198,9 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
     isAdvancingRef.current = true
     setIsFetchingAffirmation(true)
+    setIsNewAffirmation(true)
+    setTimeout(() => setIsNewAffirmation(false), 500)
+
     try {
       const focusAreaRaw = config.focusAreas?.[0] || 'General'
       const focusLabel =
@@ -324,112 +328,121 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   const progress =
     ((config.duration * 60 - timeLeft) / (config.duration * 60)) * 100
-  const pageShell = INNER_PAGE_SHELL
-  const sectionFrame = innerSectionFrame(theme)
-  const heroCard = innerHeroCard(theme)
-  const surfaceCard = innerSurfaceCard(theme)
-  const backButton = innerBackButton(theme)
-  const inputBg = innerInputBg(theme)
-  const sectionKicker = innerSectionKicker(theme)
-  const secondaryButton = innerSecondaryButton(theme)
 
-  const getPracticeCardClass = () => {
-    if (isMeditation) {
-      return 'rounded-[22px] border p-4 shadow-[0_22px_44px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-700 bg-gradient-to-br from-emerald-600 to-emerald-800 border-emerald-400/30 text-white'
-    }
-    if (isMorning) {
-      return 'rounded-[22px] border p-4 shadow-[0_22px_44px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-700 bg-gradient-to-br from-amber-400 to-orange-500 border-amber-500/50 text-slate-900 shadow-lg shadow-amber-500/30'
-    }
-    return 'rounded-[22px] border p-4 shadow-[0_22px_44px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-700 bg-gradient-to-br from-yellow-200 to-amber-300 border-amber-400/50 text-slate-900 shadow-lg shadow-amber-500/30'
-  }
-
-  const practiceCard = getPracticeCardClass()
-  const practiceGlassControl =
-    'inline-flex items-center justify-center rounded-full border border-white/14 bg-white/8 text-white transition-colors hover:bg-white/12'
   const practiceLabel = isMeditation
     ? 'Meditation'
     : isMorning
-      ? 'I Am Practice'
-      : 'I Love Practice'
-  const accent = isMeditation
-    ? {
-        icon: 'text-emerald-400',
-        softBorder:
-          theme === 'light'
-            ? 'border-emerald-400/70 bg-emerald-200/80 text-emerald-900'
-            : 'border-emerald-400/50 bg-emerald-500/25 text-emerald-100',
-        stops: ['#34d399', '#059669'],
-        textColor: 'text-white',
-      }
-    : isMorning
-      ? {
-          icon: 'text-slate-800',
-          softBorder:
-            theme === 'light'
-              ? 'border-amber-500/70 bg-amber-300/80 text-slate-900'
-              : 'border-slate-800/50 bg-slate-900/40 text-slate-900',
-          stops: ['#fbbf24', '#ea580c'],
-          textColor: 'text-slate-900',
-        }
-      : {
-          icon: 'text-slate-800',
-          softBorder:
-            theme === 'light'
-              ? 'border-amber-400/70 bg-amber-200/80 text-slate-900'
-              : 'border-slate-800/50 bg-slate-900/40 text-slate-900',
-          stops: ['#fcd34d', '#f59e0b'],
-          textColor: 'text-slate-900',
-        }
+      ? 'I Am'
+      : 'I Love'
+
+  const variantStyles = {
+    iam: {
+      bgGradient: 'from-amber-400 via-orange-400 to-orange-500',
+      orbClass: 'bg-gradient-to-br from-amber-300 to-orange-400',
+      orbGlow: 'orb-glow-iam',
+      orbPulse: 'animate-breath',
+      textColor: 'text-slate-900',
+      accentColor: 'text-orange-600',
+      borderColor: 'border-orange-500/30',
+      progressGradient: 'from-amber-500 to-orange-500',
+    },
+    ilove: {
+      bgGradient: 'from-yellow-200 via-amber-200 to-amber-300',
+      orbClass: 'bg-gradient-to-br from-amber-200 to-yellow-300',
+      orbGlow: 'orb-glow-love',
+      orbPulse: 'animate-breathe',
+      textColor: 'text-slate-900',
+      accentColor: 'text-amber-600',
+      borderColor: 'border-amber-400/30',
+      progressGradient: 'from-yellow-300 to-amber-400',
+    },
+    meditation: {
+      bgGradient: 'from-emerald-600 to-emerald-800',
+      orbClass: 'bg-gradient-to-br from-emerald-400 to-teal-500',
+      orbGlow: 'orb-glow-iam',
+      orbPulse: 'animate-breath',
+      textColor: 'text-white',
+      accentColor: 'text-emerald-300',
+      borderColor: 'border-emerald-400/30',
+      progressGradient: 'from-emerald-400 to-teal-500',
+    },
+  }
+
+  const styles = variantStyles[variant]
 
   if (showGratitude) {
     return (
       <div
         className={`h-full w-full overflow-y-auto px-4 pt-4 pb-8 custom-scrollbar ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}
       >
-        <div className={pageShell}>
+        <div className="mx-auto w-full max-w-[440px] space-y-6 pb-8">
           <div className="flex items-center justify-between">
-            <div className={backButton}>
+            <button
+              onClick={() => {
+                playBell()
+                onComplete()
+              }}
+              className="flex items-center gap-2 rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-4 py-2 text-xs font-extrabold uppercase tracking-widest text-slate-950 shadow-md"
+            >
               <span>✓</span>
               <span>Complete</span>
-            </div>
-            <span className={INNER_TITLE_PILL}>{practiceLabel}</span>
+            </button>
+            <span className="inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-md">
+              {practiceLabel}
+            </span>
           </div>
 
-          <div className={sectionFrame}>
-            <div className={`${heroCard} text-center`}>
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-amber-400/35 bg-amber-500/12">
-                <Heart size={28} className="text-amber-400" />
-              </div>
-              <h1 className="mt-4 text-2xl font-serif font-semibold">
-                Session Complete
-              </h1>
-              <p
-                className={`mt-2 text-sm leading-relaxed ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}
-              >
-                Take a moment to name what this practice opened, steadied, or
-                clarified in you.
-              </p>
+          <div
+            className={`rounded-[28px] p-6 text-center ${theme === 'light' ? 'bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 shadow-lg' : 'bg-gradient-to-br from-slate-900/90 to-slate-950/95 border border-white/10 shadow-xl'}`}
+          >
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-amber-400/30 bg-gradient-to-br from-amber-300/30 to-orange-400/20 shadow-lg">
+              <Heart size={36} className="text-amber-400" />
             </div>
+            <h1 className="font-display text-2xl font-semibold text-slate-900 dark:text-white">
+              Session Complete
+            </h1>
+            <p
+              className={`mt-3 text-sm leading-relaxed ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}
+            >
+              Take a moment to name what this practice opened, steadied, or
+              clarified in you.
+            </p>
           </div>
 
-          <div className={sectionFrame}>
-            <div className={`${surfaceCard} space-y-4`}>
-              <p className={sectionKicker}>Reflection</p>
-              <textarea
-                value={gratitudeText}
-                onChange={(e) => setGratitudeText(e.target.value)}
-                placeholder="What are you grateful for? (optional)"
-                className={`min-h-[140px] w-full resize-none rounded-[20px] border p-4 text-sm outline-none focus:ring-2 focus:ring-amber-500 ${inputBg}`}
-                rows={5}
-                autoFocus
-              />
-              <button onClick={handleComplete} className={INNER_PRIMARY_BUTTON}>
-                {gratitudeText.trim() ? 'Save & Continue' : 'Continue'}
-              </button>
-              <button onClick={() => onComplete()} className={secondaryButton}>
-                Skip Reflection
-              </button>
-            </div>
+          <div
+            className={`rounded-[28px] p-5 ${theme === 'light' ? 'bg-gradient-to-br from-amber-50/30 to-white/85 border border-amber-200/30 shadow-md' : 'bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 shadow-lg'}`}
+          >
+            <p
+              className={`mb-3 text-[10px] font-extrabold uppercase tracking-[0.22em] ${theme === 'light' ? 'text-amber-700' : 'text-amber-400/90'}`}
+            >
+              Reflection
+            </p>
+            <textarea
+              value={gratitudeText}
+              onChange={(e) => setGratitudeText(e.target.value)}
+              placeholder="What are you grateful for? (optional)"
+              className={`min-h-[140px] w-full resize-none rounded-[20px] border p-4 text-sm outline-none focus:ring-2 focus:ring-amber-500 ${theme === 'light' ? 'border-amber-200/50 bg-white/90 text-slate-800 placeholder-slate-400' : 'border-white/10 bg-slate-900/50 text-slate-100 placeholder-slate-500'}`}
+              rows={5}
+              autoFocus
+            />
+            <button
+              onClick={() => {
+                playBell()
+                handleComplete()
+              }}
+              className="mt-4 w-full rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-4 py-3 text-xs font-extrabold uppercase tracking-[0.18em] text-slate-950 shadow-md transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {gratitudeText.trim() ? 'Save & Continue' : 'Continue'}
+            </button>
+            <button
+              onClick={() => {
+                playBell()
+                onComplete()
+              }}
+              className={`mt-3 w-full rounded-full border px-4 py-3 text-xs font-semibold transition-colors ${theme === 'light' ? 'border-slate-300 text-slate-600 hover:bg-slate-100' : 'border-white/20 text-slate-300 hover:bg-white/5'}`}
+            >
+              Skip Reflection
+            </button>
           </div>
         </div>
       </div>
@@ -438,181 +451,217 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   return (
     <div
-      className={`h-full w-full overflow-y-auto px-4 pt-4 pb-8 custom-scrollbar ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}
+      className={`h-full w-full overflow-y-auto custom-scrollbar ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}
     >
-      <div className={pageShell}>
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => {
-              stopAmbience()
-              onExit()
-            }}
-            className={backButton}
-          >
-            <span>←</span>
-            <span>Back</span>
-          </button>
-          <span className={INNER_TITLE_PILL}>{practiceLabel}</span>
-        </div>
+      <div className="relative min-h-full px-4 pt-4 pb-8">
+        <div className="sacred-radial-light" />
 
-        <div className={sectionFrame}>
-          <div className={`${heroCard} text-center`}>
-            <h1
-              className={`text-xl font-serif font-semibold text-center ${accent.textColor}`}
+        <div className="relative z-10 mx-auto w-full max-w-[440px] space-y-5">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => {
+                playBell()
+                stopAmbience()
+                onExit()
+              }}
+              className="flex items-center gap-2 rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-4 py-2 text-xs font-extrabold uppercase tracking-widest text-slate-950 shadow-md"
             >
+              <span>←</span>
+              <span>Back</span>
+            </button>
+            <span className="inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-md">
               {practiceLabel}
+            </span>
+          </div>
+
+          <div
+            className={`rounded-[28px] p-5 text-center ${theme === 'light' ? 'bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 shadow-lg' : 'bg-gradient-to-br from-slate-900/90 to-slate-950/95 border border-amber-500/20 shadow-xl'}`}
+          >
+            <h1
+              className={`font-display text-2xl font-semibold ${styles.textColor}`}
+            >
+              {practiceLabel} Practice
             </h1>
             <p
-              className={`mt-1 text-[10px] font-medium ${accent.textColor} opacity-70`}
+              className={`mt-1 text-xs font-medium ${styles.textColor} opacity-60`}
             >
               {meditationFocusLabel}
             </p>
-            <div className="mt-2 flex flex-wrap justify-center gap-2">
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
               <span
-                className={`rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] ${accent.softBorder}`}
+                className={`rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] ${styles.textColor} ${styles.borderColor} ${variant === 'meditation' ? 'bg-emerald-500/20' : 'bg-white/40'}`}
               >
-                {config.duration} Minute Session
+                {config.duration} Min
               </span>
               <span
-                className={`rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] ${
-                  isRunning
-                    ? accent.softBorder
-                    : theme === 'light'
-                      ? 'border-amber-200/60 bg-white/90 text-slate-700'
-                      : 'border-amber-500/18 bg-slate-900/75 text-slate-200'
-                }`}
+                className={`rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] ${isRunning ? styles.textColor + ' ' + styles.borderColor + ' bg-white/40' : theme === 'light' ? 'border-amber-200/60 bg-white/90 text-slate-700' : 'border-amber-500/18 bg-slate-900/75 text-slate-200'}`}
               >
                 {isRunning ? 'In Progress' : 'Ready to Begin'}
               </span>
             </div>
-            <p
-              className={`mt-3 text-[10px] leading-relaxed ${accent.textColor} opacity-80`}
-            >
-              To begin session start timer. Speak as many Affirmations aloud as
-              you can. You want to feel the vibration of your voice in your
-              body. Tap the Affirmation to advance to the next - the faster the
-              better.
-            </p>
           </div>
-        </div>
 
-        <div className={sectionFrame}>
-          <div className={`${practiceCard} text-center`}>
-            <div className="flex items-center justify-center gap-4">
-              <button
-                onClick={resetTimer}
-                className={`${practiceGlassControl} h-8 w-8`}
-              >
-                <RotateCcw size={14} />
-              </button>
-              <div className="flex flex-col items-center">
-                <p
-                  className={`text-[1.5rem] font-semibold tabular-nums tracking-wider ${accent.textColor}`}
-                >
-                  {formatTime(timeLeft)}
-                </p>
-                <p
-                  className={`text-[7px] font-extrabold uppercase tracking-[0.16em] ${accent.textColor} opacity-60`}
-                >
-                  Remaining
-                </p>
+          <div className="flex flex-col items-center">
+            {isMeditation ? (
+              <div className="relative">
+                <div className="sacred-orb">
+                  <div
+                    className={`relative flex h-36 w-36 items-center justify-center rounded-full ${styles.orbClass} ${isRunning ? styles.orbPulse : ''} ${styles.orbGlow}`}
+                  >
+                    <div className="text-center">
+                      <p
+                        className={`text-2xl font-semibold tabular-nums ${styles.textColor}`}
+                      >
+                        {formatTime(timeLeft)}
+                      </p>
+                      <p
+                        className={`text-[9px] font-medium uppercase tracking-wider ${styles.textColor} opacity-60`}
+                      >
+                        Remaining
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
+            ) : (
+              <div className="relative h-[132px] w-[132px]">
+                <BreathingOrb
+                  size={96}
+                  breathingSpeed={variant === 'iam' ? 4200 : 5000}
+                />
+                <div className="pointer-events-none absolute inset-0 z-[1100] flex flex-col items-center justify-center">
+                  <p className="text-xl font-semibold tabular-nums text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.7)]">
+                    {formatTime(timeLeft)}
+                  </p>
+                  <p className="text-[9px] font-semibold uppercase tracking-wider text-white/80">
+                    Remaining
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 flex items-center gap-4">
               <button
-                onClick={toggleTimer}
-                className={`inline-flex h-10 w-10 items-center justify-center rounded-full border ${accent.softBorder}`}
+                onClick={() => {
+                  playBell()
+                  resetTimer()
+                }}
+                className={`flex h-10 w-10 items-center justify-center rounded-full border ${styles.borderColor} ${variant === 'meditation' ? 'bg-emerald-500/20 text-white' : 'bg-white/40 text-slate-900'} transition-colors hover:bg-white/60`}
+              >
+                <RotateCcw size={16} />
+              </button>
+              <button
+                onClick={() => {
+                  playBell()
+                  toggleTimer()
+                }}
+                className={`flex h-14 w-14 items-center justify-center rounded-full border-2 ${styles.borderColor} ${variant === 'meditation' ? 'bg-emerald-500/30 text-emerald-300' : 'bg-white/50 text-slate-900'} transition-all hover:scale-105 active:scale-95`}
               >
                 {isRunning ? (
-                  <Pause size={16} className="fill-current" />
+                  <Pause size={24} className="fill-current" />
                 ) : (
-                  <Play size={16} className="fill-current" />
+                  <Play size={24} className="fill-current ml-1" />
                 )}
               </button>
+              <div className="h-10 w-10" />
             </div>
-            <div className="mt-3 mx-2">
-              <div className="h-1.5 rounded-full bg-black/20 overflow-hidden">
+
+            <div className="mt-4 w-full max-w-[280px]">
+              <div className="h-1.5 overflow-hidden rounded-full bg-black/10">
                 <div
                   className="h-full rounded-full transition-all duration-1000"
                   style={{
                     width: `${progress}%`,
-                    background: `linear-gradient(90deg, ${accent.stops[0]}, ${accent.stops[1]})`,
+                    background:
+                      variant === 'meditation'
+                        ? 'linear-gradient(90deg, #34d399, #14b8a6)'
+                        : variant === 'iam'
+                          ? 'linear-gradient(90deg, #fbbf24, #f97316)'
+                          : 'linear-gradient(90deg, #fcd34d, #f59e0b)',
                   }}
                 />
               </div>
             </div>
           </div>
-        </div>
 
-        <div className={sectionFrame}>
-          <button
-            onClick={handleNextAffirmation}
-            disabled={isMeditation || isLoadingContent || isFetchingAffirmation}
-            className={`${practiceCard} min-h-[160px] w-full text-center transition-all ${
-              !isMeditation ? 'active:scale-[0.99]' : ''
-            }`}
-          >
-            <div className="flex h-full flex-col items-center justify-center text-center">
-              <p className={`${sectionKicker} ${accent.textColor}`}>
-                {isMeditation ? 'Meditation Reflection' : 'Affirmation'}
-              </p>
-              {isLoadingContent ? (
-                <div className="mt-6 animate-pulse text-sm text-white">
-                  Loading practice content...
-                </div>
-              ) : isMeditation ? (
-                <div className="mt-5 space-y-4">
-                  <div
-                    className={`mx-auto h-10 w-10 rounded-full border ${accent.softBorder} ${isRunning ? 'animate-pulse' : ''}`}
-                  />
-                  <p className="max-w-[280px] text-base font-serif italic leading-relaxed text-white">
-                    {meditationWisdom ||
-                      'Breathe deeply and find your center...'}
-                  </p>
-                </div>
-              ) : (
-                <>
+          {!isMeditation && (
+            <button
+              onClick={() => {
+                playBell()
+                handleNextAffirmation()
+              }}
+              disabled={isLoadingContent || isFetchingAffirmation}
+              className={`w-full rounded-[24px] border p-6 text-center transition-all active:scale-[0.98] ${theme === 'light' ? 'bg-gradient-to-br from-amber-100/80 to-orange-100/60 border-amber-300/40 shadow-lg' : 'bg-gradient-to-br from-slate-800/80 to-slate-900/90 border-white/10 shadow-xl'} ${isNewAffirmation ? 'animate-affirmation-rise' : ''}`}
+            >
+              <div className="flex flex-col items-center">
+                <p
+                  className={`text-sm font-extrabold uppercase tracking-widest ${styles.accentColor}`}
+                >
+                  #{affirmationCount}
+                </p>
+                {isLoadingContent ? (
+                  <div className="mt-4 animate-pulse text-sm text-slate-500">
+                    Loading practice content...
+                  </div>
+                ) : (
                   <p
-                    className={`text-[9px] font-bold uppercase tracking-widest ${accent.textColor} opacity-70`}
-                  >
-                    #{affirmationCount}
-                  </p>
-                  <p
-                    className={`mt-2 text-base font-medium leading-relaxed md:text-lg ${accent.textColor} ${isRunning ? 'animate-pulse-subtle' : ''}`}
-                    style={{
-                      fontFamily: 'Trebuchet MS, Trebuchet, Arial, sans-serif',
-                    }}
+                    className={`mt-3 text-base font-medium leading-relaxed md:text-lg ${styles.textColor} ${isRunning ? 'animate-pulse-subtle' : ''}`}
+                    style={{ fontFamily: 'var(--font-body)' }}
                   >
                     {currentAffirmation}
                   </p>
-                  {isRunning ? (
-                    <div className="mt-3 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.22em] text-slate-700">
-                      <Zap size={10} />
-                      <span>Tap to advance (the faster the better) →</span>
-                    </div>
-                  ) : null}
-                </>
-              )}
-            </div>
-          </button>
-        </div>
+                )}
+                {isRunning && (
+                  <div className="mt-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-600">
+                    <Zap size={12} />
+                    <span>Tap to advance →</span>
+                  </div>
+                )}
+              </div>
+            </button>
+          )}
 
-        <div className={sectionFrame}>
-          <div className={`${practiceCard} space-y-4`}>
-            <div className="flex items-center justify-between gap-3">
-              <p className={`${sectionKicker} ${accent.textColor}`}>
+          {isMeditation && (
+            <div
+              className={`rounded-[24px] border p-6 text-center ${theme === 'light' ? 'bg-gradient-to-br from-emerald-100/80 to-teal-100/60 border-emerald-300/40 shadow-lg' : 'bg-gradient-to-br from-emerald-900/60 to-slate-900/90 border-emerald-500/20 shadow-xl'}`}
+            >
+              <div className="flex flex-col items-center">
+                <div
+                  className={`mx-auto mb-4 h-12 w-12 rounded-full border-2 ${isRunning ? 'animate-breath border-emerald-400/50 bg-emerald-400/20' : 'border-emerald-500/30 bg-emerald-500/10'}`}
+                />
+                <p
+                  className={`text-base font-display italic leading-relaxed ${styles.textColor}`}
+                >
+                  {meditationWisdom || 'Breathe deeply and find your center...'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div
+            className={`rounded-[24px] border p-4 ${theme === 'light' ? 'bg-white/80 border-slate-200/40 shadow-md' : 'bg-slate-900/70 border-white/10 shadow-lg'}`}
+          >
+            <div className="flex items-center justify-between">
+              <p
+                className={`text-[10px] font-bold uppercase tracking-[0.18em] ${theme === 'light' ? 'text-amber-700' : 'text-amber-400/90'}`}
+              >
                 Temple Sound
               </p>
               <span
-                className={`truncate text-[10px] font-extrabold uppercase tracking-[0.18em] ${accent.textColor}`}
+                className={`truncate text-[10px] font-medium uppercase tracking-wider ${styles.textColor} opacity-60`}
               >
                 {userAudioFile?.name || soundscape?.label}
               </span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="mt-3 flex items-center gap-3">
               <button
-                onClick={toggleMute}
-                className={`${practiceGlassControl} h-10 px-4 py-2`}
+                onClick={() => {
+                  playBell()
+                  toggleMute()
+                }}
+                className={`flex h-9 w-9 items-center justify-center rounded-full border ${theme === 'light' ? 'border-slate-300 text-slate-600 hover:bg-slate-100' : 'border-white/20 text-slate-300 hover:bg-white/5'}`}
               >
-                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
               </button>
               <input
                 type="range"
@@ -620,13 +669,16 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
                 max="100"
                 value={isMuted ? 0 : volume}
                 onChange={handleVolumeChange}
-                className="h-2 w-full rounded-lg bg-slate-600 accent-amber-500"
+                className="h-2 flex-1 rounded-lg bg-slate-600 accent-amber-500"
               />
               <button
-                onClick={restartMusic}
-                className={`${practiceGlassControl} h-10 px-4 py-2`}
+                onClick={() => {
+                  playBell()
+                  restartMusic()
+                }}
+                className={`flex h-9 w-9 items-center justify-center rounded-full border ${theme === 'light' ? 'border-slate-300 text-slate-600 hover:bg-slate-100' : 'border-white/20 text-slate-300 hover:bg-white/5'}`}
               >
-                <SkipBack size={16} />
+                <SkipBack size={14} />
               </button>
             </div>
           </div>
@@ -635,3 +687,6 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     </div>
   )
 }
+
+export { PracticeSession }
+export default PracticeSession

@@ -1,27 +1,27 @@
 // src/types.ts
-export type ThemeMode = 'light' | 'dark';
+export type ThemeMode = 'light' | 'dark'
 
 export type FocusArea =
   | string
   | {
-      id: string;
-      label: string;
-      swahili?: string;
-      description?: string;
-      swahiliAffirmation?: string;
-      icon?: string;
-    };
+      id: string
+      label: string
+      swahili?: string
+      description?: string
+      swahiliAffirmation?: string
+      icon?: string
+    }
 
 // Updated: FocusChoice should be an object with Swahili support
 export type FocusChoice = {
-  id: string;
-  label: string;
-  swahili?: string;
-  description?: string;
-  swahiliAffirmation?: string; // Added this missing property
-  swAffirmation?: string; // Alternative name used in some components
-  icon?: string;
-};
+  id: string
+  label: string
+  swahili?: string
+  description?: string
+  swahiliAffirmation?: string // Added this missing property
+  swAffirmation?: string // Alternative name used in some components
+  icon?: string
+}
 
 export enum AppMode {
   SPLASH = 'SPLASH',
@@ -33,6 +33,7 @@ export enum AppMode {
   ONBOARDING = 'ONBOARDING',
   TUTORIAL = 'TUTORIAL',
   DASHBOARD = 'DASHBOARD',
+  PRACTICE_PREP = 'PRACTICE_PREP',
   PRACTICE = 'PRACTICE',
   SETTINGS = 'SETTINGS',
   LIBRARY = 'LIBRARY',
@@ -43,7 +44,6 @@ export enum AppMode {
   PRAYER_SESSION = 'PRAYER_SESSION',
   PROFILE = 'PROFILE',
 }
-
 
 export enum PracticeType {
   MORNING_IAM = 'MORNING_IAM',
@@ -58,9 +58,13 @@ export enum CycleType {
   MONTHLY = 'MONTHLY',
 }
 
-export type ReminderMode = 'INTERVAL' | 'SPECIFIC_TIMES';
+export type ReminderMode = 'INTERVAL' | 'SPECIFIC_TIMES'
 
-export type ReminderPractice = 'MORNING_IAM' | 'EVENING_ILOVE' | 'MEDITATION' | 'PRAYER';
+export type ReminderPractice =
+  | 'MORNING_IAM'
+  | 'EVENING_ILOVE'
+  | 'MEDITATION'
+  | 'PRAYER'
 
 export type PrayerIntent =
   | 'gratitude'
@@ -68,135 +72,135 @@ export type PrayerIntent =
   | 'healing'
   | 'protection'
   | 'provision'
-  | 'forgiveness';
+  | 'forgiveness'
 
-export type PrayerTone = 'gentle' | 'bold' | 'contemplative' | 'joyful';
+export type PrayerTone = 'gentle' | 'bold' | 'contemplative' | 'joyful'
 
-export type PrayerLanguage = 'english' | 'swahili' | 'bilingual';
+export type PrayerLanguage = 'english' | 'swahili' | 'bilingual'
 
-export type PrayerStyle = 'short' | 'standard' | 'extended';
+export type PrayerStyle = 'short' | 'standard' | 'extended'
 
 export interface PrayerProfile {
-  intent: PrayerIntent;
-  tone: PrayerTone;
-  language: PrayerLanguage;
-  style: PrayerStyle;
+  intent: PrayerIntent
+  tone: PrayerTone
+  language: PrayerLanguage
+  style: PrayerStyle
 }
 
 export interface PrayerContent {
-  pathKey: string;
-  guideSteps: string[];
-  sessionPrayers: string[];
+  pathKey: string
+  guideSteps: string[]
+  sessionPrayers: string[]
 }
 
 export interface UserPrayer {
-  id: string;
-  path_key: string;
-  title: string;
-  body: string;
-  created_at?: string | null;
-  updated_at?: string | null;
+  id: string
+  path_key: string
+  title: string
+  body: string
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 export interface ReminderPracticeSchedule {
-  enabled: boolean;
-  time: string; // HH:MM (24h)
+  enabled: boolean
+  time: string // HH:MM (24h)
 }
 
 export interface RemindersSettings {
-  enabled: boolean;
-  mode: ReminderMode;
-  intervalMinutes: number;
-  specificTimes: string[]; // e.g. ['08:00','20:00']
-  timezone: string; // IANA zone, e.g. America/New_York
-  snoozeMinutes: 15 | 30 | 60;
-  notificationPermission: NotificationPermission | 'unsupported';
-  practiceTimes: Record<ReminderPractice, ReminderPracticeSchedule>;
+  enabled: boolean
+  mode: ReminderMode
+  intervalMinutes: number
+  specificTimes: string[] // e.g. ['08:00','20:00']
+  timezone: string // IANA zone, e.g. America/New_York
+  snoozeMinutes: 15 | 30 | 60
+  notificationPermission: NotificationPermission | 'unsupported'
+  practiceTimes: Record<ReminderPractice, ReminderPracticeSchedule>
 }
 
 export interface AppSettings {
-  theme: ThemeMode;
-  soundEffectsOn: boolean;
-  musicOn: boolean;
+  theme: ThemeMode
+  soundEffectsOn: boolean
+  musicOn: boolean
   // Soundscape IDs for different practice types
-  soundscapeId: string;
-  iAmSoundscapeId: string;
-  iLoveSoundscapeId: string;
-  meditationSoundscapeId: string;
-  ambienceVolume: number; // 0–100
-  voiceId: string;
-  reminders: RemindersSettings;
+  soundscapeId: string
+  iAmSoundscapeId: string
+  iLoveSoundscapeId: string
+  meditationSoundscapeId: string
+  ambienceVolume: number // 0–100
+  voiceId: string
+  reminders: RemindersSettings
 }
 
 export interface UserAccount {
-  id?: number;
-  email?: string; // keep optional because some flows store just email/token
-  name?: string;
-  profileImage?: string;
-  streak?: number;
-  level?: number;
-  focusAreas?: FocusArea[];
-  affirmationsCompleted?: number;
+  id?: number
+  email?: string // keep optional because some flows store just email/token
+  name?: string
+  profileImage?: string
+  streak?: number
+  level?: number
+  focusAreas?: FocusArea[]
+  affirmationsCompleted?: number
 }
 
 export interface Soundscape {
-  id: string; // normalize in components as String(id)
-  label: string;
-  category?: string;
-  url?: string; // if you have real URLs
+  id: string // normalize in components as String(id)
+  label: string
+  category?: string
+  url?: string // if you have real URLs
 }
 
 export interface Affirmation {
-  id: string;
-  text: string;
-  category?: string;
-  isFavorite?: boolean;
-  type: PracticeType;
-  dateAdded?: string;
+  id: string
+  text: string
+  category?: string
+  isFavorite?: boolean
+  type: PracticeType
+  dateAdded?: string
 }
 
 export interface GratitudeLog {
-  id: string;
-  date: string; // ISO
-  text: string;
-  focusArea: string; // store label string to keep logs stable
-  sessionType: PracticeType;
+  id: string
+  date: string // ISO
+  text: string
+  focusArea: string // store label string to keep logs stable
+  sessionType: PracticeType
 }
 
 export interface UserProfile {
-  name: string; // keep optional? your onboarding currently sets it
-  preferredName?: string;
-  email?: string;
-  profileImage?: string;
-  focusAreas: FocusArea[];
-  cyclePreference: CycleType; // CHANGED from cycleType to cyclePreference
-  streak: number;
-  level: number;
-  affirmationsCompleted: number;
-  lastPracticeDate: string | null;
-  customAffirmations: Affirmation[];
-  gratitudeLogs: GratitudeLog[];
+  name: string // keep optional? your onboarding currently sets it
+  preferredName?: string
+  email?: string
+  profileImage?: string
+  focusAreas: FocusArea[]
+  cyclePreference: CycleType // CHANGED from cycleType to cyclePreference
+  streak: number
+  level: number
+  affirmationsCompleted: number
+  lastPracticeDate: string | null
+  customAffirmations: Affirmation[]
+  gratitudeLogs: GratitudeLog[]
 }
 
 export interface PracticeSessionConfig {
-  type: PracticeType;
-  duration: number; // minutes
-  focusAreas?: FocusArea[];
-  soundscape?: Soundscape | string; // allow legacy string id or object
+  type: PracticeType
+  duration: number // minutes
+  focusAreas?: FocusArea[]
+  soundscape?: Soundscape | string // allow legacy string id or object
 }
 
 // LibraryProps interface for Library component
 export interface LibraryProps {
-  affirmations?: Affirmation[];
-  customAffirmations?: Affirmation[];
-  gratitudeLogs: GratitudeLog[];
+  affirmations?: Affirmation[]
+  customAffirmations?: Affirmation[]
+  gratitudeLogs: GratitudeLog[]
   onAdd: (
     text: string,
     type: PracticeType,
-    category?: string
-  ) => Promise<{ ok: boolean; message?: string }>;
-  onRemove: (id: string) => Promise<void>;
-  onAudioUpload: React.Dispatch<React.SetStateAction<File | null>>;
-  userAudioFile: File | null;
-  theme: 'light' | 'dark';
+    category?: string,
+  ) => Promise<{ ok: boolean; message?: string }>
+  onRemove: (id: string) => Promise<void>
+  onAudioUpload: React.Dispatch<React.SetStateAction<File | null>>
+  userAudioFile: File | null
+  theme: 'light' | 'dark'
 }

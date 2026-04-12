@@ -55,6 +55,9 @@ const TutorialOverlay = lazy(async () => ({
 const PracticeSession = lazy(async () => ({
   default: (await import('./components/PracticeSession')).PracticeSession,
 }))
+const PrePracticeInvocation = lazy(async () => ({
+  default: (await import('./components/PrePracticeInvocation')).default,
+}))
 const Settings = lazy(async () => ({
   default: (await import('./components/Settings')).Settings,
 }))
@@ -307,6 +310,7 @@ const RESUMABLE_AUTH_MODES = new Set([
   AppMode.ONBOARDING,
   AppMode.TUTORIAL,
   AppMode.DASHBOARD,
+  AppMode.PRACTICE_PREP,
   AppMode.PRACTICE,
   AppMode.LIBRARY,
   AppMode.SETTINGS,
@@ -327,6 +331,7 @@ const HISTORY_NAVIGABLE_MODES = new Set([
   AppMode.ONBOARDING,
   AppMode.TUTORIAL,
   AppMode.DASHBOARD,
+  AppMode.PRACTICE_PREP,
   AppMode.LIBRARY,
   AppMode.SETTINGS,
   AppMode.STATS,
@@ -902,10 +907,12 @@ function App() {
         const resumeMode = readResumeMode()
         const authenticatedResumeMode =
           resumeMode && RESUMABLE_AUTH_MODES.has(resumeMode) ? resumeMode : null
-        const resumePractice =
+        const shouldRestorePractice =
+          authenticatedResumeMode === AppMode.PRACTICE_PREP ||
           authenticatedResumeMode === AppMode.PRACTICE
-            ? readPracticeSnapshot()
-            : null
+        const resumePractice = shouldRestorePractice
+          ? readPracticeSnapshot()
+          : null
         const hasFocusSelection =
           Array.isArray(profile.focusAreas) && profile.focusAreas.length > 0
         const defaultAuthenticatedMode = hasFocusSelection
@@ -917,10 +924,10 @@ function App() {
         clearPreAuthName()
         setAuthFlowMode('login')
         writeAuthFlowMode('login')
-        if (authenticatedResumeMode === AppMode.PRACTICE) {
+        if (shouldRestorePractice) {
           if (resumePractice) {
             setPracticeConfig(resumePractice)
-            setBootDestination(AppMode.PRACTICE)
+            setBootDestination(authenticatedResumeMode)
           } else {
             clearPracticeSnapshot()
             setPracticeConfig(null)
@@ -987,7 +994,11 @@ function App() {
       writeResumeMode(currentMode)
     }
     clearPreAuthName()
-    if (currentMode === AppMode.PRACTICE && practiceConfig) {
+    if (
+      (currentMode === AppMode.PRACTICE_PREP ||
+        currentMode === AppMode.PRACTICE) &&
+      practiceConfig
+    ) {
       writePracticeSnapshot(practiceConfig)
     } else {
       clearPracticeSnapshot()
@@ -1618,7 +1629,34 @@ function App() {
                 (s) => s.id === settings.meditationSoundscapeId,
               ) || DEFAULT_SOUNDSCAPE,
     }
+
+    const storageKey =
+      type === PracticeType.MORNING_IAM
+        ? 'hidePrep_iam'
+        : type === PracticeType.EVENING_ILOVE
+          ? 'hidePrep_ilove'
+          : type === PracticeType.MEDITATION
+            ? 'hidePrep_meditation'
+            : null
+
+    const shouldShowPrep = storageKey
+      ? localStorage.getItem(storageKey) !== 'true'
+      : true
+
     setPracticeConfig(config)
+
+    if (shouldShowPrep) {
+      setCurrentMode(AppMode.PRACTICE_PREP)
+    } else {
+      setCurrentMode(AppMode.PRACTICE)
+    }
+  }
+
+  const handlePracticePrepBegin = () => {
+    setCurrentMode(AppMode.PRACTICE)
+  }
+
+  const handlePracticePrepSkip = () => {
     setCurrentMode(AppMode.PRACTICE)
   }
 
@@ -1903,6 +1941,35 @@ function App() {
               onChangeFocus={handleChangeFocus}
               theme={theme}
             />
+          </UniversalLayout>
+        )
+      case AppMode.PRACTICE_PREP:
+        return (
+          <UniversalLayout showBottomMenu={false}>
+            {practiceConfig ? (
+              <PrePracticeInvocation
+                variant={
+                  practiceConfig.type === PracticeType.MORNING_IAM
+                    ? 'iam'
+                    : practiceConfig.type === PracticeType.EVENING_ILOVE
+                      ? 'ilove'
+                      : 'meditation'
+                }
+                onBegin={handlePracticePrepBegin}
+                onSkip={handlePracticePrepSkip}
+                showSkip={true}
+              />
+            ) : (
+              <div className="min-h-screen flex items-center justify-center">
+                <p className="text-slate-400">No practice configured</p>
+                <button
+                  onClick={() => setCurrentMode(AppMode.DASHBOARD)}
+                  className="ml-4 px-4 py-2 bg-amber-500 text-black rounded-lg"
+                >
+                  Return to Dashboard
+                </button>
+              </div>
+            )}
           </UniversalLayout>
         )
       case AppMode.PRACTICE:

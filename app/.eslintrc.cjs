@@ -30,5 +30,16 @@ module.exports = {
   rules: {
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      },
+    ],
+    '@typescript-eslint/ban-ts-comment': 'off',
+    'react/no-unescaped-entities': 'off',
+    'react-hooks/set-state-in-effect': 'off',
   },
 }

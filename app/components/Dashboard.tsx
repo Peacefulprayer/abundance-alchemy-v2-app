@@ -344,10 +344,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="mt-4 rounded-[20px] bg-gradient-to-r from-amber-400/90 to-orange-500/90 px-4 py-3 text-center shadow-lg">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-white">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-black">
               Dashibodi
             </p>
-            <p className="mt-2 text-sm font-medium text-white">
+            <p className="mt-2 text-sm font-medium text-black">
               Your sacred hub for today&apos;s practices.
             </p>
           </div>

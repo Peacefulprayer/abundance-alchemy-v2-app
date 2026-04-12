@@ -9,10 +9,9 @@
 }
 
 :root {
-  --app-bg: #020617; /* slate-950 */
-  --app-font-stack:
-    'Trebuchet MS', 'Trebuchet', 'Lucida Grande', 'Lucida Sans Unicode',
-    'Lucida Sans', Tahoma, sans-serif;
+  --app-bg: #020617;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Source Sans 3', 'Trebuchet MS', system-ui, sans-serif;
 }
 
 html,
@@ -21,14 +20,17 @@ body,
   height: 100%;
   width: 100%;
   background-color: var(--app-bg);
-  font-family: var(--app-font-stack);
+  font-family: var(--font-body);
   overflow-x: hidden;
 }
 
-/* Base Styles */
-.font-serif,
-.font-sans {
-  font-family: var(--app-font-stack);
+/* Typography */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
 }
 
 .bg-clip-text {
@@ -160,6 +162,100 @@ body,
   }
 }
 
+/* Breathing Orb Animations */
+@keyframes breathing-in {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+@keyframes breathing-out {
+  0%,
+  100% {
+    transform: scale(1.15);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
+
+@keyframes orb-glow-iam {
+  0%,
+  100% {
+    box-shadow:
+      0 0 30px 10px rgba(251, 191, 36, 0.3),
+      0 0 60px 20px rgba(251, 191, 36, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 0 50px 20px rgba(251, 191, 36, 0.5),
+      0 0 80px 30px rgba(251, 191, 36, 0.25);
+  }
+}
+
+@keyframes orb-glow-love {
+  0%,
+  100% {
+    box-shadow:
+      0 0 30px 10px rgba(251, 146, 60, 0.25),
+      0 0 60px 20px rgba(251, 146, 60, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 50px 20px rgba(251, 146, 60, 0.4),
+      0 0 80px 30px rgba(251, 146, 60, 0.2);
+  }
+}
+
+@keyframes resonance-pulse {
+  0%,
+  100% {
+    transform: scaleY(0.6);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 0.7;
+  }
+}
+
+@keyframes glow-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes affirmation-rise {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes radial-light {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Animation Classes */
 .animate-spin-slow {
   animation: spin-slow 15s linear infinite;
 }
@@ -196,10 +292,117 @@ body,
   animation: subtle-glow 3s ease-in-out infinite;
 }
 
-/* Sacred glass — available for non-card elements that opt into blur.
- * NOT used on entry flow cards (those use high-opacity solid gradients
- * to avoid the Safari backdrop-filter compositing flash).
- * Only apply where parent does NOT have overflow:hidden. */
+.animate-affirmation-rise {
+  animation: affirmation-rise 0.5s ease-out forwards;
+}
+
+/* Sacred Visual Primitives */
+.sacred-radial-light {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300%;
+  height: 300%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(251, 191, 36, 0.08) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  animation: radial-light 6s ease-in-out infinite;
+}
+
+.sacred-halo {
+  position: relative;
+}
+
+.sacred-halo::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(251, 191, 36, 0.1) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+.sacred-orb {
+  position: relative;
+}
+
+.sacred-orb::before,
+.sacred-orb::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  pointer-events: none;
+}
+
+.sacred-orb::before {
+  width: 150%;
+  height: 150%;
+  animation: glow-ring 3s ease-out infinite;
+}
+
+.sacred-orb::after {
+  width: 200%;
+  height: 200%;
+  animation: glow-ring 3s ease-out infinite 1.5s;
+}
+
+.sacred-geometry-line {
+  position: absolute;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(251, 191, 36, 0.3),
+    transparent
+  );
+  height: 1px;
+  width: 60%;
+  left: 20%;
+}
+
+.sacred-geometry-line.top {
+  top: 0;
+}
+
+.sacred-geometry-line.bottom {
+  bottom: 0;
+}
+
+.sacred-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.sacred-divider::before,
+.sacred-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(251, 191, 36, 0.3),
+    transparent
+  );
+}
+
+/* Sacred glass */
 .sacred-glass {
   -webkit-backdrop-filter: blur(12px) saturate(1.15);
   backdrop-filter: blur(12px) saturate(1.15);

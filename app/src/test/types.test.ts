@@ -12,6 +12,7 @@ describe('AppMode enum', () => {
     expect(AppMode.ONBOARDING).toBe('ONBOARDING')
     expect(AppMode.TUTORIAL).toBe('TUTORIAL')
     expect(AppMode.DASHBOARD).toBe('DASHBOARD')
+    expect(AppMode.PRACTICE_PREP).toBe('PRACTICE_PREP')
     expect(AppMode.PRACTICE).toBe('PRACTICE')
     expect(AppMode.SETTINGS).toBe('SETTINGS')
     expect(AppMode.LIBRARY).toBe('LIBRARY')
@@ -23,9 +24,9 @@ describe('AppMode enum', () => {
     expect(AppMode.PROFILE).toBe('PROFILE')
   })
 
-  it('should have 18 total modes', () => {
+  it('should have 19 total modes', () => {
     const values = Object.values(AppMode)
-    expect(values).toHaveLength(18)
+    expect(values).toHaveLength(19)
   })
 })
 

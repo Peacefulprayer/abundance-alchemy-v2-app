@@ -15,7 +15,7 @@ interface UseAudioOrchestrationProps {
 const SILENT_MODES = new Set<AppMode>([
   AppMode.PRE_SPLASH,
   AppMode.WELCOME,
-  AppMode.PRACTICE,
+  AppMode.PRACTICE_PREP,
 ]);
 
 // Modes where ambience SHOULD play (if settings allow)
@@ -31,6 +31,7 @@ const AMBIENCE_MODES = new Set<AppMode>([
   AppMode.STATS,
   AppMode.PROFILE,
   AppMode.RETURN_PORTAL,
+  AppMode.PRACTICE,
   AppMode.MEDITATION_SETUP,
   AppMode.PRAYER_SETUP,
   AppMode.PRAYER_GUIDE,

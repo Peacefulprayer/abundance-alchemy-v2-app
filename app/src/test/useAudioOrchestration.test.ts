@@ -95,9 +95,9 @@ describe('useAudioOrchestration', () => {
       expect(playAmbience).not.toHaveBeenCalled()
     })
 
-    it('should stop ambience for PRACTICE mode', () => {
+    it('should stop ambience for PRACTICE_PREP mode', () => {
       renderUseAudioOrchestration(
-        AppMode.PRACTICE,
+        AppMode.PRACTICE_PREP,
         createMockSettings(),
         mockSoundscape,
       )
@@ -133,6 +133,14 @@ describe('useAudioOrchestration', () => {
       )
 
       expect(playAmbience).toHaveBeenCalled()
+    })
+
+    it('should play ambience for PRACTICE mode when music is on', () => {
+      const settings = createMockSettings()
+      renderUseAudioOrchestration(AppMode.PRACTICE, settings, mockSoundscape)
+
+      expect(playAmbience).toHaveBeenCalledWith(mockSoundscape, 50)
+      expect(stopAmbience).not.toHaveBeenCalled()
     })
   })
 
