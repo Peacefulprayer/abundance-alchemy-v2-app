@@ -1,10 +1,10 @@
 // components/SplashScreen/SplashScreen.tsx - NORMALIZED TO UNIVERSAL DESIGN SYSTEM
-import React, { useEffect, useRef, useState } from 'react';
-import BreathingOrb from '../BreathingOrb';
-import { buttonSoundService } from '../../services/buttonSoundService';
-import { startAmbience } from '../../services/audioService';
-import { SacredBackground } from '../SacredBackground';
-import { href } from '../../services/base';
+import React, { useEffect, useRef, useState } from 'react'
+import BreathingOrb from '../BreathingOrb'
+import { buttonSoundService } from '../../services/buttonSoundService'
+import { startAmbience } from '../../services/audioService'
+import { SacredBackground } from '../SacredBackground'
+import { href } from '../../services/base'
 import {
   SACRED_LAYOUT,
   SACRED_ORB_WRAPPER,
@@ -13,16 +13,16 @@ import {
   SACRED_FOOTER_CARD,
   SACRED_CARD_GAP,
   SACRED_INNER_WIDTH,
-} from '../../styles/sacredCards';
+} from '../../styles/sacredCards'
 
 interface SplashScreenProps {
-  onComplete: () => void;
-  theme?: 'light' | 'dark';
+  onComplete: () => void
+  theme?: 'light' | 'dark'
 }
 
-type BackgroundMap = Record<string, { imageUrl?: string }>;
+type BackgroundMap = Record<string, { imageUrl?: string }>
 
-const API_BACKGROUND_ENDPOINT = '/abundance-alchemy/api/get-backgrounds.php';
+const API_BACKGROUND_ENDPOINT = '/abundance-alchemy/api/get-backgrounds.php'
 
 // Best-effort list (covers both new + returning paths) — capped for mobile safety
 const PRELOAD_SLOTS: string[] = [
@@ -32,20 +32,20 @@ const PRELOAD_SLOTS: string[] = [
   'RETURN_PORTAL',
   'HOME',
   'SETTINGS',
-];
+]
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({
   onComplete,
   theme = 'dark',
 }) => {
-  const [progress, setProgress] = useState(0);
-  const [isPreparing, setIsPreparing] = useState(false);
-  const [currentMessage, setCurrentMessage] = useState('');
-  const [isReady, setIsReady] = useState(false);
-  const [showSwahili, setShowSwahili] = useState(false);
+  const [progress, setProgress] = useState(0)
+  const [isPreparing, setIsPreparing] = useState(false)
+  const [currentMessage, setCurrentMessage] = useState('')
+  const [isReady, setIsReady] = useState(false)
+  const [showSwahili, setShowSwahili] = useState(false)
 
-  const preloadImagesRef = useRef<HTMLImageElement[]>([]);
-  const didPreloadRef = useRef(false);
+  const preloadImagesRef = useRef<HTMLImageElement[]>([])
+  const didPreloadRef = useRef(false)
 
   const preparationMessages = [
     'Opening The Space...',
@@ -53,97 +53,102 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
     'Gathering The Presence...',
     'Welcoming You In...',
     'We Are Ready For You',
-  ];
+  ]
 
   // Start background music when SplashScreen loads
   useEffect(() => {
-    startAmbience(href('assets/audio/ambient/default.mp3'), 50);
-  }, []);
+    startAmbience(href('assets/audio/ambient/default.mp3'), 50)
+  }, [])
 
   // Best-effort background preloading during preparation
   useEffect(() => {
-    if (!isPreparing) return;
-    if (didPreloadRef.current) return;
-    didPreloadRef.current = true;
+    if (!isPreparing) return
+    if (didPreloadRef.current) return
+    didPreloadRef.current = true
 
     const preload = async () => {
       try {
-        const res = await fetch(API_BACKGROUND_ENDPOINT, { credentials: 'include' });
-        if (!res.ok) return;
+        const res = await fetch(API_BACKGROUND_ENDPOINT, {
+          credentials: 'include',
+        })
+        if (!res.ok) return
 
-        const data = (await res.json()) as BackgroundMap;
+        const data = (await res.json()) as BackgroundMap
 
-        const urls: string[] = PRELOAD_SLOTS
-          .map((slot) => data?.[slot]?.imageUrl)
-          .filter((u): u is string => typeof u === 'string' && u.trim().length > 0)
+        const urls: string[] = PRELOAD_SLOTS.map(
+          (slot) => data?.[slot]?.imageUrl,
+        )
+          .filter(
+            (u): u is string => typeof u === 'string' && u.trim().length > 0,
+          )
           .slice(0, 6)
           .map((u) => {
             try {
-              return new URL(u, window.location.origin).toString();
+              return new URL(u, window.location.origin).toString()
             } catch {
-              return u;
+              return u
             }
-          });
+          })
 
         urls.forEach((src) => {
-          const img = new Image();
-          img.decoding = 'async';
-          img.loading = 'eager';
-          img.src = src;
-          preloadImagesRef.current.push(img);
-        });
+          const img = new Image()
+          img.decoding = 'async'
+          img.loading = 'eager'
+          img.src = src
+          preloadImagesRef.current.push(img)
+        })
       } catch {
         // best effort: ignore preload errors
       }
-    };
+    }
 
-    void preload();
-  }, [isPreparing]);
+    void preload()
+  }, [isPreparing])
 
   // Preparation progress animation
   useEffect(() => {
-    if (!isPreparing) return;
+    if (!isPreparing) return
 
     const interval = setInterval(() => {
       setProgress((prev) => {
-        const newProgress = prev + 1.5;
+        const newProgress = prev + 1.5
 
-        if (newProgress < 20) setCurrentMessage(preparationMessages[0]);
-        else if (newProgress < 40) setCurrentMessage(preparationMessages[1]);
-        else if (newProgress < 55) setCurrentMessage(preparationMessages[2]);
-        else if (newProgress < 85) setCurrentMessage(preparationMessages[3]);
+        if (newProgress < 20) setCurrentMessage(preparationMessages[0])
+        else if (newProgress < 40) setCurrentMessage(preparationMessages[1])
+        else if (newProgress < 55) setCurrentMessage(preparationMessages[2])
+        else if (newProgress < 85) setCurrentMessage(preparationMessages[3])
         else {
-          setCurrentMessage(preparationMessages[4]);
+          setCurrentMessage(preparationMessages[4])
           if (newProgress >= 100) {
-            clearInterval(interval);
-            setIsReady(true);
-            return 100;
+            clearInterval(interval)
+            setIsReady(true)
+            return 100
           }
         }
-        return newProgress;
-      });
-    }, 100);
+        return newProgress
+      })
+    }, 100)
 
-    return () => clearInterval(interval);
-  }, [isPreparing]);
+    return () => clearInterval(interval)
+  }, [isPreparing])
 
   useEffect(() => {
-    if (!isReady) return;
-    const interval = setInterval(() => setShowSwahili((s) => !s), 3500);
-    return () => clearInterval(interval);
-  }, [isReady]);
+    if (!isReady) return
+    const interval = setInterval(() => setShowSwahili((s) => !s), 3500)
+    return () => clearInterval(interval)
+  }, [isReady])
 
   const handleStartPreparation = () => {
-    buttonSoundService.play('click');
-    setIsPreparing(true);
-  };
+    buttonSoundService.play('click')
+    setIsPreparing(true)
+  }
 
   const handleReadyClick = () => {
-    buttonSoundService.play('click');
+    buttonSoundService.play('click')
     setTimeout(() => {
-      onComplete();
-    }, 200);
-  };
+      onComplete()
+    }, 200)
+  }
 
   return (
     <SacredBackground theme={theme} backgroundType="splash">
@@ -163,26 +168,55 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         {/* FEATURE CHIPS */}
         <div className={`flex justify-center gap-2 ${SACRED_CARD_GAP}`}>
           <div className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center gap-1 group transition-all duration-500 hover:bg-amber-500/15 hover:border-amber-400/30 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]">
-            <span className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125" style={{ color: '#D4AF37' }}>✩</span>
-            <span className="text-xs text-amber-300 transition-all duration-500 group-hover:tracking-widest group-hover:font-medium group-hover:text-amber-200">Affirmations</span>
+            <span
+              className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125"
+              style={{ color: '#D4AF37' }}
+            >
+              ✩
+            </span>
+            <span className="text-xs text-amber-300 transition-all duration-500 group-hover:tracking-widest group-hover:font-medium group-hover:text-amber-200">
+              Affirmations
+            </span>
           </div>
           <div className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center gap-1 group transition-all duration-500 hover:bg-amber-500/15 hover:border-amber-400/30 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]">
-            <span className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125" style={{ color: '#8A2BE2' }}>🪷</span>
-            <span className="text-xs text-amber-300 transition-all duration-500 group-hover:tracking-widest group-hover:font-medium group-hover:text-amber-200">Meditation</span>
+            <span
+              className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125"
+              style={{ color: '#8A2BE2' }}
+            >
+              🪷
+            </span>
+            <span className="text-xs text-amber-300 transition-all duration-500 group-hover:tracking-widest group-hover:font-medium group-hover:text-amber-200">
+              Meditation
+            </span>
           </div>
           <div className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center gap-1 group transition-all duration-500 hover:bg-amber-500/15 hover:border-amber-400/30 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]">
-            <span className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125" style={{ color: '#DC2626' }}>❤️</span>
-            <span className="text-xs text-amber-300 transition-all duration-500 group-hover:tracking-widest group-hover:font-medium group-hover:text-amber-200">Gratitude</span>
+            <span
+              className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125"
+              style={{ color: '#DC2626' }}
+            >
+              ❤️
+            </span>
+            <span className="text-xs text-amber-300 transition-all duration-500 group-hover:tracking-widest group-hover:font-medium group-hover:text-amber-200">
+              Gratitude
+            </span>
           </div>
         </div>
 
         {/* BODY CARD */}
         <div className={`${SACRED_BODY_CARD} ${SACRED_CARD_GAP}`}>
           <div className="text-center space-y-2">
-            <p className="text-slate-300 text-sm font-extralight">Transformational Change</p>
-            <p className="text-slate-300 text-sm font-extralight">Always Begins with Us</p>
-            <p className="text-slate-300 text-sm font-extralight">Conscious Reality Shifting</p>
-            <p className="text-slate-300 text-sm font-extralight">The Power Of Your I Am</p>
+            <p className="text-slate-300 text-sm font-extralight">
+              Transformational Change
+            </p>
+            <p className="text-slate-300 text-sm font-extralight">
+              Always Begins with Us
+            </p>
+            <p className="text-slate-300 text-sm font-extralight">
+              Conscious Reality Shifting
+            </p>
+            <p className="text-slate-300 text-sm font-extralight">
+              The Power Of Your I Am
+            </p>
           </div>
         </div>
 
@@ -207,7 +241,9 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
                 />
               </div>
               <p className="text-xs text-white text-center">
-                {progress >= 100 ? '100% Are You Ready?' : `${progress}% Opened`}
+                {progress >= 100
+                  ? '100% Are You Ready?'
+                  : `${progress}% Opened`}
               </p>
             </div>
 
@@ -240,23 +276,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         {/* FOOTER CARD */}
         <div className={`${SACRED_FOOTER_CARD} mt-3 md:mt-4`}>
           <div className="text-center space-y-3">
-            <p className="text-xs text-slate-300 leading-relaxed">
-              By continuing you agree to be a part of
-              <br />
-              the Abundant Thought Community
-              <br />
-              and abide by community standards.
-            </p>
-            <p className="text-xs text-slate-300">
-              <a
-                href="/privacy-policy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-amber-400 hover:text-amber-300 underline"
-              >
-                View our privacy policy here.
-              </a>
-            </p>
             <p className="text-[10px] md:text-xs text-slate-300 whitespace-nowrap">
               © 2024 Abundant Thought - Michael Soaries
             </p>
@@ -271,6 +290,16 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
               Based on the book "I Am Practice"
               <br />
               by Michael Soaries.
+            </p>
+            <p className="text-xs text-slate-300">
+              <a
+                href={href('companion-pages/privacy-policy.html')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-amber-400 hover:text-amber-300 underline"
+              >
+                View our privacy policy here.
+              </a>
             </p>
           </div>
         </div>
@@ -290,5 +319,5 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         }
       `}</style>
     </SacredBackground>
-  );
-};
+  )
+}

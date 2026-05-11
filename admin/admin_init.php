@@ -1,7 +1,11 @@
 <?php
 // Admin initialization: isolated secure session + CSRF helpers.
 
-$secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+require_once __DIR__ . '/../security.php';
+
+aa_send_common_security_headers();
+
+$secure = aa_is_https_request();
 $cookieParams = session_get_cookie_params();
 $adminSessionName = 'AA_ADMIN_SESSID';
 $adminSessionLifetime = 60 * 60 * 12; // 12 hours (sliding inactivity timeout)

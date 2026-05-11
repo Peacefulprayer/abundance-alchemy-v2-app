@@ -54,10 +54,19 @@ if (strlen($password) < 8) {
     aa_error_response('Password must be at least 8 characters', 400);
 }
 
+$rateLimit = aa_rate_limit_consume('api_register', 8, 60 * 60, $email);
+if (!$rateLimit['allowed']) {
+    aa_log_auth_event($conn, 'register_rate_limited', false, $email, null, 'user');
+    aa_error_response('Too many registration attempts. Please try again later.', 429, [
+        'retryAfter' => $rateLimit['retry_after'],
+    ]);
+}
+
 try {
     $stmt = $conn->prepare('SELECT COUNT(*) FROM users WHERE email = ?');
     $stmt->execute([$email]);
     if ($stmt->fetchColumn() > 0) {
+        aa_log_auth_event($conn, 'register_failed_duplicate', false, $email, null, 'user');
         aa_error_response('An account with this email already exists', 409);
     }
 
@@ -90,6 +99,9 @@ try {
     $_SESSION['user_id'] = $userId;
     $_SESSION['user_email'] = $email;
     $_SESSION['user_name'] = $name;
+    $_SESSION['api_authenticated_at'] = time();
+    $_SESSION['api_last_activity'] = time();
+    aa_log_auth_event($conn, 'register_succeeded', true, $email, $userId, 'user');
 
     $welcomePath = __DIR__ . '/../admin/email_templates/welcome.txt';
     $template = @file_get_contents($welcomePath);
@@ -116,5 +128,6 @@ try {
     ], 201);
 } catch (Throwable $e) {
     error_log('[api/register.php] Registration failed: ' . $e->getMessage());
+    aa_log_auth_event($conn, 'register_error', false, $email, null, 'user', ['error' => 'server_error']);
     aa_error_response('Database error', 500);
 }

@@ -2,6 +2,7 @@
 // /admin/users.php
 require_once __DIR__ . '/admin_init.php';
 require_once '../db.php'; // provides $pdo (PDO)
+require_once __DIR__ . '/../api/helpers.php';
 
 // --- Auth gate (same as other admin pages)
 if (!isset($_SESSION['admin_id'])) {
@@ -94,26 +95,33 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
         }
     }
 
-    // Trigger password reset email via API endpoint
+    // Trigger password reset email directly through shared helper
     if (isset($_POST['password_reset_email'])) {
         $email = trim($_POST['password_reset_email']);
         if ($email) {
-            $publicApi = "../api/request-password-reset.php";
-            $payload = json_encode(['email'=>$email]);
-            $opts = [
-                'http'=>[
-                    'method'=>'POST',
-                    'header'=>"Content-Type: application/json\r\n",
-                    'content'=>$payload,
-                    'timeout'=>6,
-                ]
-            ];
-            $ctx = stream_context_create($opts);
-            $ok = @file_get_contents($publicApi,false,$ctx);
-            if ($ok!==false) {
-                $flash['success'] = "Password reset email requested for $email.";
-            } else {
-                $flash['error'] = "Password reset request failed (check API).";
+            try {
+                $stmt = $pdo->prepare('SELECT id, name, email FROM users WHERE email = ? LIMIT 1');
+                $stmt->execute([$email]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($user && !empty($user['email'])) {
+                    $ok = aa_issue_password_reset(
+                        $pdo,
+                        (int)($user['id'] ?? 0),
+                        (string)$user['email'],
+                        (string)($user['name'] ?? '')
+                    );
+
+                    if ($ok) {
+                        $flash['success'] = "Password reset email sent for $email.";
+                    } else {
+                        $flash['error'] = "Password reset request failed (mail not sent).";
+                    }
+                } else {
+                    $flash['error'] = "No user found for $email.";
+                }
+            } catch (Throwable $e) {
+                $flash['error'] = "Password reset request failed: " . $e->getMessage();
             }
         }
     }

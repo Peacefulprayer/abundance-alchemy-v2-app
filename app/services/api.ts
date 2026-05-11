@@ -47,6 +47,8 @@ const STORAGE_KEYS = {
 export const clearAuth = () => {
   localStorage.removeItem(STORAGE_KEYS.AUTH);
   localStorage.removeItem(STORAGE_KEYS.USER);
+  sessionStorage.removeItem(STORAGE_KEYS.AUTH);
+  sessionStorage.removeItem(STORAGE_KEYS.USER);
   csrfTokenCache = null;
   window.dispatchEvent(new Event('auth:logout'));
 };

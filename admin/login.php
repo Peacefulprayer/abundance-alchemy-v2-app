@@ -10,23 +10,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $email = $_POST['email'] ?? '';
     $pass  = $_POST['password'] ?? '';
+    $rateLimit = aa_rate_limit_consume('admin_login', 10, 15 * 60, (string)$email);
 
-    $stmt = $pdo->prepare("SELECT * FROM admins WHERE email = ?");
-    $stmt->execute([$email]);
-    $admin = $stmt->fetch();
-
-    if ($admin && password_verify($pass, $admin['password_hash'])) {
-        // Regenerate session ID on successful login
-        session_regenerate_id(true);
-
-        $_SESSION['admin_id']   = $admin['id'];
-        $_SESSION['admin_name'] = $admin['name'];
-        $_SESSION['admin_role'] = $admin['role'];
-
-        header("Location: dashboard.php");
-        exit;
+    if (!$rateLimit['allowed']) {
+        aa_log_auth_event($pdo, 'admin_login_rate_limited', false, (string)$email, null, 'admin');
+        http_response_code(429);
+        $err = 'Too many login attempts. Please try again later.';
     } else {
-        $err = "Invalid login credentials.";
+        $stmt = $pdo->prepare("SELECT * FROM admins WHERE email = ?");
+        $stmt->execute([$email]);
+        $admin = $stmt->fetch();
+        if (is_array($admin)) {
+            aa_ensure_admin_mfa_columns($pdo);
+        }
+
+        if ($admin && password_verify($pass, $admin['password_hash'])) {
+            // Regenerate session ID on successful login
+            session_regenerate_id(true);
+            if (aa_admin_totp_is_enabled($admin)) {
+                $_SESSION['pending_admin_login'] = [
+                    'id' => (int)$admin['id'],
+                    'name' => (string)$admin['name'],
+                    'role' => (string)$admin['role'],
+                    'email' => (string)$admin['email'],
+                    'started_at' => time(),
+                ];
+                aa_log_auth_event($pdo, 'admin_password_verified_pending_mfa', true, (string)$admin['email'], (int)$admin['id'], 'admin');
+                header("Location: verify-mfa.php");
+                exit;
+            }
+
+            $_SESSION['admin_id']   = $admin['id'];
+            $_SESSION['admin_name'] = $admin['name'];
+            $_SESSION['admin_role'] = $admin['role'];
+            $_SESSION['admin_email'] = $admin['email'];
+            unset($_SESSION['pending_admin_login']);
+            aa_log_auth_event($pdo, 'admin_login_succeeded', true, (string)$admin['email'], (int)$admin['id'], 'admin');
+
+            header("Location: dashboard.php");
+            exit;
+        } else {
+            aa_log_auth_event($pdo, 'admin_login_failed', false, (string)$email, null, 'admin');
+            $err = "Invalid login credentials.";
+        }
     }
 }
 ?>

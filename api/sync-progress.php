@@ -3,12 +3,8 @@ include_once 'config.php';
 
 aa_require_method('POST');
 $data = aa_read_json_input();
-$identity = aa_get_session_identity();
+$identity = aa_require_authenticated_session();
 $userId = $identity['userId'];
-
-if ($userId <= 0) {
-    aa_error_response('Unauthorized', 401, ['success' => false]);
-}
 
 if (empty($data)) {
     aa_error_response('Invalid payload', 400, ['success' => false]);

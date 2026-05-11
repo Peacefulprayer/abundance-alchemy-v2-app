@@ -2,30 +2,23 @@
 include_once 'config.php';
 
 aa_require_method('POST');
-
-function aa_send_password_reset_email_fallback(string $email, string $name = ''): void
-{
-    $templatePath = __DIR__ . '/../admin/email_templates/password_reset.txt';
-    $template = @file_get_contents($templatePath);
-    if ($template === false || trim($template) === '') {
-        $template = "Hello {name},\n\nWe received a request to reset your Abundance Alchemy password. If you made this request, please contact support or use the latest reset instructions provided by the team.\n\nEmail: {email}\n";
-    }
-
-    $body = str_replace(
-        ['{name}', '{email}'],
-        [$name !== '' ? $name : 'there', $email],
-        $template
-    );
-
-    $serverName = $_SERVER['SERVER_NAME'] ?? 'localhost';
-    @mail($email, 'Abundance Alchemy Password Reset', $body, 'From: no-reply@' . $serverName);
-}
-
 $data = aa_read_json_input();
 $email = trim((string)($data['email'] ?? ''));
 
 if ($email === '') {
     aa_error_response('Email required', 400);
+}
+
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    aa_error_response('Invalid email address', 400);
+}
+
+$rateLimit = aa_rate_limit_consume('api_password_reset', 5, 60 * 60, $email);
+if (!$rateLimit['allowed']) {
+    aa_log_auth_event($conn, 'password_reset_rate_limited', false, $email, null, 'user');
+    aa_error_response('Too many reset requests. Please try again later.', 429, [
+        'retryAfter' => $rateLimit['retry_after'],
+    ]);
 }
 
 try {
@@ -34,11 +27,27 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user && !empty($user['email'])) {
-        aa_send_password_reset_email_fallback($user['email'], (string)($user['name'] ?? ''));
+        aa_issue_password_reset(
+            $conn,
+            (int)($user['id'] ?? 0),
+            (string)$user['email'],
+            (string)($user['name'] ?? '')
+        );
     }
+
+    aa_log_auth_event(
+        $conn,
+        'password_reset_requested',
+        true,
+        $email,
+        $user ? (int)($user['id'] ?? 0) : null,
+        'user',
+        ['matched_user' => (bool)$user]
+    );
 
     aa_json_response(['message' => 'Reset link sent']);
 } catch (Throwable $e) {
     error_log('[api/request-password-reset.php] Reset request failed: ' . $e->getMessage());
+    aa_log_auth_event($conn, 'password_reset_request_error', false, $email, null, 'user', ['error' => 'server_error']);
     aa_error_response('Error', 500);
 }

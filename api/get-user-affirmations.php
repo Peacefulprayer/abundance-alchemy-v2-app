@@ -2,11 +2,11 @@
 include_once 'config.php';
 
 aa_require_method('GET');
-$identity = aa_get_session_identity();
+$identity = aa_require_authenticated_session();
 $ownerBinding = aa_resolve_owner_binding($conn, 'user_affirmations', $identity['userId'], $identity['userEmail']);
 
 if (!$ownerBinding) {
-    aa_json_response([], 401);
+    aa_error_response('Unauthorized', 401);
 }
 
 if (!aa_has_col($ownerBinding['columns'], 'text') || !aa_has_col($ownerBinding['columns'], 'type')) {

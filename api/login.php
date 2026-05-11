@@ -11,6 +11,14 @@ if ($email === '' || $password === '') {
     aa_error_response('Missing credentials', 400);
 }
 
+$rateLimit = aa_rate_limit_consume('api_login', 20, 15 * 60, $email);
+if (!$rateLimit['allowed']) {
+    aa_log_auth_event($conn, 'login_rate_limited', false, $email, null, 'user');
+    aa_error_response('Too many login attempts. Please try again later.', 429, [
+        'retryAfter' => $rateLimit['retry_after'],
+    ]);
+}
+
 try {
     $userCols = aa_table_columns($conn, 'users');
     $lastPracticeSelect = aa_has_col($userCols, 'last_practice_date')
@@ -26,6 +34,7 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user || empty($user['password_hash']) || !password_verify($password, $user['password_hash'])) {
+        aa_log_auth_event($conn, 'login_failed', false, $email, null, 'user');
         aa_error_response('Invalid email or password', 401);
     }
 
@@ -36,6 +45,9 @@ try {
     $_SESSION['user_id'] = (int)$user['id'];
     $_SESSION['user_email'] = (string)$user['email'];
     $_SESSION['user_name'] = (string)($user['name'] ?? '');
+    $_SESSION['api_authenticated_at'] = time();
+    $_SESSION['api_last_activity'] = time();
+    aa_log_auth_event($conn, 'login_succeeded', true, (string)$user['email'], (int)$user['id'], 'user');
 
     $focusAreas = [];
     if (!empty($user['focus_area'])) {
@@ -54,5 +66,6 @@ try {
     ]);
 } catch (Throwable $e) {
     error_log('[api/login.php] Login failed: ' . $e->getMessage());
+    aa_log_auth_event($conn, 'login_error', false, $email, null, 'user', ['error' => 'server_error']);
     aa_error_response('Error', 500);
 }

@@ -2,6 +2,18 @@ import React, { useMemo, useState } from 'react'
 import { PracticeType } from '../types'
 import type { Affirmation, GratitudeLog, Soundscape } from '../types'
 import { audioManager } from '../services/audioManager'
+import {
+  SCREEN_PAGE_SHELL,
+  SCREEN_TITLE_PILL,
+  SCREEN_PRIMARY_BUTTON,
+  screenHeroCard,
+  screenInputBg,
+  screenSectionFrame,
+  screenSectionKicker,
+  screenSubTextColor,
+  screenSurfaceCard,
+  screenTextColor,
+} from '../styles/sacredScreen'
 
 const CATEGORY_OPTIONS = [
   'General',
@@ -67,31 +79,19 @@ export const Library: React.FC<LibraryProps> = (props) => {
     message: string
   } | null>(null)
 
-  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100'
-  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300'
-  const titlePill =
-    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm'
-  const sectionFrame =
-    theme === 'light'
-      ? 'rounded-[28px] border border-amber-200/60 bg-white/78 p-3 shadow-sm'
-      : 'rounded-[28px] border border-amber-500/18 bg-slate-950/45 p-3 shadow-[0_16px_40px_rgba(0,0,0,0.28)]'
-  const cardBg =
-    theme === 'light'
-      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-amber-200/60 text-slate-900'
-      : 'bg-gradient-to-br from-slate-900/70 to-slate-950/75 border-amber-500/20 text-slate-100'
+  const textColor = screenTextColor(theme)
+  const subTextColor = screenSubTextColor(theme)
+  const titlePill = SCREEN_TITLE_PILL
+  const sectionFrame = screenSectionFrame(theme)
+  const heroCard = `${screenHeroCard(theme)} text-inherit`
+  const cardBg = `${screenSurfaceCard(theme)} text-inherit`
   const itemBorder =
     theme === 'light'
       ? 'border-amber-200/55 bg-white/92'
       : 'border-amber-500/15 bg-slate-950/82'
-  const inputBg =
-    theme === 'light'
-      ? 'border-amber-200/70 bg-white/92 text-slate-900'
-      : 'border-amber-500/20 bg-slate-950/75 text-slate-100'
-  const pageShell = 'mx-auto w-full max-w-[440px] space-y-5 pb-24'
-  const sectionKicker =
-    theme === 'light'
-      ? 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-700'
-      : 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/90'
+  const inputBg = screenInputBg(theme)
+  const pageShell = `${SCREEN_PAGE_SHELL} pb-24`
+  const sectionKicker = screenSectionKicker(theme)
 
   const handleAddAffirmation = async () => {
     const text = newAffirmationText.trim()
@@ -135,7 +135,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
     >
       <div className={pageShell}>
         <div className={sectionFrame}>
-          <div className={`rounded-[24px] border p-5 shadow-lg ${cardBg}`}>
+          <div className={`${heroCard} p-5`}>
             <span className={titlePill}>Maktaba</span>
             <h2 className="mt-4 text-2xl font-serif font-medium">
               Sacred Library (Maktaba) Space
@@ -153,7 +153,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
               <h3 className={titlePill}>Soundscapes</h3>
             </div>
             <div
-              className={`mt-3 rounded-[24px] border p-4 shadow-lg ${cardBg}`}
+              className={`mt-3 ${cardBg}`}
             >
               <p className={sectionKicker}>Available Atmospheres</p>
               <div className="mt-3 space-y-3">
@@ -216,7 +216,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
           <div className="px-1">
             <h3 className={titlePill}>Your Audio</h3>
           </div>
-          <div className={`mt-3 rounded-[24px] border p-4 shadow-lg ${cardBg}`}>
+          <div className={`mt-3 ${cardBg}`}>
             <p className={sectionKicker}>Upload a Personal Track</p>
             <label
               className={`mt-3 flex cursor-pointer items-center justify-center rounded-[20px] border border-dashed px-4 py-6 text-center transition-colors ${
@@ -261,7 +261,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
           <div className="px-1">
             <h3 className={titlePill}>Affirmations</h3>
           </div>
-          <div className={`mt-3 rounded-[24px] border p-4 shadow-lg ${cardBg}`}>
+          <div className={`mt-3 ${cardBg}`}>
             <p className={sectionKicker}>Write Your Own</p>
             <div className="mt-3 space-y-3">
               <textarea
@@ -294,7 +294,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
                   ))}
                 </select>
                 <button
-                  className="rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.18em] text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] disabled:opacity-50"
+                  className={`${SCREEN_PRIMARY_BUTTON} px-4 py-2 disabled:opacity-50`}
                   onClick={handleAddAffirmation}
                   disabled={isSavingAffirmation || !newAffirmationText.trim()}
                 >
@@ -356,7 +356,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
           <div className="px-1">
             <h3 className={titlePill}>Gratitude Logs</h3>
           </div>
-          <div className={`mt-3 rounded-[24px] border p-4 shadow-lg ${cardBg}`}>
+          <div className={`mt-3 ${cardBg}`}>
             {gratitudeLogs.length === 0 ? (
               <div
                 className={`rounded-[20px] border px-4 py-5 text-sm ${itemBorder}`}

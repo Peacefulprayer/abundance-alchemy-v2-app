@@ -10,11 +10,15 @@ import {
   INNER_PRIMARY_BUTTON,
   INNER_TITLE_PILL,
   innerBackButton,
+  innerGlassPanel,
   innerHeroCard,
   innerInputBg,
   innerSectionFrame,
   innerSectionKicker,
   innerSecondaryButton,
+  innerSubTextColor,
+  innerSurfaceCard,
+  innerTextColor,
 } from '../styles/sacredInnerScreen'
 
 interface PrayerSetupProps {
@@ -73,26 +77,22 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
     [availableSoundscapes],
   )
 
-  const textColor = theme === 'light' ? 'text-slate-700' : 'text-white'
-  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-300'
+  const textColor = innerTextColor(theme)
+  const subTextColor = innerSubTextColor(theme)
   const pageShell = INNER_PAGE_SHELL
   const titlePill = INNER_TITLE_PILL
   const sectionFrame = innerSectionFrame(theme)
   const heroCard = innerHeroCard(theme)
+  const surfaceCard = innerSurfaceCard(theme)
+  const glassPanel = innerGlassPanel(theme)
   const inputBg = innerInputBg(theme)
   const sectionKicker = innerSectionKicker(theme)
   const backButton = innerBackButton(theme)
   const secondaryButton = innerSecondaryButton(theme)
   const centeredSecondaryButton = secondaryButton.replace('w-full ', '')
-  const prayerSetupSectionWrap = theme === 'light' ? 'space-y-3' : sectionFrame
-  const prayerSetupSectionCard =
-    theme === 'light'
-      ? 'rounded-[22px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-4 shadow-[0_8px_24px_rgba(180,140,80,0.12)]'
-      : 'rounded-[22px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-4 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
-  const prayerSetupInputBg =
-    theme === 'light'
-      ? 'border-amber-200/50 bg-white/90 text-slate-800'
-      : inputBg
+  const prayerSetupSectionWrap = 'space-y-3'
+  const prayerSetupSectionCard = surfaceCard
+  const prayerSetupInputBg = inputBg
 
   const intentOptions: Array<{
     value: PrayerProfile['intent']
@@ -336,7 +336,7 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
           <div className="px-1">
             <h2 className={titlePill}>Prayer Ambience</h2>
           </div>
-          <div className={`mt-3 space-y-4 ${prayerSetupSectionCard}`}>
+          <div className={`mt-3 space-y-4 ${glassPanel}`}>
             <p className={sectionKicker}>Sound and Volume</p>
             <div>
               <label

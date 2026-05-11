@@ -1,5 +1,16 @@
 import React from 'react'
 import type { UserProfile, FocusArea } from '../types'
+import {
+  SCREEN_PAGE_SHELL,
+  SCREEN_TITLE_PILL,
+  screenBackButton,
+  screenHeroCard,
+  screenSectionFrame,
+  screenSectionKicker,
+  screenSubTextColor,
+  screenSurfaceCard,
+  screenTextColor,
+} from '../styles/sacredScreen'
 
 interface StatsProps {
   user: UserProfile
@@ -14,24 +25,15 @@ function focusLabel(f: FocusArea | undefined): string {
 
 export const Stats: React.FC<StatsProps> = ({ user, theme, onBack }) => {
   const primaryFocus = focusLabel(user.focusAreas?.[0])
-  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100'
-  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300'
-  const titlePill =
-    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm'
-  const sectionFrame =
-    theme === 'light'
-      ? 'rounded-[28px] border border-amber-200/60 bg-white/78 p-3 shadow-sm'
-      : 'rounded-[28px] border border-amber-500/18 bg-slate-950/45 p-3 shadow-[0_16px_40px_rgba(0,0,0,0.28)]'
-  const cardBg =
-    theme === 'light'
-      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-amber-200/60'
-      : 'bg-gradient-to-br from-slate-900/70 to-slate-950/75 border-amber-500/20'
-  const statCardBg = cardBg
-  const pageShell = 'mx-auto w-full max-w-[440px] space-y-5 pb-24'
-  const sectionKicker =
-    theme === 'light'
-      ? 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-700'
-      : 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/90'
+  const textColor = screenTextColor(theme)
+  const subTextColor = screenSubTextColor(theme)
+  const titlePill = SCREEN_TITLE_PILL
+  const backButton = screenBackButton(theme)
+  const sectionFrame = screenSectionFrame(theme)
+  const cardBg = screenHeroCard(theme)
+  const statCardBg = screenSurfaceCard(theme)
+  const pageShell = `${SCREEN_PAGE_SHELL} pb-24`
+  const sectionKicker = screenSectionKicker(theme)
 
   return (
     <div className={`h-full w-full overflow-y-auto px-4 pt-4 ${textColor}`}>
@@ -39,11 +41,7 @@ export const Stats: React.FC<StatsProps> = ({ user, theme, onBack }) => {
         <div className="flex items-center justify-between">
           <button
             onClick={onBack}
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-medium uppercase tracking-[0.22em] transition-colors ${
-              theme === 'light'
-                ? 'border-amber-200/70 bg-white/85 text-slate-700 hover:bg-white'
-                : 'border-amber-500/20 bg-slate-950/70 text-slate-100 hover:bg-slate-950'
-            }`}
+            className={backButton}
           >
             <span>←</span>
             <span>Back</span>
@@ -53,7 +51,7 @@ export const Stats: React.FC<StatsProps> = ({ user, theme, onBack }) => {
 
         <div className={sectionFrame}>
           <div
-            className={`rounded-[24px] border p-5 text-center shadow-lg ${cardBg}`}
+            className={`${cardBg} p-5 text-center`}
           >
             <p className={sectionKicker}>Journey Snapshot</p>
             <h2 className="mt-3 text-2xl font-serif font-medium">
@@ -70,7 +68,7 @@ export const Stats: React.FC<StatsProps> = ({ user, theme, onBack }) => {
           <div className="flex items-center justify-between px-1">
             <h3 className={titlePill}>Current Focus</h3>
           </div>
-          <div className={`mt-3 rounded-[24px] border p-5 shadow-lg ${cardBg}`}>
+          <div className={`mt-3 ${screenSurfaceCard(theme)} p-5`}>
             <p className={sectionKicker}>Primary Intention</p>
             <h2 className="mt-2 text-xl font-medium">{primaryFocus}</h2>
             <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>

@@ -1,4 +1,5 @@
 /config.php
+/config.local.php
 /db.php
 /.env
 /app/.env.local

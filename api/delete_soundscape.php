@@ -39,22 +39,13 @@ if (!$row) {
 }
 
 $storedUrl = basename((string)($row['url'] ?? ''));
-if ($storedUrl === '') {
+$storedUrlRaw = trim((string)($row['url'] ?? ''));
+if ($storedUrlRaw === '') {
     aa_error_response('Stored soundscape filename is invalid', 400);
 }
 
-$audioBase = realpath(__DIR__ . '/../assets/audio');
-if ($audioBase === false || !is_dir($audioBase)) {
-    aa_error_response('Audio storage directory is unavailable', 500);
-}
-
-$targetFile = $audioBase . DIRECTORY_SEPARATOR . $storedUrl;
-$deletedFile = true;
-if (file_exists($targetFile)) {
-    $deletedFile = unlink($targetFile);
-    if (!$deletedFile) {
-        aa_error_response('Failed to delete audio file', 500);
-    }
+if (!aa_delete_soundscape_file($storedUrlRaw)) {
+    aa_error_response('Failed to delete audio file', 500);
 }
 
 $deleteStmt = $conn->prepare('DELETE FROM soundscapes WHERE id = :id AND user_email = :email');
@@ -64,6 +55,6 @@ $deleteStmt->execute();
 
 aa_json_response([
     'success' => true,
-    'deleted_file' => $deletedFile,
+    'deleted_file' => true,
     'removed_record' => $deleteStmt->rowCount() > 0,
 ]);

@@ -9,6 +9,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 api_require_csrf();
 
+$identity = aa_get_session_identity();
+if ($identity['userId'] > 0 && $identity['userEmail'] !== '') {
+    aa_log_auth_event($conn, 'logout_succeeded', true, $identity['userEmail'], $identity['userId'], 'user');
+}
+
 // Clear session data
 $_SESSION = [];
 

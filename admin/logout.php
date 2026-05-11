@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/admin_init.php';
+require_once __DIR__ . '/../db.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -8,6 +9,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 aa_require_valid_csrf();
+
+if (!empty($_SESSION['admin_id'])) {
+    aa_log_auth_event(
+        $pdo,
+        'admin_logout_succeeded',
+        true,
+        (string)($_SESSION['admin_email'] ?? ''),
+        (int)$_SESSION['admin_id'],
+        'admin'
+    );
+}
 
 $_SESSION = [];
 if (ini_get('session.use_cookies')) {

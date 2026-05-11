@@ -11,6 +11,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         'companion-pages/prayer': resolve(__dirname, 'companion-pages/prayer.html'),
         'companion-pages/meditation': resolve(__dirname, 'companion-pages/meditation.html'),
+        'companion-pages/privacy-policy': resolve(__dirname, 'companion-pages/privacy-policy.html'),
       },
     },
   },

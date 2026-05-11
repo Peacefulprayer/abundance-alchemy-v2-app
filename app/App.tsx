@@ -162,6 +162,13 @@ const AppScreenFallback = () => (
       <p className="mt-2 text-sm text-slate-200">
         Preparing your sacred space...
       </p>
+      <p className="mt-3 text-center text-[10px] leading-relaxed text-slate-400 space-y-0.5">
+        <span className="block">רוח אלוהים מרחפת מעל המים.</span>
+        <span className="block">የእግዚአብሔር መንፈስ በውሃ ላይ ይንሳፈፋል።</span>
+        <span className="block italic">
+          The Spirit of God hovers over the waters.
+        </span>
+      </p>
     </div>
   </div>
 )
@@ -295,6 +302,38 @@ const parseStoredRecord = (key: string): StoredRecord => {
 const writeStoredRecord = (key: string, value: StoredRecord) => {
   try {
     localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    // ignore storage errors
+  }
+}
+const readSessionJsonRecord = <T,>(key: string): T | null => {
+  try {
+    const sessionRaw = sessionStorage.getItem(key)
+    if (sessionRaw) {
+      return JSON.parse(sessionRaw) as T
+    }
+    const legacyRaw = localStorage.getItem(key)
+    if (!legacyRaw) return null
+    sessionStorage.setItem(key, legacyRaw)
+    localStorage.removeItem(key)
+    return JSON.parse(legacyRaw) as T
+  } catch {
+    return null
+  }
+}
+const writeSessionJsonRecord = (key: string, value: unknown) => {
+  try {
+    const serialized = JSON.stringify(value)
+    sessionStorage.setItem(key, serialized)
+    localStorage.removeItem(key)
+  } catch {
+    // ignore storage errors
+  }
+}
+const removeSessionJsonRecord = (key: string) => {
+  try {
+    sessionStorage.removeItem(key)
+    localStorage.removeItem(key)
   } catch {
     // ignore storage errors
   }
@@ -813,14 +852,9 @@ function App() {
   ): HydratedUserProfile => {
     const source: UserProfileSource = account ?? {}
     let storedProfile: Partial<UserProfile> = {}
-    try {
-      const raw = localStorage.getItem('abundance_user')
-      const parsed = raw ? JSON.parse(raw) : null
-      if (isObjectRecord(parsed)) {
-        storedProfile = parsed as Partial<UserProfile>
-      }
-    } catch {
-      storedProfile = {}
+    const parsed = readSessionJsonRecord<Partial<UserProfile>>('abundance_user')
+    if (parsed && isObjectRecord(parsed)) {
+      storedProfile = parsed as Partial<UserProfile>
     }
 
     const profile: HydratedUserProfile = {
@@ -870,7 +904,7 @@ function App() {
     let storedAuthFlowMode: AuthFlowMode = 'login'
     try {
       hasKnownVisitor = localStorage.getItem(RETURNING_VISITOR_KEY) === '1'
-      hasStoredAuth = !!localStorage.getItem('abundance_auth')
+      hasStoredAuth = !!readSessionJsonRecord<Record<string, unknown>>('abundance_auth')
     } catch {
       hasKnownVisitor = false
       hasStoredAuth = false
@@ -942,10 +976,11 @@ function App() {
 
         try {
           localStorage.setItem(RETURNING_VISITOR_KEY, '1')
-          localStorage.setItem(
-            'abundance_auth',
-            JSON.stringify({ id: res.id, email: res.email, name: res.name }),
-          )
+          writeSessionJsonRecord('abundance_auth', {
+            id: res.id,
+            email: res.email,
+            name: res.name,
+          })
         } catch {
           // ignore storage errors
         }
@@ -954,7 +989,7 @@ function App() {
         if (!(e instanceof ApiError && e.status === 401)) {
           console.error('me.php validation failed:', e)
         }
-        localStorage.removeItem('abundance_auth')
+        removeSessionJsonRecord('abundance_auth')
         clearPracticeSnapshot()
         setPracticeConfig(null)
         const shouldRouteToLogin =
@@ -1345,7 +1380,7 @@ function App() {
     setWelcomeReturnMode(null)
     setUser({ ...profile, name: nextSacredName || profile.name })
     localStorage.setItem(RETURNING_VISITOR_KEY, '1')
-    localStorage.setItem('abundance_auth', JSON.stringify(account))
+    writeSessionJsonRecord('abundance_auth', account)
     setAuthFlowMode('login')
     writeAuthFlowMode('login')
     setAuthChecked(true)
@@ -1362,7 +1397,7 @@ function App() {
     setWelcomeReturnMode(null)
     setUser(profile)
     localStorage.setItem(RETURNING_VISITOR_KEY, '1')
-    localStorage.setItem('abundance_auth', JSON.stringify(account))
+    writeSessionJsonRecord('abundance_auth', account)
     setAuthFlowMode('login')
     writeAuthFlowMode('login')
     setAuthChecked(true)
@@ -1376,7 +1411,7 @@ function App() {
       ...profile,
     }
     setUser(mergedProfile)
-    localStorage.setItem('abundance_user', JSON.stringify(mergedProfile))
+    writeSessionJsonRecord('abundance_user', mergedProfile)
     const email = user?.email ?? profile.email
     if (email) {
       api.syncProgress({ ...profile, email })
@@ -1435,7 +1470,7 @@ function App() {
         lastPracticeDate: completedAt,
       }
       setUser(updatedUser)
-      localStorage.setItem('abundance_user', JSON.stringify(updatedUser))
+      writeSessionJsonRecord('abundance_user', updatedUser)
 
       void api
         .syncProgress({
@@ -1595,6 +1630,7 @@ function App() {
 
   const handleResetAndStartOver = () => {
     localStorage.clear()
+    sessionStorage.clear()
     clearResumeMode()
     clearPracticeSnapshot()
     clearAuthFlowMode()
@@ -1657,7 +1693,7 @@ function App() {
   }
 
   const handlePracticePrepSkip = () => {
-    setCurrentMode(AppMode.PRACTICE)
+    setCurrentMode(AppMode.DASHBOARD)
   }
 
   const handleReminderSnooze = (
@@ -1763,11 +1799,7 @@ function App() {
     setUser((prev) => {
       if (!prev) return prev
       const next = { ...prev, ...patch }
-      try {
-        localStorage.setItem('abundance_user', JSON.stringify(next))
-      } catch {
-        // ignore storage errors
-      }
+      writeSessionJsonRecord('abundance_user', next)
       return next
     })
   }
@@ -1781,8 +1813,8 @@ function App() {
   const handleSignOut = () => {
     console.log('Dashboard: sign out')
     api.logout().catch(() => {})
-    localStorage.removeItem('abundance_auth')
-    localStorage.removeItem('abundance_user')
+    removeSessionJsonRecord('abundance_auth')
+    removeSessionJsonRecord('abundance_user')
     localStorage.removeItem(REMINDER_LAST_FIRED_KEY)
     localStorage.removeItem(REMINDER_SNOOZE_KEY)
     setSacredName('')
@@ -1955,6 +1987,7 @@ function App() {
                       ? 'ilove'
                       : 'meditation'
                 }
+                theme={theme}
                 onBegin={handlePracticePrepBegin}
                 onSkip={handlePracticePrepSkip}
                 showSkip={true}

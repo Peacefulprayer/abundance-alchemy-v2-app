@@ -2,6 +2,17 @@ import React, { useState, useEffect } from 'react'
 import { ChevronRight } from 'lucide-react'
 import BreathingOrb from './BreathingOrb'
 import { playBell } from '../services/audioService'
+import {
+  SCREEN_PRIMARY_BUTTON,
+  screenBackButton,
+  screenGlassPanel,
+  screenHeroCard,
+  screenSectionFrame,
+  screenSectionKicker,
+  screenSubTextColor,
+  screenSurfaceCard,
+  screenTextColor,
+} from '../styles/sacredScreen'
 
 type PracticeVariant = 'iam' | 'ilove' | 'meditation'
 
@@ -10,6 +21,7 @@ interface PrePracticeInvocationProps {
   onBegin: () => void
   onSkip?: () => void
   showSkip?: boolean
+  theme: 'light' | 'dark'
 }
 
 const STORAGE_KEY_IAM = 'hidePrep_iam'
@@ -107,6 +119,7 @@ const PrePracticeInvocation: React.FC<PrePracticeInvocationProps> = ({
   onBegin,
   onSkip,
   showSkip = true,
+  theme,
 }) => {
   const [hideEveryTime, setHideEveryTime] = useState(false)
 
@@ -135,137 +148,176 @@ const PrePracticeInvocation: React.FC<PrePracticeInvocationProps> = ({
   const c = content[variant]
 
   const accentClass = `${c.accentFrom} ${c.accentTo}`
+  const textColor = screenTextColor(theme)
+  const subTextColor = screenSubTextColor(theme)
+  const pageShell = 'mx-auto w-full max-w-[408px] space-y-5 pb-8'
+  const sectionFrame = screenSectionFrame(theme)
+  const heroCard = screenHeroCard(theme)
+  const surfaceCard = screenSurfaceCard(theme)
+  const glassPanel = screenGlassPanel(theme)
+  const backButton = screenBackButton(theme)
+  const sectionKicker = screenSectionKicker(theme)
+  const secondaryButton =
+    theme === 'light'
+      ? 'flex w-full items-center justify-center gap-2 rounded-full border border-amber-200/60 bg-white/90 px-5 py-2.5 text-xs font-medium text-slate-600 transition-colors hover:bg-amber-50/60'
+      : 'flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-slate-900/70 px-5 py-2.5 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-800/70'
 
   return (
-    <div className="flex h-full flex-col items-center justify-center px-6 py-8">
-      <div className="sacred-radial-light" />
+    <div className={`h-full w-full overflow-y-auto overflow-x-hidden custom-scrollbar ${textColor}`}>
+      <div className="relative min-h-full overflow-hidden px-4 pt-4 pb-8">
+        <div className="sacred-radial-light" />
 
-      <div className="relative z-10 mx-auto w-full max-w-[400px] space-y-6">
-        <div className="text-center">
-          <p
-            className={`text-[10px] font-bold uppercase tracking-[0.22em] ${c.accentText}`}
-          >
-            {c.subtitle}
-          </p>
-          <h1
-            className="mt-2 font-display text-3xl font-semibold"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            {c.title}
-          </h1>
-        </div>
-
-        <div className="flex justify-center">
-          <BreathingOrb size={112} breathingSpeed={c.orbSpeed} />
-        </div>
-
-        <div className="text-center">
-          <p
-            className={`text-[10px] font-bold uppercase tracking-[0.22em] ${c.accentText}`}
-          >
-            How to Practice
-          </p>
-        </div>
-
-        <div
-          className={`rounded-[24px] border p-5 ${c.cardBg} ${c.borderColor}`}
-        >
-          <p
-            className="text-sm leading-relaxed text-slate-900"
-            style={{ fontFamily: 'var(--font-body)' }}
-          >
-            {c.intro}
-          </p>
-          {'practiceNote' in c && c.practiceNote && (
-            <p
-              className="mt-3 text-sm leading-relaxed font-semibold italic text-slate-900"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              {c.practiceNote}
-            </p>
-          )}
-        </div>
-
-        <div
-          className={`rounded-[20px] border p-4 ${c.borderColor} ${c.instructionCard}`}
-        >
-          <ul className="space-y-2">
-            {c.instructions.map((instruction, index) => (
-              <li
-                key={index}
-                className="flex items-start gap-2 text-xs text-slate-900"
-              >
-                <span
-                  className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${c.numberBg || accentClass} text-[9px] font-bold text-white`}
-                >
-                  {index + 1}
-                </span>
-                <span>{instruction}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {'readyText' in c && c.readyText && (
-          <div className="text-center">
-            <p className={`text-xs font-medium italic ${c.accentText}`}>
-              {c.readyText}
-            </p>
-          </div>
-        )}
-
-        <div className="space-y-3">
-          <button
-            onClick={handleBegin}
-            className={`flex w-full items-center justify-center gap-2 rounded-full border bg-gradient-to-r px-5 py-3 text-sm font-semibold uppercase tracking-wider text-slate-900 shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] ${accentClass} ${c.borderColor}`}
-          >
-            <span>{c.cta}</span>
-            <ChevronRight size={16} />
-          </button>
-
-          {showSkip && onSkip && (
+        <div className={`relative z-10 ${pageShell}`}>
+          <div className="flex items-center justify-between">
             <button
-              onClick={handleSkip}
-              className="flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 px-5 py-2.5 text-xs font-medium text-slate-500 transition-colors hover:border-slate-400 hover:text-slate-600"
+              onClick={() => {
+                playBell()
+                onSkip?.()
+              }}
+              className={backButton}
             >
-              <span>Skip for now</span>
+              <span>←</span>
+              <span className="font-semibold tracking-wide uppercase">Back</span>
             </button>
-          )}
+            <span className="inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)]">
+              {variant === 'iam'
+                ? 'I Am'
+                : variant === 'ilove'
+                  ? 'I Love'
+                  : 'Meditation'}
+            </span>
+          </div>
 
-          {'quote' in c && c.quote && (
-            <div
-              className={`rounded-[20px] border p-4 ${c.borderColor} ${c.cardBg}`}
-            >
-              <p
-                className="text-xs italic leading-relaxed text-slate-900"
-                style={{ fontFamily: 'var(--font-body)' }}
+          <div className={sectionFrame}>
+            <div className={`${heroCard} text-center`}>
+              <p className={sectionKicker}>{c.subtitle}</p>
+              <h1
+                className="mt-2 font-display text-3xl font-semibold"
+                style={{ fontFamily: 'var(--font-display)' }}
               >
-                {c.quote}
+                {c.title}
+              </h1>
+              <p className={`mt-3 text-sm leading-relaxed ${subTextColor}`}>
+                Enter the practice with clear rhythm and deliberate attention.
               </p>
-              {'quoteAttribution' in c && c.quoteAttribution && (
+            </div>
+          </div>
+
+          <div className="flex justify-center">
+            <BreathingOrb size={90} breathingSpeed={c.orbSpeed} />
+          </div>
+
+          <div className={sectionFrame}>
+            <div className={surfaceCard}>
+              <p className={sectionKicker}>How to Practice</p>
+              <div className={`mt-4 rounded-[20px] border p-5 ${theme === 'light' ? 'bg-white/92' : 'bg-slate-950/70'} ${c.borderColor}`}>
                 <p
-                  className={`mt-2 text-[10px] font-semibold uppercase tracking-wider ${c.accentText}`}
+                  className={`text-sm leading-relaxed ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}
+                  style={{ fontFamily: 'var(--font-body)' }}
                 >
-                  — {c.quoteAttribution}
+                  {c.intro}
                 </p>
-              )}
+                {'practiceNote' in c && c.practiceNote && (
+                  <p
+                    className={`mt-3 text-sm leading-relaxed font-semibold italic ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}
+                    style={{ fontFamily: 'var(--font-body)' }}
+                  >
+                    {c.practiceNote}
+                  </p>
+                )}
+              </div>
+
+              <div
+                className={`mt-4 rounded-[20px] border p-4 ${c.borderColor} ${
+                  theme === 'light' ? 'bg-white/94' : 'bg-slate-950/78'
+                }`}
+              >
+                <p
+                  className={`mb-3 text-[10px] font-bold uppercase tracking-[0.22em] ${c.accentText}`}
+                >
+                  Affirmations
+                </p>
+                <ul className="space-y-2">
+                  {c.instructions.map((instruction, index) => (
+                    <li
+                      key={index}
+                      className={`flex items-start gap-2 text-xs ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}
+                    >
+                      <span
+                        className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${c.numberBg || accentClass} text-[9px] font-bold text-white`}
+                      >
+                        {index + 1}
+                      </span>
+                      <span>{instruction}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {'readyText' in c && c.readyText && (
+            <div className="text-center">
+              <p className={`text-xs font-medium italic ${c.accentText}`}>
+                {c.readyText}
+              </p>
             </div>
           )}
 
-          <div className="flex items-center justify-center gap-2 pt-2">
-            <input
-              type="checkbox"
-              id="hide-every-time"
-              checked={hideEveryTime}
-              onChange={(e) => handleHideEveryTimeChange(e.target.checked)}
-              className="h-4 w-4 accent-amber-500"
-            />
-            <label
-              htmlFor="hide-every-time"
-              className="cursor-pointer text-[11px] text-slate-500"
-            >
-              Don&apos;t show every time
-            </label>
+          <div className={sectionFrame}>
+            <div className={`${glassPanel} space-y-3`}>
+              <button
+                onClick={handleBegin}
+                className={`${SCREEN_PRIMARY_BUTTON} flex items-center justify-center gap-2 bg-gradient-to-r ${accentClass} ${c.borderColor}`}
+              >
+                <span>{c.cta}</span>
+                <ChevronRight size={16} />
+              </button>
+
+              {showSkip && onSkip && (
+                <button onClick={handleSkip} className={secondaryButton}>
+                  <span>Skip for now</span>
+                </button>
+              )}
+
+              {'quote' in c && c.quote && (
+                <div
+                  className={`rounded-[20px] border p-4 ${c.borderColor} ${
+                    theme === 'light' ? 'bg-white/94' : 'bg-slate-950/78'
+                  }`}
+                >
+                  <p
+                    className={`text-xs italic leading-relaxed break-words ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}
+                    style={{ fontFamily: 'var(--font-body)' }}
+                  >
+                    {c.quote}
+                  </p>
+                  {'quoteAttribution' in c && c.quoteAttribution && (
+                    <p
+                      className={`mt-2 text-[10px] font-semibold uppercase tracking-wider ${c.accentText}`}
+                    >
+                      {c.quoteAttribution}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex flex-col items-center gap-3 pt-2">
+                <input
+                  type="checkbox"
+                  id="hide-every-time"
+                  checked={hideEveryTime}
+                  onChange={(e) => handleHideEveryTimeChange(e.target.checked)}
+                  className="h-4 w-4 accent-amber-500"
+                />
+                <label
+                  htmlFor="hide-every-time"
+                  className={`cursor-pointer text-[11px] ${subTextColor}`}
+                >
+                  Don&apos;t show every time
+                </label>
+              </div>
+            </div>
           </div>
         </div>
       </div>

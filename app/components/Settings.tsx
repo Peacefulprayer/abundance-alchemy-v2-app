@@ -13,6 +13,18 @@ import {
   Upload,
 } from 'lucide-react'
 import { buttonSoundService } from '../services/buttonSoundService'
+import {
+  SCREEN_PAGE_SHELL,
+  SCREEN_TITLE_PILL,
+  screenBackButton,
+  screenHeroCard,
+  screenInputBg,
+  screenSectionFrame,
+  screenSectionKicker,
+  screenSubTextColor,
+  screenSurfaceCard,
+  screenTextColor,
+} from '../styles/sacredScreen'
 
 interface SettingsProps {
   settings: AppSettings
@@ -48,35 +60,20 @@ export const Settings: React.FC<SettingsProps> = ({
   const [uploadCategory, setUploadCategory] = useState('MEDITATION')
   const [uploadFile, setUploadFile] = useState<File | null>(null)
 
-  const textColor = theme === 'light' ? 'text-slate-700' : 'text-white'
-  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-300'
-  const titlePill =
-    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm'
-  const pageShell = 'mx-auto w-full max-w-[440px] space-y-5 pb-24'
-  const sectionFrame =
-    theme === 'light'
-      ? 'rounded-[28px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-3 shadow-[0_8px_24px_rgba(180,140,80,0.12)]'
-      : 'rounded-[28px] bg-gradient-to-br from-slate-900/90 to-slate-950/95 border border-white/10 p-3 shadow-[0_16px_40px_rgba(0,0,0,0.4)]'
-  const cardBg =
-    theme === 'light'
-      ? 'bg-gradient-to-br from-amber-50/50 to-white/90 border border-amber-200/40'
-      : 'bg-gradient-to-br from-slate-900/90 to-slate-950/95 border border-white/10'
+  const textColor = screenTextColor(theme)
+  const subTextColor = screenSubTextColor(theme)
+  const titlePill = SCREEN_TITLE_PILL
+  const pageShell = `${SCREEN_PAGE_SHELL} pb-24`
+  const sectionFrame = screenSectionFrame(theme)
+  const cardBg = screenHeroCard(theme)
   const actionCardBg =
     theme === 'light'
       ? 'bg-gradient-to-br from-slate-900/90 to-slate-800/88 border border-slate-700'
       : 'bg-gradient-to-br from-slate-950/90 to-slate-900/88 border border-slate-700'
-  const surfaceCard =
-    theme === 'light'
-      ? 'rounded-[22px] bg-gradient-to-br from-amber-50/30 to-white/85 border border-amber-200/30 p-4 shadow-[0_8px_24px_rgba(180,140,80,0.1)]'
-      : 'rounded-[22px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-4 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
-  const inputBg =
-    theme === 'light'
-      ? 'border-amber-200/50 bg-white/90 text-slate-800'
-      : 'border-white/10 bg-slate-900/70 text-white'
-  const sectionKicker =
-    theme === 'light'
-      ? 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-700'
-      : 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/90'
+  const surfaceCard = screenSurfaceCard(theme)
+  const inputBg = screenInputBg(theme)
+  const sectionKicker = screenSectionKicker(theme)
+  const backButton = screenBackButton(theme)
   const actionRow =
     theme === 'light'
       ? 'border border-amber-200/60 bg-white/85 text-slate-900 hover:bg-white'
@@ -232,11 +229,7 @@ export const Settings: React.FC<SettingsProps> = ({
               buttonSoundService.play('back')
               onBack()
             }}
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-medium uppercase tracking-[0.22em] transition-colors ${
-              theme === 'light'
-                ? 'border-amber-200/70 bg-white/85 text-slate-700 hover:bg-white'
-                : 'border-amber-500/20 bg-slate-950/70 text-slate-100 hover:bg-slate-950'
-            }`}
+            className={backButton}
           >
             <ArrowLeft size={16} />
             <span>Back</span>
@@ -245,7 +238,7 @@ export const Settings: React.FC<SettingsProps> = ({
         </div>
 
         <div className={sectionFrame}>
-          <div className={`rounded-[24px] border p-5 shadow-lg ${cardBg}`}>
+          <div className={`${cardBg} p-5`}>
             <p className={sectionKicker}>Personalize Your Sacred Space</p>
             <h1 className="mt-3 text-2xl font-serif">
               Shape the Atmosphere Around You
@@ -261,7 +254,7 @@ export const Settings: React.FC<SettingsProps> = ({
           <div className="px-1">
             <h2 className={titlePill}>Appearance</h2>
           </div>
-          <div className={`mt-3 rounded-[24px] border p-5 shadow-lg ${cardBg}`}>
+          <div className={`mt-3 ${surfaceCard} p-5`}>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className={sectionKicker}>Visual Mode</p>
@@ -299,7 +292,7 @@ export const Settings: React.FC<SettingsProps> = ({
             <h2 className={titlePill}>Audio</h2>
           </div>
           <div className="mt-3 space-y-3">
-            <div className={`rounded-[24px] border p-5 shadow-lg ${cardBg}`}>
+            <div className={`${surfaceCard} p-5`}>
               <p className={sectionKicker}>Core Audio</p>
               <div className="mt-3 flex items-start gap-3">
                 <Volume2 size={18} className="mt-1 text-emerald-500" />
@@ -377,7 +370,7 @@ export const Settings: React.FC<SettingsProps> = ({
               </div>
             </div>
 
-            <div className={`rounded-[24px] border p-5 shadow-lg ${cardBg}`}>
+            <div className={`${surfaceCard} p-5`}>
               <p className={sectionKicker}>Soundscape Assignments</p>
               <div className="mt-4 space-y-3">
                 <div className={surfaceCard}>
@@ -471,7 +464,7 @@ export const Settings: React.FC<SettingsProps> = ({
               </div>
             </div>
 
-            <div className={`rounded-[24px] border p-5 shadow-lg ${cardBg}`}>
+            <div className={`${surfaceCard} p-5`}>
               <p className={sectionKicker}>Upload Your Music</p>
               <div className="mt-4 space-y-4">
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -575,7 +568,7 @@ export const Settings: React.FC<SettingsProps> = ({
             </button>
           </div>
 
-          <div className={`mt-3 rounded-[24px] border p-5 shadow-lg ${cardBg}`}>
+          <div className={`mt-3 ${surfaceCard} p-5`}>
             <div className="flex items-start gap-3">
               <Clock size={18} className="mt-1 text-amber-500" />
               <div>
@@ -730,7 +723,7 @@ export const Settings: React.FC<SettingsProps> = ({
             <h2 className={titlePill}>Actions</h2>
           </div>
           <div
-            className={`mt-3 rounded-[24px] border p-5 shadow-lg ${actionCardBg}`}
+            className={`mt-3 rounded-[24px] p-5 shadow-lg ${actionCardBg}`}
           >
             <div className="space-y-3">
               <button
@@ -788,7 +781,7 @@ export const Settings: React.FC<SettingsProps> = ({
 
         <div className={sectionFrame}>
           <div
-            className={`rounded-[24px] border p-5 text-center shadow-lg ${cardBg}`}
+            className={`${surfaceCard} p-5 text-center`}
           >
             <p className={`text-xs leading-relaxed ${subTextColor}`}>
               Abundance Alchemy v1.0.0

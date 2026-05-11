@@ -14,9 +14,13 @@ import {
   INNER_PRIMARY_BUTTON,
   INNER_TITLE_PILL,
   innerBackButton,
+  innerGlassPanel,
   innerInputBg,
   innerSectionKicker,
   innerSecondaryButton,
+  innerSubTextColor,
+  innerSurfaceCard,
+  innerTextColor,
 } from '../styles/sacredInnerScreen'
 
 interface PrayerSessionProps {
@@ -50,8 +54,8 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
   const [isLoadingContent, setIsLoadingContent] = useState(false)
   const [isSavingPrayer, setIsSavingPrayer] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const textColor = theme === 'light' ? 'text-slate-700' : 'text-white'
-  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-300'
+  const textColor = innerTextColor(theme)
+  const subTextColor = innerSubTextColor(theme)
   const pageShell = `${INNER_PAGE_SHELL} max-w-[408px] space-y-3.5`
   const sectionFrame =
     theme === 'light'
@@ -65,33 +69,19 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
   const backButton = innerBackButton(theme)
   const secondaryButton = innerSecondaryButton(theme)
   const inputBg = innerInputBg(theme)
+  const surfaceCard = innerSurfaceCard(theme)
+  const glassPanel = innerGlassPanel(theme)
   const prayerSessionSectionWrap = 'space-y-2'
-  const prayerProfileCard =
-    theme === 'light'
-      ? 'rounded-[18px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-3 shadow-[0_8px_24px_rgba(180,140,80,0.12)]'
-      : 'rounded-[18px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
-  const sacredFlowCard =
-    theme === 'light'
-      ? 'rounded-[18px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-3 shadow-[0_8px_24px_rgba(180,140,80,0.12)]'
-      : 'rounded-[18px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
-  const customPrayerCard =
-    theme === 'light'
-      ? 'rounded-[18px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-3 shadow-[0_8px_24px_rgba(180,140,80,0.12)]'
-      : 'rounded-[18px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
-  const savedPrayerCard =
-    theme === 'light'
-      ? 'rounded-[18px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-3 shadow-[0_8px_24px_rgba(180,140,80,0.12)]'
-      : 'rounded-[18px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
-  const actionCard =
-    theme === 'light'
-      ? 'rounded-[18px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-3 shadow-[0_8px_24px(180,140,80,0.12)]'
-      : 'rounded-[18px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
-  const prayerSessionInputBg =
-    theme === 'light'
-      ? 'border-amber-200/50 bg-white/90 text-slate-800'
-      : inputBg
+  const prayerProfileCard = surfaceCard
+  const sacredFlowCard = surfaceCard
+  const customPrayerCard = surfaceCard
+  const savedPrayerCard = surfaceCard
+  const actionCard = glassPanel
+  const prayerSessionInputBg = inputBg
   const prayerTextCard =
-    'relative overflow-hidden rounded-[18px] border border-white/12 bg-black px-4 py-4 text-white shadow-[0_22px_48px_rgba(0,0,0,0.42)]'
+    theme === 'light'
+      ? 'relative overflow-hidden rounded-[18px] border border-amber-300/35 bg-slate-950 px-4 py-4 text-white shadow-[0_22px_48px_rgba(15,23,42,0.32)]'
+      : 'relative overflow-hidden rounded-[18px] border border-white/14 bg-slate-950/95 px-4 py-4 text-white shadow-[0_22px_48px_rgba(0,0,0,0.42)]'
   const readLocalUserPrayers = (pathId: PrayerPathId): UserPrayer[] => {
     try {
       const raw = localStorage.getItem(LOCAL_USER_PRAYERS_KEY)
@@ -306,15 +296,15 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
   const profileChipClass =
     theme === 'light'
       ? 'rounded-[14px] border border-amber-200/70 bg-white/82 px-2.5 py-2 text-[10px] text-slate-700'
-      : 'rounded-[14px] border border-amber-200/16 bg-black/18 px-2.5 py-2 text-[10px] text-slate-100'
+      : 'rounded-[14px] border border-white/12 bg-slate-950/78 px-2.5 py-2 text-[10px] text-slate-100'
   const flowStepClass =
     theme === 'light'
-      ? 'flex gap-2.5 rounded-[14px] border border-emerald-200/65 bg-white/72 px-3 py-2'
-      : 'flex gap-2.5 rounded-[14px] border border-emerald-200/14 bg-black/16 px-3 py-2'
+      ? 'flex gap-2.5 rounded-[14px] border border-emerald-200/65 bg-white/88 px-3 py-2 text-slate-800'
+      : 'flex gap-2.5 rounded-[14px] border border-white/12 bg-slate-950/78 px-3 py-2 text-slate-100'
   const savedPrayerItemClass =
     theme === 'light'
-      ? 'rounded-[14px] border border-violet-200/70 bg-white/78 px-3 py-2.5 text-slate-700'
-      : 'rounded-[14px] border border-violet-200/14 bg-black/18 px-3 py-2.5 text-slate-100'
+      ? 'rounded-[14px] border border-violet-200/70 bg-white/86 px-3 py-2.5 text-slate-700'
+      : 'rounded-[14px] border border-white/12 bg-slate-950/78 px-3 py-2.5 text-slate-100'
 
   return (
     <div
@@ -412,7 +402,11 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
                   <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-[11px] font-extrabold text-amber-300">
                     {stepIndex + 1}
                   </span>
-                  <p className={`text-[12px] leading-relaxed ${subTextColor}`}>
+                  <p
+                    className={`text-[12px] leading-relaxed ${
+                      theme === 'light' ? 'text-slate-800' : 'text-slate-100'
+                    }`}
+                  >
                     {step}
                   </p>
                 </div>
@@ -439,7 +433,13 @@ export const PrayerSession: React.FC<PrayerSessionProps> = ({
               className={`w-full resize-none rounded-[14px] border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 ${prayerSessionInputBg}`}
             />
             {saveError ? (
-              <p className="text-sm text-rose-300">{saveError}</p>
+              <p
+                className={`text-sm ${
+                  theme === 'light' ? 'text-rose-700' : 'text-rose-300'
+                }`}
+              >
+                {saveError}
+              </p>
             ) : null}
             <button
               onClick={handleSavePrayer}

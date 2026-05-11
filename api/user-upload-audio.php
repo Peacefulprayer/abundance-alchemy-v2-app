@@ -1,32 +1,14 @@
 <?php
 include_once 'config.php';
 
-header('Content-Type: application/json; charset=utf-8');
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(["success" => false, "message" => "Method not allowed"]);
-    exit();
-}
-
-// Require authenticated app session for uploads.
-$userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
-$sessionEmail = isset($_SESSION['user_email']) ? trim((string)$_SESSION['user_email']) : '';
-if ($userId <= 0 || $sessionEmail === '' || !filter_var($sessionEmail, FILTER_VALIDATE_EMAIL)) {
-    http_response_code(401);
-    echo json_encode(["success" => false, "message" => "Unauthorized"]);
-    exit();
-}
-
+aa_require_method('POST');
+$identity = aa_require_authenticated_session();
 api_require_csrf();
 
-// Never trust client-provided email for ownership.
 if (isset($_POST['email'])) {
     $postedEmail = trim((string)$_POST['email']);
-    if ($postedEmail !== '' && strcasecmp($postedEmail, $sessionEmail) !== 0) {
-        http_response_code(403);
-        echo json_encode(["success" => false, "message" => "Email mismatch"]);
-        exit();
+    if ($postedEmail !== '' && strcasecmp($postedEmail, $identity['userEmail']) !== 0) {
+        aa_error_response('Email mismatch', 403);
     }
 }
 
@@ -38,9 +20,7 @@ if (isset($_FILES['audioFile'])) {
 }
 
 if (!$fileKey) {
-    http_response_code(400);
-    echo json_encode(["success" => false, "message" => "Missing audio file"]);
-    exit();
+    aa_error_response('Missing audio file', 400);
 }
 
 $allowedCategories = ['MORNING_IAM', 'EVENING_ILOVE', 'MEDITATION', 'PRAYER', 'GENERAL', 'AMBIENCE'];
@@ -56,14 +36,7 @@ if ($usage_purpose === '') {
 
 $file = $_FILES[$fileKey];
 if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
-    http_response_code(400);
-    echo json_encode(["success" => false, "message" => "Invalid upload payload"]);
-    exit();
-}
-
-$target_dir = "../assets/audio/";
-if (!file_exists($target_dir)) {
-    mkdir($target_dir, 0755, true);
+    aa_error_response('Invalid upload payload', 400);
 }
 
 // File validation
@@ -75,67 +48,63 @@ $mimeType = $finfo->file($file['tmp_name']);
 $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
 if (!in_array($mimeType, $allowedMime, true) || !in_array($ext, $allowedExt, true)) {
-    http_response_code(400);
-    echo json_encode(["success" => false, "message" => "Invalid audio file type"]);
-    exit();
+    aa_error_response('Invalid audio file type', 400);
 }
 
 // Size limit (15MB for user uploads)
 $maxSize = 15 * 1024 * 1024;
 if ($file['size'] > $maxSize) {
-    http_response_code(400);
-    echo json_encode(["success" => false, "message" => "File too large. Max 15MB."]);
-    exit();
+    aa_error_response('File too large. Max 15MB.', 400);
 }
 
-// Generate safe filename
 $safeBase = preg_replace('/[^a-zA-Z0-9_\-]/', '_', pathinfo($file['name'], PATHINFO_FILENAME));
 $filename = "user_" . time() . "_" . bin2hex(random_bytes(4)) . "_" . $safeBase . "." . $ext;
-$targetFile = $target_dir . $filename;
+$targetDir = aa_ensure_private_audio_storage_dir();
+$targetFile = $targetDir . DIRECTORY_SEPARATOR . $filename;
 
-// Move file
-if (move_uploaded_file($file["tmp_name"], $targetFile)) {
-    $name = pathinfo($file["name"], PATHINFO_FILENAME);
-
-    // Simple user insert - minimal data
-    $query = "
-        INSERT INTO soundscapes 
-        (name, url, category, usage_purpose, user_email, 
-         is_active, is_public, creator_name, license_type,
-         duration_seconds, bpm, energy_level, is_loopable, tags, mood)
-        VALUES 
-        (:name, :url, :category, :purpose, :email,
-         1, 0, :creator_name, :license,
-         NULL, NULL, 'medium', 1, '', '')
-    ";
-
-    $creator_name = "User Upload";
-    $license = "Personal Use";
-
-    $stmt = $conn->prepare($query);
-    $stmt->bindParam(":name", $name);
-    $stmt->bindParam(":url", $filename);
-    $stmt->bindParam(":category", $category);
-    $stmt->bindParam(":purpose", $usage_purpose);
-    $stmt->bindParam(":email", $sessionEmail);
-    $stmt->bindParam(":creator_name", $creator_name);
-    $stmt->bindParam(":license", $license);
-
-    if ($stmt->execute()) {
-        echo json_encode([
-            "success" => true, 
-            "message" => "Your audio has been uploaded!",
-            "is_public" => false,
-            "filename" => $filename,
-            "id" => $conn->lastInsertId(),
-            "audio_url" => "https://abundantthought.com/abundance-alchemy/assets/audio/" . $filename
-        ]);
-    } else {
-        @unlink($targetFile);
-        http_response_code(500);
-        echo json_encode(["success" => false, "message" => "Database error"]);
-    }
-} else {
-    http_response_code(500);
-    echo json_encode(["success" => false, "message" => "Failed to save file"]);
+if (!move_uploaded_file($file["tmp_name"], $targetFile)) {
+    aa_error_response('Failed to save file', 500);
 }
+
+$name = pathinfo($file["name"], PATHINFO_FILENAME);
+$query = "
+    INSERT INTO soundscapes 
+    (name, url, category, usage_purpose, user_email, 
+     is_active, is_public, creator_name, license_type,
+     duration_seconds, bpm, energy_level, is_loopable, tags, mood)
+    VALUES 
+    (:name, :url, :category, :purpose, :email,
+     1, 0, :creator_name, :license,
+     NULL, NULL, 'medium', 1, '', '')
+";
+
+$creator_name = "User Upload";
+$license = "Personal Use";
+$storageKey = aa_private_soundscape_key($filename);
+
+$stmt = $conn->prepare($query);
+$stmt->bindParam(":name", $name);
+$stmt->bindParam(":url", $storageKey);
+$stmt->bindParam(":category", $category);
+$stmt->bindParam(":purpose", $usage_purpose);
+$stmt->bindValue(":email", $identity['userEmail'], PDO::PARAM_STR);
+$stmt->bindParam(":creator_name", $creator_name);
+$stmt->bindParam(":license", $license);
+
+if (!$stmt->execute()) {
+    @unlink($targetFile);
+    aa_error_response('Database error', 500);
+}
+
+$recordId = (int)$conn->lastInsertId();
+$apiBasePath = rtrim(str_replace('\\', '/', dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/'))), '/');
+$audioUrl = ($apiBasePath !== '' ? $apiBasePath : '') . '/private-audio.php?id=' . $recordId;
+
+aa_json_response([
+    "success" => true,
+    "message" => "Your audio has been uploaded!",
+    "is_public" => false,
+    "filename" => $filename,
+    "id" => $recordId,
+    "audio_url" => $audioUrl,
+]);

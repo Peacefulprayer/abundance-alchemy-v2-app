@@ -3,36 +3,13 @@
 
 import { Soundscape } from '../types';
 import { getAudioContext, unlockAudio as unlockToneAudio } from './buttonTone';
+import { href } from './base';
 
 let masterVolume = 1;
 const TRACK_SWITCH_FADE_OUT_MS = 320;
 const TRACK_SWITCH_FADE_IN_MS = 900;
 const SAME_TRACK_VOLUME_RAMP_MS = 450;
 const STOP_FADE_MS = 900;
-
-function playTone(frequency: number, durationMs: number, volume = 0.25) {
-  const ctx = getAudioContext();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.type = 'sine';
-  osc.frequency.value = frequency;
-  gain.gain.value = 0.0001;
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-
-  const now = ctx.currentTime;
-  const attack = 0.02;
-  const release = Math.max(0.03, durationMs / 1000 - attack);
-
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(volume, now + attack);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + attack + release);
-
-  osc.start(now);
-  osc.stop(now + attack + release);
-}
 
 class AudioService {
   private static instance: AudioService;
@@ -288,13 +265,70 @@ export const playBell = () => {
 
 export const playCompletionSound = () => {
   try {
-    unlockToneAudio();
-    playTone(660, 140, 0.22);
-    playTone(880, 180, 0.18);
+    // Try to play the gong sound file from gongs folder
+    const gong = new Audio(href('assets/audio/gongs/gong.mp3'))
+    gong.volume = 0.7
+    gong.play().catch(() => {
+      // Fallback to synthesized gong sound if file fails
+      playSynthGong()
+    })
+  } catch {
+    // Fallback to synthesized gong sound
+    playSynthGong()
+  }
+}
+
+// Synthesized gong fallback
+const playSynthGong = () => {
+  try {
+    const ctx = getAudioContext()
+    unlockToneAudio()
+    
+    const now = ctx.currentTime
+    const duration = 2.5
+    
+    // Fundamental tone (deep gong base)
+    const osc1 = ctx.createOscillator()
+    const gain1 = ctx.createGain()
+    osc1.type = 'sine'
+    osc1.frequency.value = 110 // A2 - deep tone
+    gain1.gain.setValueAtTime(0.0001, now)
+    gain1.gain.exponentialRampToValueAtTime(0.3, now + 0.05)
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + duration)
+    osc1.connect(gain1)
+    gain1.connect(ctx.destination)
+    osc1.start(now)
+    osc1.stop(now + duration)
+    
+    // Second harmonic (adds richness)
+    const osc2 = ctx.createOscillator()
+    const gain2 = ctx.createGain()
+    osc2.type = 'sine'
+    osc2.frequency.value = 220 // A3
+    gain2.gain.setValueAtTime(0.0001, now)
+    gain2.gain.exponentialRampToValueAtTime(0.15, now + 0.03)
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.8)
+    osc2.connect(gain2)
+    gain2.connect(ctx.destination)
+    osc2.start(now)
+    osc2.stop(now + duration * 0.8)
+    
+    // Third harmonic (shimmer)
+    const osc3 = ctx.createOscillator()
+    const gain3 = ctx.createGain()
+    osc3.type = 'sine'
+    osc3.frequency.value = 330 // E4
+    gain3.gain.setValueAtTime(0.0001, now + 0.1)
+    gain3.gain.exponentialRampToValueAtTime(0.08, now + 0.2)
+    gain3.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.6)
+    osc3.connect(gain3)
+    gain3.connect(ctx.destination)
+    osc3.start(now + 0.1)
+    osc3.stop(now + duration * 0.6)
   } catch {
     // ignore
   }
-};
+}
 
 export const startAmbience = (soundscape: Soundscape | string, volume = 50) => {
   if (typeof soundscape === 'string') {

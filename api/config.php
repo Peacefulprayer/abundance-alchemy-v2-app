@@ -7,26 +7,28 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/helpers.php';
 
+aa_send_common_security_headers();
+
 // CORS allowlist
 $origin         = $_SERVER['HTTP_ORIGIN'] ?? '';
 $allowedOrigins = unserialize(ALLOWED_ORIGINS);
 $allowedOrigins = is_array($allowedOrigins) ? array_values($allowedOrigins) : [];
-$defaultOrigin  = $allowedOrigins[0] ?? '*';
 
 if ($origin && is_array($allowedOrigins) && in_array($origin, $allowedOrigins, true)) {
     header("Access-Control-Allow-Origin: {$origin}");
-} else {
-    // fallback – you can change this to be stricter if you want
-    header("Access-Control-Allow-Origin: {$defaultOrigin}");
+    header("Access-Control-Allow-Credentials: true");
 }
 header("Vary: Origin");
-header("Access-Control-Allow-Credentials: true");
 
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-CSRF-Token");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    if ($origin && !in_array($origin, $allowedOrigins, true)) {
+        http_response_code(403);
+        exit();
+    }
     http_response_code(200);
     exit();
 }

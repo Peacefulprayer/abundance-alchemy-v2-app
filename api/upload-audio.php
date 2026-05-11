@@ -30,11 +30,6 @@ if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || empty($file['tmp
     aa_error_response('Invalid upload payload', 400);
 }
 
-$targetDir = __DIR__ . '/../assets/audio/';
-if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
-    aa_error_response('Audio storage directory is unavailable', 500);
-}
-
 $allowedMime = [
     'audio/mpeg',
     'audio/mp3',
@@ -61,7 +56,8 @@ if (($file['size'] ?? 0) > $maxSize) {
 
 $uuid = bin2hex(random_bytes(16));
 $filename = 'user_' . $uuid . '.' . $ext;
-$targetFile = $targetDir . $filename;
+$targetDir = aa_ensure_private_audio_storage_dir();
+$targetFile = $targetDir . DIRECTORY_SEPARATOR . $filename;
 
 if (!move_uploaded_file($file['tmp_name'], $targetFile)) {
     aa_error_response('Failed to save file', 500);
@@ -75,7 +71,7 @@ $query = '
 
 $stmt = $conn->prepare($query);
 $stmt->bindValue(':name', $label, PDO::PARAM_STR);
-$stmt->bindValue(':url', $filename, PDO::PARAM_STR);
+$stmt->bindValue(':url', aa_private_soundscape_key($filename), PDO::PARAM_STR);
 $stmt->bindValue(':category', $dbCategory, PDO::PARAM_STR);
 $stmt->bindValue(':email', $identity['userEmail'], PDO::PARAM_STR);
 
@@ -88,4 +84,5 @@ aa_json_response([
     'success' => true,
     'message' => 'File uploaded',
     'filename' => $filename,
+    'audio_url' => rtrim(str_replace('\\', '/', dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/'))), '/') . '/private-audio.php?id=' . (int)$conn->lastInsertId(),
 ]);

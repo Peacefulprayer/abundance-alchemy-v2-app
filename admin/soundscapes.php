@@ -2,6 +2,7 @@
 // /admin/soundscapes.php
 require_once __DIR__ . '/admin_init.php';
 require_once '../db.php';
+require_once __DIR__ . '/../api/helpers.php';
 
 // Use the same admin check as other admin pages
 if (!isset($_SESSION['admin_id'])) {
@@ -30,8 +31,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['id'
             $stmt = $pdo->prepare("UPDATE soundscapes SET is_public = NOT is_public WHERE id = ?");
             $stmt->execute([$id]);
         } elseif ($action === 'delete') {
-            $stmt = $pdo->prepare("DELETE FROM soundscapes WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT url FROM soundscapes WHERE id = ?");
             $stmt->execute([$id]);
+            $storedUrl = (string)($stmt->fetchColumn() ?: '');
+
+            if ($storedUrl !== '' && !aa_delete_soundscape_file($storedUrl)) {
+                $error = 'Failed to delete audio file from storage.';
+            } else {
+                $stmt = $pdo->prepare("DELETE FROM soundscapes WHERE id = ?");
+                $stmt->execute([$id]);
+            }
         }
     }
 
@@ -61,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['audio_file']) && emp
     
     $targetDir = "../assets/audio/";
     if (!file_exists($targetDir)) {
-        mkdir($targetDir, 0777, true);
+        mkdir($targetDir, 0755, true);
     }
     
     $fileName       = time() . '_' . bin2hex(random_bytes(4)) . '_' . basename($_FILES["audio_file"]["name"]);

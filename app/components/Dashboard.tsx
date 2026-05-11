@@ -24,6 +24,18 @@ import { AlchemistAvatar } from './AlchemistAvatar'
 import { ProfileImage } from './ProfileImage'
 import { playBell } from '../services/audioService'
 import { WISDOM_QUOTES } from '../data/wisdomQuotes'
+import {
+  SCREEN_PAGE_SHELL,
+  SCREEN_TITLE_PILL,
+  screenGlassPanel,
+  screenHeroCard,
+  screenInputBg,
+  screenSectionFrame,
+  screenSectionKicker,
+  screenSubTextColor,
+  screenSurfaceCard,
+  screenTextColor,
+} from '../styles/sacredScreen'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
 
@@ -244,7 +256,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       ...user,
       gratitudeLogs: [...user.gratitudeLogs, newLog],
     }
-    localStorage.setItem('abundance_user', JSON.stringify(updatedUser))
+    sessionStorage.setItem('abundance_user', JSON.stringify(updatedUser))
+    localStorage.removeItem('abundance_user')
     setJournalEntry('')
     setShowJournal(false)
     setJournalStatus('Reflection saved.')
@@ -253,18 +266,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const greeting = user.lastPracticeDate ? 'Welcome back' : 'Greetings'
 
-  const textColor = theme === 'light' ? 'text-slate-700' : 'text-white'
-  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-300'
-  const whitePill =
-    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm'
+  const textColor = screenTextColor(theme)
+  const subTextColor = screenSubTextColor(theme)
+  const whitePill = SCREEN_TITLE_PILL
   const headerPill =
     'inline-flex items-center rounded-full border border-amber-300/45 bg-gradient-to-r from-slate-950/82 to-slate-900/76 px-3 py-1.5 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)] backdrop-blur-sm'
-  const streakPill =
-    'inline-flex items-center gap-2 rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm'
-  const glassCard =
-    theme === 'light'
-      ? 'bg-white/85 border-white/60 shadow-sm'
-      : 'bg-gradient-to-br from-slate-900/70 to-slate-950/75 border-white/10 shadow-xl'
+  const streakPill = `${SCREEN_TITLE_PILL} gap-2`
+  const heroCard = screenHeroCard(theme)
+  const glassCard = `${screenGlassPanel(theme)} p-4`
   const buttonBg =
     theme === 'light'
       ? 'bg-slate-100 hover:bg-amber-100 border-slate-200'
@@ -272,19 +281,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const sectionTitleChip = whitePill
   const daysLeftChip =
     'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm'
-  const infoCardBg =
-    theme === 'light'
-      ? 'rounded-2xl border border-slate-200/60 bg-white/85 p-3 shadow-sm'
-      : 'rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-xl'
-  const pageShell = 'mx-auto w-full max-w-[440px] space-y-5'
-  const sectionFrame =
-    theme === 'light'
-      ? 'rounded-[28px] border border-slate-200/40 bg-white/60 p-3 shadow-sm'
-      : 'rounded-[28px] border border-white/10 bg-slate-900/50 p-3 shadow-[0_16px_40px_rgba(0,0,0,0.28)]'
-  const sectionKicker =
-    theme === 'light'
-      ? 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-700'
-      : 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/90'
+  const infoCardBg = `${screenSurfaceCard(theme)} p-3`
+  const pageShell = `${SCREEN_PAGE_SHELL} pb-24`
+  const sectionFrame = screenSectionFrame(theme)
+  const sectionKicker = screenSectionKicker(theme)
+  const inputBg = screenInputBg(theme)
   const toggleShell =
     theme === 'light'
       ? 'relative p-1 rounded-full flex border border-slate-200/70 bg-white/90 shadow-sm'
@@ -327,7 +328,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className="space-y-1">
                 <div className={headerPill}>{greeting}</div>
                 <p
-                  className={`text-base font-semibold ${theme === 'light' ? textColor : 'text-white'}`}
+                  className={`text-base font-semibold ${
+                    theme === 'light' ? 'text-slate-950' : 'text-white'
+                  }`}
                 >
                   {displayName}
                 </p>
@@ -343,56 +346,59 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
 
-          <div className="mt-4 rounded-[20px] bg-gradient-to-r from-amber-400/90 to-orange-500/90 px-4 py-3 text-center shadow-lg">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-black">
-              Dashibodi
-            </p>
-            <p className="mt-2 text-sm font-medium text-black">
-              Your sacred hub for today&apos;s practices.
-            </p>
+          <div className={`mt-4 ${sectionFrame}`}>
+            <div className={`${heroCard} text-center`}>
+              <p className={sectionKicker}>Dashboard / Dashibodi</p>
+              <h1
+                className={`mt-3 text-2xl font-serif font-medium ${
+                  theme === 'light' ? 'text-slate-950' : 'text-white'
+                }`}
+              >
+                Your sacred hub for today&apos;s practices
+              </h1>
+              <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
+                Return to your focus, enter practice, and keep your atmosphere
+                aligned.
+              </p>
+            </div>
           </div>
 
-          {/* Wisdom card */}
-          <div
-            className={`mt-4 relative p-4 rounded-2xl border overflow-hidden group ${glassCard}`}
-          >
-            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-              <SparklesIcon size={40} className="text-amber-500" />
-            </div>
-            <div className="relative z-10 flex flex-col items-center justify-start text-center gap-3 pt-1">
-              <span className={sectionKicker}>Today&apos;s Wisdom</span>
-              <div className="flex-shrink-0">
-                <AlchemistAvatar
-                  size="sm"
-                  mood={getAvatarMood()}
-                  speaking={false}
-                  className="mx-auto"
-                />
+          <div className={`mt-4 ${sectionFrame}`}>
+            <div className={`relative overflow-hidden group ${glassCard}`}>
+              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                <SparklesIcon size={40} className="text-amber-500" />
               </div>
-              <div className="w-full">
-                <p
-                  className={`text-sm italic leading-relaxed font-medium ${
-                    theme === 'light' ? 'text-slate-600' : 'text-white'
-                  }`}
-                >
-                  "{wisdom.text}"
-                </p>
-                <p className="text-[10px] text-amber-500 font-bold uppercase tracking-widest mt-2">
-                  - {wisdom.author}
-                </p>
-                <button
-                  onClick={() => {
-                    playBell()
-                    loadWisdom()
-                  }}
-                  className={`mt-2 text-[9px] font-medium uppercase tracking-wider opacity-60 hover:opacity-100 transition-opacity ${
-                    theme === 'light' ? 'text-amber-700' : 'text-amber-400'
-                  }`}
-                  title="Get another wisdom"
-                >
-                  <SparklesIcon size={10} className="inline mr-1" />
-                  New Wisdom
-                </button>
+              <div className="relative z-10 flex flex-col items-center justify-start gap-3 pt-1 text-center">
+                <span className={sectionKicker}>Today&apos;s Wisdom</span>
+                <div className="flex-shrink-0">
+                  <AlchemistAvatar
+                    size="sm"
+                    mood={getAvatarMood()}
+                    speaking={false}
+                    className="mx-auto"
+                  />
+                </div>
+                <div className="w-full">
+                  <p className={`text-sm italic font-medium leading-relaxed ${subTextColor}`}>
+                    "{wisdom.text}"
+                  </p>
+                  <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-amber-500">
+                    - {wisdom.author}
+                  </p>
+                  <button
+                    onClick={() => {
+                      playBell()
+                      loadWisdom()
+                    }}
+                    className={`mt-2 text-[9px] font-medium uppercase tracking-wider opacity-60 transition-opacity hover:opacity-100 ${
+                      theme === 'light' ? 'text-amber-700' : 'text-amber-400'
+                    }`}
+                    title="Get another wisdom"
+                  >
+                    <SparklesIcon size={10} className="mr-1 inline" />
+                    New Wisdom
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -462,11 +468,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         value={journalEntry}
                         onChange={(e) => setJournalEntry(e.target.value)}
                         placeholder={`Reflect on your ${getFocusAreaLabel(user.focusAreas[0]) || 'focus'} practice...`}
-                        className={`w-full p-3 rounded-lg text-sm resize-none border ${
-                          theme === 'light'
-                            ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
-                            : 'bg-slate-900/50 border-slate-600 text-slate-100 placeholder-slate-500'
-                        } focus:ring-2 focus:ring-amber-500 outline-none`}
+                        className={`w-full resize-none rounded-lg border p-3 text-sm ${inputBg} focus:ring-2 focus:ring-amber-500 outline-none`}
                         rows={4}
                       />
                       <div className="flex justify-end">
@@ -673,16 +675,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         className={`block text-[10px] font-bold uppercase tracking-widest group-hover:opacity-100 opacity-70 transition-opacity ${
                           mode === PracticeType.MORNING_IAM
                             ? 'text-black'
-                            : 'text-white'
+                            : 'mx-auto w-fit rounded-full bg-black/75 px-3 py-1 text-white shadow-md'
                         }`}
                       >
                         Prefer A Longer Experience?
                       </span>
                       <span
-                        className={`block text-[10px] opacity-50 group-hover:opacity-70 transition-opacity ${
+                        className={`mt-1 block text-[10px] opacity-50 group-hover:opacity-70 transition-opacity ${
                           mode === PracticeType.MORNING_IAM
                             ? 'text-black'
-                            : 'text-white'
+                            : 'mx-auto w-fit rounded-full bg-black/70 px-3 py-1 text-white shadow-md'
                         }`}
                       >
                         Click to choose a custom time.
@@ -840,11 +842,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-amber-500/20 bg-slate-950/85 px-3 py-2 shadow-xl text-center space-y-1">
+          <div className={`${infoCardBg} space-y-1 text-center`}>
             <p className="text-[10px] font-medium text-amber-500">
               Based on the book "I Am Practice" by
             </p>
-            <p className="text-[11px] font-serif font-bold text-amber-400">
+            <p
+              className={`text-[11px] font-serif font-bold ${
+                theme === 'light' ? 'text-slate-950' : 'text-amber-400'
+              }`}
+            >
               Michael Soaries
             </p>
             <a

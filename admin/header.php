@@ -1,6 +1,16 @@
 <?php
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 $adminName = isset($_SESSION['admin_name']) ? $_SESSION['admin_name'] : 'Admin';
+$adminBasePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/admin')), '/');
+if ($adminBasePath === '') {
+    $adminBasePath = '/admin';
+}
+$adminHref = static function (string $page) use ($adminBasePath): string {
+    return htmlspecialchars($adminBasePath . '/' . ltrim($page, '/'), ENT_QUOTES, 'UTF-8');
+};
+$adminAsset = static function (string $path) use ($adminBasePath): string {
+    return htmlspecialchars($adminBasePath . '/' . ltrim($path, '/'), ENT_QUOTES, 'UTF-8');
+};
 ?>
 <style>
 .admin-nav {
@@ -146,8 +156,8 @@ $adminName = isset($_SESSION['admin_name']) ? $_SESSION['admin_name'] : 'Admin';
 
 <nav class="admin-nav navbar-expand-lg">
     <div class="container">
-        <a class="navbar-brand" href="dashboard.php">
-            <img src="assets/images/logo.png" width="36" alt="Logo">
+        <a class="navbar-brand" href="<?= $adminHref('dashboard.php') ?>">
+            <img src="<?= $adminAsset('assets/images/logo.png') ?>" width="36" alt="Logo">
             <span>Abundance Alchemy</span>
         </a>
         
@@ -157,35 +167,39 @@ $adminName = isset($_SESSION['admin_name']) ? $_SESSION['admin_name'] : 'Admin';
         
         <div class="nav-collapse">
             <div class="nav-links d-flex flex-wrap align-items-center gap-1 mb-0">
-                <a class="nav-link <?= $current_page === 'dashboard' ? 'active' : '' ?>" href="dashboard.php">
+                <a class="nav-link <?= $current_page === 'dashboard' ? 'active' : '' ?>" href="<?= $adminHref('dashboard.php') ?>">
                     <i class="bi bi-speedometer2"></i>
                     Dashboard
                 </a>
-                <a class="nav-link <?= $current_page === 'users' ? 'active' : '' ?>" href="users.php">
+                <a class="nav-link <?= $current_page === 'users' ? 'active' : '' ?>" href="<?= $adminHref('users.php') ?>">
                     <i class="bi bi-people"></i>
                     Users
                 </a>
-                <a class="nav-link <?= $current_page === 'affirmations' ? 'active' : '' ?>" href="affirmations.php">
+                <a class="nav-link <?= $current_page === 'affirmations' ? 'active' : '' ?>" href="<?= $adminHref('affirmations.php') ?>">
                     <i class="bi bi-chat-quote"></i>
                     Affirmations
                 </a>
-                <a class="nav-link <?= $current_page === 'wisdom' ? 'active' : '' ?>" href="wisdom.php">
+                <a class="nav-link <?= $current_page === 'wisdom' ? 'active' : '' ?>" href="<?= $adminHref('wisdom.php') ?>">
                     <i class="bi bi-journal-text"></i>
                     Wisdom
                 </a>
-                <a class="nav-link <?= $current_page === 'prayers' ? 'active' : '' ?>" href="prayers.php">
+                <a class="nav-link <?= $current_page === 'prayers' ? 'active' : '' ?>" href="<?= $adminHref('prayers.php') ?>">
                     <i class="bi bi-prayer"></i>
                     Prayers
                 </a>
-                <a class="nav-link <?= $current_page === 'soundscapes' ? 'active' : '' ?>" href="soundscapes.php">
+                <a class="nav-link <?= $current_page === 'soundscapes' ? 'active' : '' ?>" href="<?= $adminHref('soundscapes.php') ?>">
                     <i class="bi bi-music-note-list"></i>
                     Soundscapes
                 </a>
-                <a class="nav-link <?= $current_page === 'backgrounds' ? 'active' : '' ?>" href="backgrounds.php">
+                <a class="nav-link <?= $current_page === 'backgrounds' ? 'active' : '' ?>" href="<?= $adminHref('backgrounds.php') ?>">
                     <i class="bi bi-image"></i>
                     Backgrounds
                 </a>
-                <a class="nav-link <?= $current_page === 'push' ? 'active' : '' ?>" href="push.php">
+                <a class="nav-link <?= $current_page === 'admin-security' ? 'active' : '' ?>" href="<?= $adminHref('admin-security.php') ?>">
+                    <i class="bi bi-shield-lock"></i>
+                    Security
+                </a>
+                <a class="nav-link <?= $current_page === 'push' ? 'active' : '' ?>" href="<?= $adminHref('push.php') ?>">
                     <i class="bi bi-bell"></i>
                     Push
                 </a>
@@ -196,7 +210,7 @@ $adminName = isset($_SESSION['admin_name']) ? $_SESSION['admin_name'] : 'Admin';
                     <i class="bi bi-person-circle me-1"></i>
                     <?= htmlspecialchars($adminName) ?>
                 </span>
-                <form method="post" action="logout.php" style="display:inline">
+                <form method="post" action="<?= $adminHref('logout.php') ?>" style="display:inline">
                     <?php 
                     if (function_exists('aa_csrf_field')) {
                         aa_csrf_field();

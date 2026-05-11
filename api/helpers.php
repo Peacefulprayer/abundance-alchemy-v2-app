@@ -298,3 +298,401 @@ function aa_ensure_user_prayers_table(PDO $conn): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 }
+
+function aa_mail_domain_from_host(string $host): string
+{
+    $candidate = trim($host);
+    $candidate = preg_replace('/[\r\n]+/', '', $candidate) ?? '';
+    $candidate = preg_replace('/:\d+$/', '', $candidate) ?? '';
+    $candidate = strtolower($candidate);
+
+    if ($candidate === '') {
+        return 'localhost';
+    }
+
+    if (!preg_match('/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/', $candidate)) {
+        return 'localhost';
+    }
+
+    return $candidate;
+}
+
+function aa_request_host(): string
+{
+    $forwardedHost = trim((string)($_SERVER['HTTP_X_FORWARDED_HOST'] ?? ''));
+    if ($forwardedHost !== '') {
+        $parts = array_map('trim', explode(',', $forwardedHost));
+        $candidate = $parts[0] ?? '';
+        if ($candidate !== '') {
+            return $candidate;
+        }
+    }
+
+    $host = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
+    if ($host !== '') {
+        return $host;
+    }
+
+    return trim((string)($_SERVER['SERVER_NAME'] ?? 'localhost')) ?: 'localhost';
+}
+
+function aa_public_app_root_path(): string
+{
+    $scriptName = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? '/'));
+    $basePath = dirname($scriptName);
+
+    if (preg_match('#/(api|admin)$#', $basePath)) {
+        $basePath = dirname($basePath);
+    }
+
+    $basePath = str_replace('\\', '/', $basePath);
+    if ($basePath === '/' || $basePath === '.' || $basePath === '\\') {
+        return '';
+    }
+
+    return rtrim($basePath, '/');
+}
+
+function aa_public_url(string $path = ''): string
+{
+    $configuredBase = defined('APP_BASE_URL') ? rtrim((string)APP_BASE_URL, '/') : '';
+    if ($configuredBase !== '') {
+        $normalizedPath = ltrim($path, '/');
+        return $normalizedPath !== '' ? $configuredBase . '/' . $normalizedPath : $configuredBase;
+    }
+
+    $scheme = function_exists('aa_is_https_request') && aa_is_https_request() ? 'https' : 'http';
+    $host = aa_request_host();
+    $basePath = aa_public_app_root_path();
+    $normalizedPath = ltrim($path, '/');
+
+    $url = $scheme . '://' . $host;
+    if ($basePath !== '') {
+        $url .= $basePath;
+    }
+    if ($normalizedPath !== '') {
+        $url .= '/' . $normalizedPath;
+    }
+
+    return $url;
+}
+
+function aa_private_uploads_root(): string
+{
+    $configured = defined('PRIVATE_UPLOADS_DIR') ? trim((string)PRIVATE_UPLOADS_DIR) : '';
+    if ($configured !== '') {
+        return rtrim($configured, DIRECTORY_SEPARATOR);
+    }
+
+    return dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'abundance-alchemy-private';
+}
+
+function aa_private_audio_storage_dir(): string
+{
+    return aa_private_uploads_root() . DIRECTORY_SEPARATOR . 'audio';
+}
+
+function aa_ensure_private_audio_storage_dir(): string
+{
+    $dir = aa_private_audio_storage_dir();
+    if (!is_dir($dir) && !mkdir($dir, 0700, true) && !is_dir($dir)) {
+        throw new RuntimeException('Private audio storage directory is unavailable');
+    }
+
+    @chmod($dir, 0700);
+    return $dir;
+}
+
+function aa_private_soundscape_key(string $filename): string
+{
+    return 'private:' . ltrim($filename, '/');
+}
+
+function aa_is_private_soundscape_url(string $value): bool
+{
+    return strncmp($value, 'private:', 8) === 0;
+}
+
+function aa_private_soundscape_filename(string $value): string
+{
+    if (!aa_is_private_soundscape_url($value)) {
+        return '';
+    }
+
+    return basename(substr($value, 8));
+}
+
+function aa_public_audio_assets_dir(): string
+{
+    return dirname(__DIR__) . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'audio';
+}
+
+function aa_soundscape_file_path(string $storedUrl): ?string
+{
+    $raw = trim($storedUrl);
+    if ($raw === '' || preg_match('#^https?://#i', $raw)) {
+        return null;
+    }
+
+    if (aa_is_private_soundscape_url($raw)) {
+        $filename = aa_private_soundscape_filename($raw);
+        if ($filename === '') {
+            return null;
+        }
+
+        return aa_private_audio_storage_dir() . DIRECTORY_SEPARATOR . $filename;
+    }
+
+    $normalized = str_replace('\\', '/', ltrim($raw, '/'));
+    if (strpos($normalized, 'abundance-alchemy/') === 0) {
+        $normalized = substr($normalized, strlen('abundance-alchemy/'));
+    }
+
+    if (strpos($normalized, 'assets/audio/') === 0) {
+        return dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $normalized);
+    }
+
+    if (strpos($normalized, 'admin/uploads/') === 0 || strpos($normalized, 'uploads/') === 0 || strpos($normalized, 'user_uploads/') === 0) {
+        return dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $normalized);
+    }
+
+    if (strpos($normalized, '/') === false) {
+        return aa_public_audio_assets_dir() . DIRECTORY_SEPARATOR . basename($normalized);
+    }
+
+    return dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $normalized);
+}
+
+function aa_delete_soundscape_file(string $storedUrl): bool
+{
+    $path = aa_soundscape_file_path($storedUrl);
+    if ($path === null || $path === '' || !file_exists($path)) {
+        return true;
+    }
+
+    return unlink($path);
+}
+
+function aa_password_reset_token_hash(string $token): string
+{
+    return hash('sha256', $token);
+}
+
+function aa_password_reset_token_is_well_formed(string $token): bool
+{
+    return preg_match('/^[a-f0-9]{64}$/', strtolower(trim($token))) === 1;
+}
+
+function aa_password_reset_ttl_seconds(): int
+{
+    return 60 * 60;
+}
+
+function aa_ensure_password_resets_table(PDO $conn): void
+{
+    $conn->exec(
+        "CREATE TABLE IF NOT EXISTS password_resets (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            user_id INT UNSIGNED NULL,
+            email VARCHAR(255) NOT NULL,
+            token_hash CHAR(64) NOT NULL,
+            requested_ip VARCHAR(64) NULL,
+            expires_at DATETIME NOT NULL,
+            used_at DATETIME NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_password_resets_email (email),
+            KEY idx_password_resets_user_id (user_id),
+            KEY idx_password_resets_token_hash (token_hash),
+            KEY idx_password_resets_expires_at (expires_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+}
+
+function aa_send_password_reset_email(string $email, string $name, string $resetLink): bool
+{
+    $templatePath = __DIR__ . '/../admin/email_templates/password_reset.txt';
+    $template = @file_get_contents($templatePath);
+    if ($template === false || trim($template) === '') {
+        $template = "Hello {name},\n\nWe received a request to reset your Abundance Alchemy password.\n\nOpen the link below to create a new password:\n{reset_link}\n\nIf you did not request this, you can ignore this email.\n";
+    }
+
+    $body = str_replace(
+        ['{name}', '{email}', '{reset_link}'],
+        [$name !== '' ? $name : 'there', $email, $resetLink],
+        $template
+    );
+
+    $fromDomain = aa_mail_domain_from_host(aa_request_host());
+    $headers = implode("\r\n", [
+        'From: Abundance Alchemy <no-reply@' . $fromDomain . '>',
+        'Reply-To: no-reply@' . $fromDomain,
+        'MIME-Version: 1.0',
+        'Content-Type: text/plain; charset=UTF-8',
+    ]);
+
+    return @mail($email, 'Abundance Alchemy Password Reset', $body, $headers);
+}
+
+function aa_issue_password_reset(PDO $conn, int $userId, string $email, string $name = ''): bool
+{
+    if ($userId <= 0 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (function_exists('aa_log_auth_event')) {
+            aa_log_auth_event($conn, 'password_reset_issue_rejected', false, $email, $userId > 0 ? $userId : null, 'user');
+        }
+        return false;
+    }
+
+    aa_ensure_password_resets_table($conn);
+
+    $conn->prepare(
+        'DELETE FROM password_resets WHERE expires_at < UTC_TIMESTAMP() OR used_at IS NOT NULL'
+    )->execute();
+
+    $invalidate = $conn->prepare(
+        'UPDATE password_resets
+         SET used_at = UTC_TIMESTAMP()
+         WHERE user_id = :user_id
+           AND used_at IS NULL
+           AND expires_at >= UTC_TIMESTAMP()'
+    );
+    $invalidate->bindValue(':user_id', $userId, PDO::PARAM_INT);
+    $invalidate->execute();
+
+    $token = bin2hex(random_bytes(32));
+    $tokenHash = aa_password_reset_token_hash($token);
+    $expiresAt = gmdate('Y-m-d H:i:s', time() + aa_password_reset_ttl_seconds());
+
+    $insert = $conn->prepare(
+        'INSERT INTO password_resets (user_id, email, token_hash, requested_ip, expires_at)
+         VALUES (:user_id, :email, :token_hash, :requested_ip, :expires_at)'
+    );
+    $insert->bindValue(':user_id', $userId, PDO::PARAM_INT);
+    $insert->bindValue(':email', $email, PDO::PARAM_STR);
+    $insert->bindValue(':token_hash', $tokenHash, PDO::PARAM_STR);
+    $insert->bindValue(':requested_ip', function_exists('aa_client_ip') ? aa_client_ip() : '', PDO::PARAM_STR);
+    $insert->bindValue(':expires_at', $expiresAt, PDO::PARAM_STR);
+    $insert->execute();
+
+    $resetLink = aa_public_url('reset-password.php') . '?token=' . urlencode($token);
+    $sent = aa_send_password_reset_email($email, $name, $resetLink);
+
+    if (!$sent) {
+        $cleanup = $conn->prepare('DELETE FROM password_resets WHERE token_hash = :token_hash LIMIT 1');
+        $cleanup->bindValue(':token_hash', $tokenHash, PDO::PARAM_STR);
+        $cleanup->execute();
+        if (function_exists('aa_log_auth_event')) {
+            aa_log_auth_event($conn, 'password_reset_email_failed', false, $email, $userId, 'user');
+        }
+    } elseif (function_exists('aa_log_auth_event')) {
+        aa_log_auth_event($conn, 'password_reset_issued', true, $email, $userId, 'user');
+    }
+
+    return $sent;
+}
+
+function aa_find_valid_password_reset(PDO $conn, string $token): ?array
+{
+    if (!aa_password_reset_token_is_well_formed($token)) {
+        return null;
+    }
+
+    aa_ensure_password_resets_table($conn);
+
+    $query = $conn->prepare(
+        'SELECT id, user_id, email, expires_at, used_at, created_at
+         FROM password_resets
+         WHERE token_hash = :token_hash
+           AND used_at IS NULL
+           AND expires_at >= UTC_TIMESTAMP()
+         ORDER BY id DESC
+         LIMIT 1'
+    );
+    $query->bindValue(':token_hash', aa_password_reset_token_hash($token), PDO::PARAM_STR);
+    $query->execute();
+
+    $row = $query->fetch(PDO::FETCH_ASSOC);
+    return is_array($row) ? $row : null;
+}
+
+function aa_consume_password_reset(PDO $conn, string $token, string $passwordHash): bool
+{
+    if (!aa_password_reset_token_is_well_formed($token) || trim($passwordHash) === '') {
+        return false;
+    }
+
+    aa_ensure_password_resets_table($conn);
+    $tokenHash = aa_password_reset_token_hash($token);
+
+    try {
+        $conn->beginTransaction();
+
+        $lookup = $conn->prepare(
+            'SELECT id, user_id, email
+             FROM password_resets
+             WHERE token_hash = :token_hash
+               AND used_at IS NULL
+               AND expires_at >= UTC_TIMESTAMP()
+             ORDER BY id DESC
+             LIMIT 1
+             FOR UPDATE'
+        );
+        $lookup->bindValue(':token_hash', $tokenHash, PDO::PARAM_STR);
+        $lookup->execute();
+        $reset = $lookup->fetch(PDO::FETCH_ASSOC);
+
+        if (!$reset) {
+            $conn->rollBack();
+            if (function_exists('aa_log_auth_event')) {
+                aa_log_auth_event($conn, 'password_reset_consume_failed', false, '', null, 'user', ['reason' => 'invalid_or_expired']);
+            }
+            return false;
+        }
+
+        $userId = isset($reset['user_id']) ? (int)$reset['user_id'] : 0;
+        $email = trim((string)($reset['email'] ?? ''));
+
+        if ($userId > 0) {
+            $updateUser = $conn->prepare('UPDATE users SET password_hash = :password_hash WHERE id = :user_id LIMIT 1');
+            $updateUser->bindValue(':password_hash', $passwordHash, PDO::PARAM_STR);
+            $updateUser->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        } else {
+            $updateUser = $conn->prepare('UPDATE users SET password_hash = :password_hash WHERE email = :email LIMIT 1');
+            $updateUser->bindValue(':password_hash', $passwordHash, PDO::PARAM_STR);
+            $updateUser->bindValue(':email', $email, PDO::PARAM_STR);
+        }
+        $updateUser->execute();
+
+        if ($updateUser->rowCount() < 1) {
+            $conn->rollBack();
+            if (function_exists('aa_log_auth_event')) {
+                aa_log_auth_event($conn, 'password_reset_consume_failed', false, $email, $userId > 0 ? $userId : null, 'user', ['reason' => 'user_not_updated']);
+            }
+            return false;
+        }
+
+        $invalidate = $conn->prepare(
+            'UPDATE password_resets
+             SET used_at = UTC_TIMESTAMP()
+             WHERE (user_id = :user_id OR email = :email)
+               AND used_at IS NULL'
+        );
+        $invalidate->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $invalidate->bindValue(':email', $email, PDO::PARAM_STR);
+        $invalidate->execute();
+
+        $conn->commit();
+        if (function_exists('aa_log_auth_event')) {
+            aa_log_auth_event($conn, 'password_reset_completed', true, $email, $userId > 0 ? $userId : null, 'user');
+        }
+        return true;
+    } catch (Throwable $e) {
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
+        error_log('[api/helpers.php] Password reset consume failed: ' . $e->getMessage());
+        if (function_exists('aa_log_auth_event')) {
+            aa_log_auth_event($conn, 'password_reset_consume_error', false, '', null, 'user', ['error' => 'server_error']);
+        }
+        return false;
+    }
+}

@@ -6,6 +6,7 @@ aa_require_method('GET');
 try {
     $identity = aa_get_session_identity();
     $userEmail = $identity['userEmail'] !== '' ? $identity['userEmail'] : null;
+    $apiBasePath = rtrim(str_replace('\\', '/', dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/'))), '/');
     $purpose = $_GET['purpose'] ?? null;
     $category = $_GET['category'] ?? null;
     $energy = $_GET['energy'] ?? null;
@@ -66,6 +67,8 @@ try {
         $rawUrl = trim((string)($row['url'] ?? ''));
         if ($rawUrl === '') {
             $row['audio_url'] = null;
+        } elseif (aa_is_private_soundscape_url($rawUrl)) {
+            $row['audio_url'] = ($apiBasePath !== '' ? $apiBasePath : '') . '/private-audio.php?id=' . (int)$row['id'];
         } elseif (preg_match('#^https?://#i', $rawUrl)) {
             $row['audio_url'] = $rawUrl;
         } else {
@@ -84,6 +87,7 @@ try {
         }
 
         $row['is_user_upload'] = !empty($row['user_email']);
+        $row['is_private_upload'] = aa_is_private_soundscape_url($rawUrl);
         $row['is_practice_length'] = (bool)($row['duration_seconds'] && $row['duration_seconds'] >= 55 && $row['duration_seconds'] <= 125);
     }
     unset($row);

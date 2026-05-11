@@ -10,10 +10,14 @@ import {
   INNER_PRIMARY_BUTTON,
   INNER_TITLE_PILL,
   innerBackButton,
+  innerGlassPanel,
   innerHeroCard,
   innerSectionFrame,
   innerSectionKicker,
   innerSecondaryButton,
+  innerSubTextColor,
+  innerSurfaceCard,
+  innerTextColor,
 } from '../styles/sacredInnerScreen'
 
 interface PrayerGuideProps {
@@ -33,19 +37,18 @@ export const PrayerGuide: React.FC<PrayerGuideProps> = ({
   onChangePath,
   theme,
 }) => {
-  const textColor = theme === 'light' ? 'text-slate-700' : 'text-white'
-  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-300'
+  const textColor = innerTextColor(theme)
+  const subTextColor = innerSubTextColor(theme)
   const pageShell = INNER_PAGE_SHELL
   const sectionFrame = innerSectionFrame(theme)
   const heroCard = innerHeroCard(theme)
+  const surfaceCard = innerSurfaceCard(theme)
+  const glassPanel = innerGlassPanel(theme)
   const sectionKicker = innerSectionKicker(theme)
   const backButton = innerBackButton(theme)
   const secondaryButton = innerSecondaryButton(theme)
-  const prayerGuideSectionWrap = theme === 'light' ? 'space-y-3' : sectionFrame
-  const prayerGuideSectionCard =
-    theme === 'light'
-      ? 'rounded-[22px] bg-gradient-to-br from-amber-50/40 to-white/80 border border-amber-200/30 p-4 shadow-[0_8px_24px_rgba(180,140,80,0.12)]'
-      : 'rounded-[22px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-4 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
+  const prayerGuideSectionWrap = 'space-y-3'
+  const prayerGuideSectionCard = surfaceCard
   const formatToken = (value: string) =>
     value
       .split('_')
@@ -185,7 +188,19 @@ export const PrayerGuide: React.FC<PrayerGuideProps> = ({
             <h2 className={INNER_TITLE_PILL}>Guide Steps</h2>
           </div>
           <div className={`mt-3 space-y-3 ${prayerGuideSectionCard}`}>
-            <p className={sectionKicker}>How to Pray in This Flow</p>
+            <div
+              className={`-mx-1 rounded-[14px] px-4 py-2.5 ${
+                theme === 'light' ? 'bg-amber-100/80' : 'bg-slate-800/90'
+              }`}
+            >
+              <p
+                className={`text-xs font-bold uppercase tracking-wider ${
+                  theme === 'light' ? 'text-slate-900' : 'text-white'
+                }`}
+              >
+                How to Pray in This Flow
+              </p>
+            </div>
             {isLoadingSteps ? (
               <p className={`text-sm ${subTextColor}`}>
                 Loading prayer guidance...
@@ -212,7 +227,7 @@ export const PrayerGuide: React.FC<PrayerGuideProps> = ({
         </div>
 
         <div className={prayerGuideSectionWrap}>
-          <div className={`${prayerGuideSectionCard} space-y-3`}>
+          <div className={`${glassPanel} space-y-3`}>
             <button
               onClick={() => {
                 buttonSoundService.play('confirm')

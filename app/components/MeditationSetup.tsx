@@ -51,12 +51,12 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
   const companionButton = secondaryButton.replace('w-full ', '')
   const meditationGlassCard =
     theme === 'light'
-      ? 'rounded-[22px] bg-gradient-to-br from-emerald-50/40 to-white/80 border border-emerald-200/30 p-4 shadow-[0_8px_24px_rgba(16,140,100,0.12)]'
-      : 'rounded-[22px] bg-gradient-to-br from-slate-900/85 to-slate-950/92 border border-white/10 p-4 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
+      ? 'rounded-[22px] bg-gradient-to-br from-violet-50/90 to-purple-50/80 border border-violet-300/40 p-4 shadow-[0_8px_24px_rgba(124,58,237,0.12)]'
+      : 'rounded-[22px] bg-gradient-to-br from-violet-950/60 to-slate-900/70 border border-violet-500/25 p-4 shadow-[0_12px_32px_rgba(0,0,0,0.35)]'
   const meditationGlassButton =
     theme === 'light'
-      ? 'rounded-[18px] border border-emerald-200/50 bg-white/70 text-slate-800 transition-colors hover:bg-emerald-50/50'
-      : 'rounded-[18px] border border-white/14 bg-white/8 text-white transition-colors hover:bg-white/12'
+      ? 'rounded-[18px] border border-violet-300/50 bg-white/70 text-slate-800 transition-colors hover:bg-violet-50/50'
+      : 'rounded-[18px] border border-violet-500/30 bg-violet-500/15 text-white transition-colors hover:bg-violet-500/25'
 
   useEffect(() => {
     let mounted = true
@@ -133,14 +133,14 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
           <div className={heroCard}>
             <p className={sectionKicker}>Sacred Stillness</p>
             <div className="mt-3 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-emerald-400/35 bg-emerald-500/12">
-                <Clock className="text-emerald-400" size={18} />
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-violet-400/35 bg-violet-500/12">
+                <Clock className="text-violet-400" size={18} />
               </div>
-              <div>
-                <h1 className="text-2xl font-serif font-semibold">
+              <div className="flex-1">
+                <h1 className="text-2xl font-serif text-center">
                   Choose Your Duration
                 </h1>
-                <p className={`mt-1 text-sm ${subTextColor}`}>
+                <p className={`mt-1 text-sm text-center ${subTextColor}`}>
                   Set the rhythm and the atmosphere before you begin.
                 </p>
               </div>
@@ -177,7 +177,7 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
                     buttonSoundService.play('click')
                     setShowCustomTime(true)
                   }}
-                  className="mx-auto block text-center text-xs font-semibold tracking-[0.04em] text-amber-100 underline decoration-amber-200/70 underline-offset-4 transition-colors hover:text-white"
+                  className="mx-auto block rounded-full bg-black/75 px-4 py-2 text-center text-xs font-semibold tracking-[0.04em] text-white shadow-md transition-colors hover:bg-black/85"
                 >
                   Prefer a custom timer? Choose your own meditation length.
                 </button>
@@ -217,11 +217,13 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
         <div className={sectionFrame}>
           <div className={`space-y-4 ${meditationGlassCard}`}>
             <div className="flex items-center gap-3">
-              <Music className="text-emerald-400" size={18} />
+              <Music className="text-violet-400" size={18} />
               <div>
-                <p className={sectionKicker}>Soundscape</p>
-                <h2 className="mt-1 text-lg font-semibold text-white">
-                  Choose the Atmosphere
+                <p className={sectionKicker}>Soundscape (Acoustic Alchemy)</p>
+                <h2
+                  className={`mt-1 text-lg font-semibold ${theme === 'light' ? 'text-violet-700' : 'text-violet-300'}`}
+                >
+                  Choose Your Background Music
                 </h2>
               </div>
             </div>
@@ -246,8 +248,8 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
                       className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm ${
                         selectedSound?.id === s.id
                           ? theme === 'light'
-                            ? 'rounded-[18px] border border-emerald-400/55 bg-emerald-100 text-emerald-800'
-                            : 'rounded-[18px] border border-emerald-400/55 bg-emerald-500/12 text-white'
+                            ? 'rounded-[18px] border border-violet-400/55 bg-violet-100 text-violet-800'
+                            : 'rounded-[18px] border border-violet-400/55 bg-violet-500/12 text-white'
                           : meditationGlassButton
                       }`}
                     >
@@ -266,25 +268,27 @@ export const MeditationSetup: React.FC<MeditationSetupProps> = ({
         <div className={sectionFrame}>
           <div className={`${meditationGlassCard} space-y-3`}>
             <p
-              className={`text-center text-[11px] leading-relaxed ${textColor}`}
+              className={`text-center text-[11px] font-semibold leading-relaxed ${textColor}`}
             >
               Set your intention, then breathe with the visual rhythm.
             </p>
-            <button
-              onClick={handleBegin}
-              disabled={!selectedSound || loading}
-              className={INNER_PRIMARY_BUTTON}
-            >
-              Begin {duration} Minute Meditation
-            </button>
-            <a
-              href={meditationCompanionHref}
-              target="_blank"
-              rel="noreferrer"
-              className={`${companionButton} mx-auto inline-flex items-center justify-center px-4 py-2 text-[10px] tracking-[0.14em]`}
-            >
-              Open Meditation Companion Page
-            </a>
+            <div className="flex flex-col items-center gap-2 w-full">
+              <button
+                onClick={handleBegin}
+                disabled={!selectedSound || loading}
+                className={`${INNER_PRIMARY_BUTTON} px-4 py-2 text-xs w-full max-w-[280px]`}
+              >
+                Begin {duration} Minute Meditation
+              </button>
+              <a
+                href={meditationCompanionHref}
+                target="_blank"
+                rel="noreferrer"
+                className={`${companionButton} text-[10px] tracking-[0.14em] text-center`}
+              >
+                Open Meditation Companion Page
+              </a>
+            </div>
           </div>
         </div>
       </div>

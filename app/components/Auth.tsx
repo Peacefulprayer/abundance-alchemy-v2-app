@@ -115,7 +115,8 @@ export const Auth: React.FC<AuthProps> = ({
           affirmationsCompleted: data?.affirmationsCompleted,
         };
 
-        localStorage.setItem('abundance_auth', JSON.stringify(newAccount));
+        sessionStorage.setItem('abundance_auth', JSON.stringify(newAccount));
+        localStorage.removeItem('abundance_auth');
         setLoading(false);
         onRegister(newAccount);
       } else {
@@ -131,7 +132,8 @@ export const Auth: React.FC<AuthProps> = ({
           focusAreas: data?.focusAreas,
           affirmationsCompleted: data?.affirmationsCompleted,
         };
-        localStorage.setItem('abundance_auth', JSON.stringify(account));
+        sessionStorage.setItem('abundance_auth', JSON.stringify(account));
+        localStorage.removeItem('abundance_auth');
         onLogin(account);
       }
     } catch (err: any) {

@@ -1,55 +1,55 @@
 // components/SacredNamingCeremony.tsx - Pre-SNC added as first step (explicit WELCOME background)
-import React, { useEffect, useState } from 'react';
-import { SacredBackground } from './SacredBackground';
-import { buttonSoundService } from '../services/buttonSoundService';
-import BreathingOrb from './BreathingOrb';
+import React, { useEffect, useState } from 'react'
+import { SacredBackground } from './SacredBackground'
+import { buttonSoundService } from '../services/buttonSoundService'
+import BreathingOrb from './BreathingOrb'
 import {
   SACRED_LAYOUT,
   SACRED_TITLE_CARD,
   SACRED_BODY_CARD,
   SACRED_INNER_WIDTH,
-} from '../styles/sacredCards';
+} from '../styles/sacredCards'
 
 interface SacredNamingCeremonyProps {
-  onComplete: (userData: { name: string }) => void;
-  theme?: 'light' | 'dark';
+  onComplete: (userData: { name: string }) => void
+  theme?: 'light' | 'dark'
 }
 
-type Step = 'prelude' | 'naming' | 'affirmation';
+type Step = 'prelude' | 'naming' | 'affirmation'
 
 export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
   onComplete,
 }) => {
-  const [name, setName] = useState('');
-  const [hasSpiritualName] = useState(false);
-  const [step, setStep] = useState<Step>('prelude');
-  const [showPreludeNext, setShowPreludeNext] = useState(false);
+  const [name, setName] = useState('')
+  const [hasSpiritualName] = useState(false)
+  const [step, setStep] = useState<Step>('prelude')
+  const [showPreludeNext, setShowPreludeNext] = useState(false)
 
   useEffect(() => {
-    if (step !== 'prelude') return;
-    setShowPreludeNext(false);
-    const t = setTimeout(() => setShowPreludeNext(true), 1200);
-    return () => clearTimeout(t);
-  }, [step]);
+    if (step !== 'prelude') return
+    setShowPreludeNext(false)
+    const t = setTimeout(() => setShowPreludeNext(true), 1200)
+    return () => clearTimeout(t)
+  }, [step])
 
   const handlePreludeNext = () => {
-    buttonSoundService.play('click');
-    setStep('naming');
-  };
+    buttonSoundService.play('click')
+    setStep('naming')
+  }
 
   const handleNameSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
+    e.preventDefault()
+    if (!name.trim()) return
 
-    buttonSoundService.play('click');
-    setStep('affirmation');
+    buttonSoundService.play('click')
+    setStep('affirmation')
 
     setTimeout(() => {
-      onComplete({ name: name.trim() });
-    }, 3000);
-  };
+      onComplete({ name: name.trim() })
+    }, 3000)
+  }
 
-  const stepsForIndicator: Step[] = ['prelude', 'naming', 'affirmation'];
+  const stepsForIndicator: Step[] = ['prelude', 'naming', 'affirmation']
 
   return (
     <SacredBackground
@@ -70,7 +70,9 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
           {step === 'prelude' && (
             <div className="text-center space-y-2">
               <div className="space-y-0.5">
-                <h2 className={`text-sm md:text-base font-semibold text-slate-100`}>
+                <h2
+                  className={`text-sm md:text-base font-semibold text-slate-100`}
+                >
                   The Naming Ceremony
                 </h2>
                 <p className="text-[11px] md:text-xs text-slate-200">
@@ -152,7 +154,9 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
                 <button
                   onClick={handlePreludeNext}
                   className={`w-full px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-[10px] md:text-xs tracking-wide shadow-lg hover:opacity-90 transition-all ${
-                    showPreludeNext ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                    showPreludeNext
+                      ? 'opacity-100'
+                      : 'opacity-0 pointer-events-none'
                   }`}
                 >
                   Begin Ceremony
@@ -166,7 +170,9 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
             <div className="text-center space-y-4">
               <div className="space-y-2">
                 <h2 className="text-base md:text-lg font-bold text-white">
-                  {hasSpiritualName ? 'Your Spiritual Name' : 'Your Sacred Name'}
+                  {hasSpiritualName
+                    ? 'Your Spiritual Name'
+                    : 'Your Sacred Name'}
                 </h2>
                 <p className="text-xs md:text-sm text-white">
                   {hasSpiritualName
@@ -186,7 +192,9 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder={
-                        hasSpiritualName ? 'Enter your spiritual name' : 'Enter your sacred name'
+                        hasSpiritualName
+                          ? 'Enter your spiritual name'
+                          : 'Enter your sacred name'
                       }
                       className="w-full pl-10 pr-3 py-2.5 text-sm rounded-xl border border-slate-600 bg-slate-800/80 text-white placeholder-slate-400 focus:ring-2 focus:ring-amber-500 outline-none transition-all"
                       autoFocus
@@ -200,8 +208,7 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
                 <div className="border-t border-amber-500/30 pt-3">
                   <p className="text-xs md:text-sm text-white italic">
                     "I am not just entering a name...
-                    <br />
-                    I am invoking an identity."
+                    <br />I am invoking an identity."
                   </p>
                 </div>
 
@@ -210,7 +217,9 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
                   disabled={!name.trim()}
                   className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-xs md:text-sm tracking-wide hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {hasSpiritualName ? 'Honor My Spiritual Name' : 'Claim My Sacred Name'}
+                  {hasSpiritualName
+                    ? 'Honor My Spiritual Name'
+                    : 'Claim My Sacred Name'}
                 </button>
               </form>
             </div>
@@ -237,8 +246,12 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-xs md:text-sm text-white">We honor your journey.</p>
-                  <p className="text-xs md:text-sm text-white">We witness your becoming.</p>
+                  <p className="text-xs md:text-sm text-white">
+                    We honor your journey.
+                  </p>
+                  <p className="text-xs md:text-sm text-white">
+                    We witness your becoming.
+                  </p>
                   <p className="text-xs md:text-sm font-semibold text-amber-500 mt-3">
                     Ase. And so it is.
                   </p>
@@ -248,7 +261,9 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
               <div className="pt-2">
                 <div className="flex items-center justify-center space-x-2">
                   <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></div>
-                  <p className="text-xs text-amber-400">Preparing your sacred space...</p>
+                  <p className="text-xs text-amber-400">
+                    Preparing your sacred space...
+                  </p>
                 </div>
               </div>
             </div>
@@ -257,21 +272,26 @@ export const SacredNamingCeremony: React.FC<SacredNamingCeremonyProps> = ({
 
         <div className={`${SACRED_INNER_WIDTH} flex justify-center space-x-2`}>
           {stepsForIndicator.map((s) => {
-            const isActive = s === step;
-            const isCompleted = stepsForIndicator.indexOf(s) < stepsForIndicator.indexOf(step);
+            const isActive = s === step
+            const isCompleted =
+              stepsForIndicator.indexOf(s) < stepsForIndicator.indexOf(step)
 
             return (
               <div
                 key={s}
                 className={[
                   'h-1.5 rounded-full transition-all duration-300',
-                  isActive ? 'w-8 bg-amber-500' : isCompleted ? 'w-4 bg-amber-500/60' : 'w-4 bg-slate-500/40',
+                  isActive
+                    ? 'w-8 bg-amber-500'
+                    : isCompleted
+                      ? 'w-4 bg-amber-500/60'
+                      : 'w-4 bg-slate-500/40',
                 ].join(' ')}
               />
-            );
+            )
           })}
         </div>
       </div>
     </SacredBackground>
-  );
-};
+  )
+}

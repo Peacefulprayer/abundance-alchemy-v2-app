@@ -2,12 +2,8 @@
 include_once 'config.php';
 
 aa_require_method('GET');
-$identity = aa_get_session_identity();
+$identity = aa_require_authenticated_session();
 $userId = $identity['userId'];
-
-if ($userId <= 0) {
-    aa_error_response('Unauthorized', 401);
-}
 
 try {
     $userCols = aa_table_columns($conn, 'users');

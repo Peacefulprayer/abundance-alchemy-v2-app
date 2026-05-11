@@ -3,7 +3,7 @@ include_once 'config.php';
 
 aa_require_method('POST');
 $data = aa_read_json_input();
-$identity = aa_get_session_identity();
+$identity = aa_require_authenticated_session();
 $ownerBinding = aa_resolve_owner_binding($conn, 'user_affirmations', $identity['userId'], $identity['userEmail']);
 $type = strtoupper(trim((string)($data['type'] ?? '')));
 $allowedTypes = ['MORNING_IAM', 'EVENING_ILOVE'];
