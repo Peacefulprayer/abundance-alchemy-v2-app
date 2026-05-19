@@ -37,7 +37,7 @@ import {
   screenTextColor,
 } from '../styles/sacredScreen'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+const WISDOM_API_BASE = import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy/api'
 
 interface WisdomQuote {
   text: string
@@ -56,7 +56,7 @@ const fetchWisdomFromAPI = async (
 ): Promise<WisdomQuote | null> => {
   try {
     const res = await fetch(
-      `${API_BASE}/api/get-wisdom.php?category=${encodeURIComponent(category)}&session_id=${encodeURIComponent(sessionId)}`,
+      `${WISDOM_API_BASE}/get-wisdom.php?category=${encodeURIComponent(category)}&session_id=${encodeURIComponent(sessionId)}`,
     )
     if (!res.ok) throw new Error('API error')
     return await res.json()

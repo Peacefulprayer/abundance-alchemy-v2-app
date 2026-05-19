@@ -1,5 +1,5 @@
 // Always point explicitly at the app's API directory
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy-api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy/api';
 const ENABLE_BACKEND = true;
 const CSRF_EXEMPT_ENDPOINTS = new Set([
   'login.php',

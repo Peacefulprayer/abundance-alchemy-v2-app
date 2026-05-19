@@ -809,7 +809,7 @@ function App() {
     readAuthFlowMode(),
   )
   const historyNavigationRef = React.useRef(false)
-  const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/abundance-alchemy-api'
+  const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/abundance-alchemy/api'
 
   // Global button sound - plays sacred bell on all interactive elements
   useEffect(() => {

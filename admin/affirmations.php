@@ -141,27 +141,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Delete
-    if (isset($_POST['del_id'])) {
+    if (isset($_POST['del_id']) && (!isset($_POST['mode']) || $_POST['mode'] !== 'export')) {
         $stmt = $pdo->prepare("DELETE FROM affirmations WHERE id=?");
         $stmt->execute([$_POST['del_id']]);
         $msg = "Affirmation deleted.";
     }
 
     // Export
-    if (isset($_POST['mode']) && $_POST['mode'] === 'export' && !empty($_POST['export_ids'])) {
-        $ids = array_map('intval', $_POST['export_ids']);
-        if (!empty($ids)) {
-            $ids_sql = implode(',', $ids);
-            $data = $pdo->query("SELECT * FROM affirmations WHERE id IN ($ids_sql)")->fetchAll(PDO::FETCH_ASSOC);
-            if (!empty($data)) {
-                header('Content-Type: text/csv');
-                header('Content-Disposition: attachment; filename="affirmations_export.csv"');
-                $f = fopen('php://output', 'w');
-                fputcsv($f, array_keys($data[0]));
-                foreach ($data as $row) fputcsv($f, $row);
-                fclose($f);
-                exit;
+    if (isset($_POST['mode']) && $_POST['mode'] === 'export') {
+        if (!empty($_POST['export_ids'])) {
+            $ids = array_map('intval', $_POST['export_ids']);
+            if (!empty($ids)) {
+                $ids_sql = implode(',', $ids);
+                $data = $pdo->query("SELECT * FROM affirmations WHERE id IN ($ids_sql)")->fetchAll(PDO::FETCH_ASSOC);
+                if (!empty($data)) {
+                    header('Content-Type: text/csv');
+                    header('Content-Disposition: attachment; filename="affirmations_export.csv"');
+                    $f = fopen('php://output', 'w');
+                    fputcsv($f, array_keys($data[0]));
+                    foreach ($data as $row) fputcsv($f, $row);
+                    fclose($f);
+                    exit;
+                }
             }
+        } else {
+            $msg = "No affirmations selected for export.";
         }
     }
 }
@@ -337,6 +341,24 @@ $default_form_category = $category_filter !== '' ? $category_filter : 'General';
             checkboxes[i].checked = source.checked;
         }
     }
+    function deleteAffirmation(id) {
+        if (!confirm('Delete affirmation?')) return;
+        var form = document.createElement('form');
+        form.method = 'post';
+        form.style.display = 'none';
+        var csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = 'csrf_token';
+        csrf.value = '<?=htmlspecialchars($_SESSION['csrf_token'] ?? '')?>';
+        var del = document.createElement('input');
+        del.type = 'hidden';
+        del.name = 'del_id';
+        del.value = id;
+        form.appendChild(csrf);
+        form.appendChild(del);
+        document.body.appendChild(form);
+        form.submit();
+    }
     </script>
 </head>
 <body>
@@ -500,11 +522,7 @@ $default_form_category = $category_filter !== '' ? $category_filter : 'General';
                     <td><?=($a['is_active']?'Yes':'No')?></td>
                     <td>
                         <button type="button" class="btn btn-sm btn-info" onclick="toggleEdit(<?=$a['id']?>)">Edit</button>
-                        <form method="post" style="display:inline">
-                            <?php aa_csrf_field(); ?>
-                            <input type="hidden" name="del_id" value="<?=$a['id']?>">
-                            <button class="btn btn-sm btn-danger" onclick="return confirm('Delete affirmation?')">Delete</button>
-                        </form>
+                        <button class="btn btn-sm btn-danger" onclick="deleteAffirmation(<?=$a['id']?>)">Delete</button>
                     </td>
                 </tr>
                 <tr class="edit-row" id="edit<?=$a['id']?>" style="display:none;">

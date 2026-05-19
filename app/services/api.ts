@@ -22,7 +22,7 @@ import type {
 } from '../types/api';
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy-api';
+  import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy/api';
 const CSRF_EXEMPT_ENDPOINTS = new Set([
   'login.php',
   'register.php',

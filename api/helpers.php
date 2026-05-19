@@ -523,14 +523,26 @@ function aa_send_password_reset_email(string $email, string $name, string $reset
     );
 
     $fromDomain = aa_mail_domain_from_host(aa_request_host());
+    $fromEmail = 'no-reply@' . $fromDomain;
     $headers = implode("\r\n", [
-        'From: Abundance Alchemy <no-reply@' . $fromDomain . '>',
-        'Reply-To: no-reply@' . $fromDomain,
+        'From: Abundance Alchemy <' . $fromEmail . '>',
+        'Reply-To: ' . $fromEmail,
+        'Return-Path: ' . $fromEmail,
         'MIME-Version: 1.0',
         'Content-Type: text/plain; charset=UTF-8',
     ]);
 
-    return @mail($email, 'Abundance Alchemy Password Reset', $body, $headers);
+    $additionalParams = '-f ' . $fromEmail . ' -r ' . $fromEmail;
+
+    error_log('[api/helpers.php] Attempting to send password reset email to ' . $email . ' via ' . $fromEmail);
+    error_log('[api/helpers.php] Reset link: ' . $resetLink);
+
+    $result = @mail($email, 'Abundance Alchemy Password Reset', $body, $headers, $additionalParams);
+    if (!$result) {
+        error_log('[api/helpers.php] mail() returned false for ' . $email);
+    }
+
+    return $result;
 }
 
 function aa_issue_password_reset(PDO $conn, int $userId, string $email, string $name = ''): bool
@@ -574,14 +586,17 @@ function aa_issue_password_reset(PDO $conn, int $userId, string $email, string $
     $insert->execute();
 
     $resetLink = aa_public_url('reset-password.php') . '?token=' . urlencode($token);
+    error_log('[api/helpers.php] Reset link for ' . $email . ': ' . $resetLink);
+
     $sent = aa_send_password_reset_email($email, $name, $resetLink);
 
     if (!$sent) {
-        $cleanup = $conn->prepare('DELETE FROM password_resets WHERE token_hash = :token_hash LIMIT 1');
-        $cleanup->bindValue(':token_hash', $tokenHash, PDO::PARAM_STR);
-        $cleanup->execute();
+        error_log('[api/helpers.php] Password reset email failed to send to ' . $email);
         if (function_exists('aa_log_auth_event')) {
-            aa_log_auth_event($conn, 'password_reset_email_failed', false, $email, $userId, 'user');
+            aa_log_auth_event($conn, 'password_reset_email_failed', false, $email, $userId, 'user', [
+                'error' => 'mail_call_failed',
+                'from_domain' => aa_mail_domain_from_host(aa_request_host()),
+            ]);
         }
     } elseif (function_exists('aa_log_auth_event')) {
         aa_log_auth_event($conn, 'password_reset_issued', true, $email, $userId, 'user');

@@ -27,12 +27,16 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user && !empty($user['email'])) {
-        aa_issue_password_reset(
-            $conn,
-            (int)($user['id'] ?? 0),
-            (string)$user['email'],
-            (string)($user['name'] ?? '')
-        );
+        try {
+            aa_issue_password_reset(
+                $conn,
+                (int)($user['id'] ?? 0),
+                (string)$user['email'],
+                (string)($user['name'] ?? '')
+            );
+        } catch (Throwable $inner) {
+            error_log('[api/request-password-reset.php] aa_issue_password_reset failed: ' . $inner->getMessage());
+        }
     }
 
     aa_log_auth_event(
@@ -48,6 +52,6 @@ try {
     aa_json_response(['message' => 'Reset link sent']);
 } catch (Throwable $e) {
     error_log('[api/request-password-reset.php] Reset request failed: ' . $e->getMessage());
-    aa_log_auth_event($conn, 'password_reset_request_error', false, $email, null, 'user', ['error' => 'server_error']);
+    aa_log_auth_event($conn, 'password_reset_request_error', false, $email, null, 'user', ['error' => $e->getMessage()]);
     aa_error_response('Error', 500);
 }
