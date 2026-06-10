@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Heart,
   Pause,
@@ -89,6 +89,7 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
   const audioInitialized = useRef(false)
   const isAdvancingRef = useRef(false)
   const recentAffirmationsRef = useRef<string[]>([])
+  const currentAffirmationRef = useRef('')
 
   const isMeditation = config.type === PracticeType.MEDITATION
   const isMorning = config.type === PracticeType.MORNING_IAM
@@ -118,33 +119,10 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
   })()
 
   useEffect(() => {
-    if (soundscape) {
-      startAmbience(soundscape, 50)
-      updateVolume(volume)
-      audioInitialized.current = true
-    }
-    void loadSessionContent()
-  }, [])
+    currentAffirmationRef.current = currentAffirmation
+  }, [currentAffirmation])
 
-  useEffect(() => {
-    if (timeLeft <= 0) {
-      handleSessionEnd()
-      return
-    }
-
-    let timer: ReturnType<typeof setInterval> | undefined
-    if (isRunning) {
-      timer = setInterval(() => {
-        setTimeLeft((prev) => prev - 1)
-      }, 1000)
-    }
-
-    return () => {
-      if (timer) clearInterval(timer)
-    }
-  }, [timeLeft, isRunning])
-
-  const loadSessionContent = async () => {
+  const loadSessionContent = useCallback(async () => {
     setIsLoadingContent(true)
     setAffirmationCount(1)
     recentAffirmationsRef.current = []
@@ -196,7 +174,8 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
       const text = await api.getRandomAffirmation(config.type, focusLabel)
       if (
         text &&
-        normalizeAffirmation(text) !== normalizeAffirmation(currentAffirmation)
+        normalizeAffirmation(text) !==
+          normalizeAffirmation(currentAffirmationRef.current)
       ) {
         firstAffirmation = text
         break
@@ -209,7 +188,41 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
       recentAffirmationsRef.current = [normalizeAffirmation(initialAffirmation)]
     }
     setIsLoadingContent(false)
-  }
+  }, [
+    config.focusAreas,
+    config.type,
+    customAffirmations,
+    isMeditation,
+    isMorning,
+    meditationFocusLabel,
+  ])
+
+  useEffect(() => {
+    if (soundscape) {
+      startAmbience(soundscape, 50)
+      updateVolume(50)
+      audioInitialized.current = true
+    }
+    void loadSessionContent()
+  }, [loadSessionContent, soundscape])
+
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      handleSessionEnd()
+      return
+    }
+
+    let timer: ReturnType<typeof setInterval> | undefined
+    if (isRunning) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1)
+      }, 1000)
+    }
+
+    return () => {
+      if (timer) clearInterval(timer)
+    }
+  }, [timeLeft, isRunning])
 
   const handleNextAffirmation = async () => {
     if (

@@ -34,6 +34,14 @@ const PRELOAD_SLOTS: string[] = [
   'SETTINGS',
 ]
 
+const PREPARATION_MESSAGES = [
+  'Opening The Space...',
+  'Settling The Atmosphere...',
+  'Gathering The Presence...',
+  'Welcoming You In...',
+  'We Are Ready For You',
+] as const
+
 export const SplashScreen: React.FC<SplashScreenProps> = ({
   onComplete,
   theme = 'dark',
@@ -46,14 +54,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
   const preloadImagesRef = useRef<HTMLImageElement[]>([])
   const didPreloadRef = useRef(false)
-
-  const preparationMessages = [
-    'Opening The Space...',
-    'Settling The Atmosphere...',
-    'Gathering The Presence...',
-    'Welcoming You In...',
-    'We Are Ready For You',
-  ]
 
   // Start background music when SplashScreen loads
   useEffect(() => {
@@ -113,12 +113,12 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       setProgress((prev) => {
         const newProgress = prev + 1.5
 
-        if (newProgress < 20) setCurrentMessage(preparationMessages[0])
-        else if (newProgress < 40) setCurrentMessage(preparationMessages[1])
-        else if (newProgress < 55) setCurrentMessage(preparationMessages[2])
-        else if (newProgress < 85) setCurrentMessage(preparationMessages[3])
+        if (newProgress < 20) setCurrentMessage(PREPARATION_MESSAGES[0])
+        else if (newProgress < 40) setCurrentMessage(PREPARATION_MESSAGES[1])
+        else if (newProgress < 55) setCurrentMessage(PREPARATION_MESSAGES[2])
+        else if (newProgress < 85) setCurrentMessage(PREPARATION_MESSAGES[3])
         else {
-          setCurrentMessage(preparationMessages[4])
+          setCurrentMessage(PREPARATION_MESSAGES[4])
           if (newProgress >= 100) {
             clearInterval(interval)
             setIsReady(true)

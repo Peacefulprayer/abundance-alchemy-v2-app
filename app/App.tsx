@@ -1,7 +1,14 @@
 // App.tsx - PHASE 1.5: Sacred entry restored with audio orchestration extracted
 // New User: PreSplash → Splash → Welcome → Naming → Auth → Onboarding → Tutorial → Dashboard
 // Returning User: PreSplash → Splash → Welcome → Auth/Return Portal → Dashboard
-import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react'
+import React, {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import {
   AppMode,
   UserAccount,
@@ -1192,7 +1199,7 @@ function App() {
     })
   }
 
-  const triggerReminder = (practice: ReminderPractice) => {
+  const triggerReminder = useCallback((practice: ReminderPractice) => {
     const reminderMeta = REMINDER_META[practice]
     setActiveReminder((current) => current ?? practice)
     if (settings.reminders.notificationPermission !== 'granted') return
@@ -1214,11 +1221,11 @@ function App() {
     } catch {
       // silently fail and rely on in-app reminder card
     }
-  }
+  }, [settings.reminders.notificationPermission])
 
   // ✅ REMINDER EFFECT - OPTIMIZED (Mutable Interval Handle)
   useEffect(() => {
-    if (!settings.reminders.enabled || !user) return
+    if (!settings.reminders.enabled || !user?.email) return
 
     let intervalId: number | null = null
 
@@ -1304,6 +1311,7 @@ function App() {
     settings.reminders.practiceTimes,
     settings.reminders.timezone,
     settings.reminders.notificationPermission,
+    triggerReminder,
     user?.email,
   ])
 
@@ -1830,36 +1838,32 @@ function App() {
     currentMode === AppMode.PRAYER_GUIDE ||
     currentMode === AppMode.PRAYER_SESSION
 
-  // ✅ Pure Resolver (Kept for logic clarity)
-  const getActiveSoundscape = (): Soundscape => {
-    if (practiceConfig?.soundscape) {
-      if (typeof practiceConfig.soundscape === 'string') {
+  const getActiveSoundscape = useCallback(
+    (): Soundscape => {
+      if (practiceConfig?.soundscape) {
+        if (typeof practiceConfig.soundscape === 'string') {
+          return (
+            soundscapes.find((s) => s.id === practiceConfig.soundscape) ||
+            DEFAULT_SOUNDSCAPE
+          )
+        }
+        return practiceConfig.soundscape
+      }
+      if (isPrayerMode) {
         return (
-          soundscapes.find((s) => s.id === practiceConfig.soundscape) ||
+          soundscapes.find((s) => s.id === prayerSoundscapeId) ||
+          soundscapes.find((s) => s.id === settings.meditationSoundscapeId) ||
           DEFAULT_SOUNDSCAPE
         )
       }
-      return practiceConfig.soundscape
-    }
-    if (isPrayerMode) {
+      if (!sessionAmbienceUnlocked) {
+        return DEFAULT_SOUNDSCAPE
+      }
       return (
-        soundscapes.find((s) => s.id === prayerSoundscapeId) ||
-        soundscapes.find((s) => s.id === settings.meditationSoundscapeId) ||
+        soundscapes.find((s) => s.id === settings.soundscapeId) ||
         DEFAULT_SOUNDSCAPE
       )
-    }
-    if (!sessionAmbienceUnlocked) {
-      return DEFAULT_SOUNDSCAPE
-    }
-    return (
-      soundscapes.find((s) => s.id === settings.soundscapeId) ||
-      DEFAULT_SOUNDSCAPE
-    )
-  }
-
-  // ✅ Stable Value (Module-level DEFAULT_SOUNDSCAPE removed from deps)
-  const activeSoundscape = useMemo(
-    () => getActiveSoundscape(),
+    },
     [
       practiceConfig,
       soundscapes,
@@ -1869,6 +1873,11 @@ function App() {
       sessionAmbienceUnlocked,
       settings.soundscapeId,
     ],
+  )
+
+  const activeSoundscape = useMemo(
+    () => getActiveSoundscape(),
+    [getActiveSoundscape],
   )
 
   // ✅ Hook Call (Replaces old useEffect)

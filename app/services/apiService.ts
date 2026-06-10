@@ -170,7 +170,7 @@ export const apiService = {
       let data: any = null;
       try {
         data = JSON.parse(text);
-      } catch (e) {
+      } catch {
         console.warn('API Register: Could not parse JSON', text);
         throw new Error(`Server Error: ${text.substring(0, 100)}...`);
       }
@@ -200,7 +200,7 @@ export const apiService = {
       let data: any = null;
       try {
         data = JSON.parse(text);
-      } catch (e) {
+      } catch {
         console.warn('API Login: Could not parse JSON', text);
         throw new Error(`Server Error: ${text.substring(0, 100)}...`);
       }
@@ -266,7 +266,7 @@ export const apiService = {
       } catch {
         return null;
       }
-    } catch (error) {
+    } catch {
       return null;
     }
   },
@@ -286,7 +286,7 @@ export const apiService = {
       } catch {
         return null;
       }
-    } catch (error) {
+    } catch {
       return null;
     }
   },
@@ -309,7 +309,7 @@ export const apiService = {
         isFavorite: false,
         dateAdded: new Date().toISOString(),
       }));
-    } catch (e) {
+    } catch {
       return [];
     }
   },
@@ -329,7 +329,7 @@ export const apiService = {
         isFavorite: true,
         dateAdded: item.created_at,
       }));
-    } catch (e) {
+    } catch {
       return [];
     }
   },
@@ -344,7 +344,7 @@ export const apiService = {
       });
       const data = await response.json();
       return data.success ? data.id.toString() : null;
-    } catch (e) {
+    } catch {
       return null;
     }
   },
@@ -358,7 +358,7 @@ export const apiService = {
         body: JSON.stringify({ id }),
       });
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   },
@@ -421,7 +421,7 @@ export const apiService = {
         category: 'CUSTOM',
         url: item.audio_url, // Use the correct audio_url
       }));
-    } catch (e) {
+    } catch {
       return [];
     }
   },

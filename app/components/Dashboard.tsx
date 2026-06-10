@@ -347,29 +347,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className={`mt-4 ${sectionFrame}`}>
-            <div className={`${heroCard} text-center`}>
-              <p className={sectionKicker}>Dashboard / Dashibodi</p>
-              <h1
-                className={`mt-3 text-2xl font-serif font-medium ${
-                  theme === 'light' ? 'text-slate-950' : 'text-white'
-                }`}
-              >
-                Your sacred hub for today&apos;s practices
-              </h1>
-              <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
-                Return to your focus, enter practice, and keep your atmosphere
-                aligned.
-              </p>
-            </div>
-          </div>
-
-          <div className={`mt-4 ${sectionFrame}`}>
             <div className={`relative overflow-hidden group ${glassCard}`}>
               <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                 <SparklesIcon size={40} className="text-amber-500" />
               </div>
               <div className="relative z-10 flex flex-col items-center justify-start gap-3 pt-1 text-center">
-                <span className={sectionKicker}>Today&apos;s Wisdom</span>
                 <div className="flex-shrink-0">
                   <AlchemistAvatar
                     size="sm"
@@ -400,6 +382,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className={`mt-4 ${sectionFrame}`}>
+            <div className={`${heroCard} text-center`}>
+              <p className={sectionKicker}>Dashboard / Dashibodi</p>
+              <h1
+                className={`mt-3 text-2xl font-serif font-medium ${
+                  theme === 'light' ? 'text-slate-950' : 'text-white'
+                }`}
+              >
+                Your sacred gathering space
+              </h1>
+              <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
+                Return to your focus, enter practices, and choose your
+                soundscape. Recharge your I Am energies.
+              </p>
             </div>
           </div>
         </div>
