@@ -23,7 +23,7 @@ import {
 import { AlchemistAvatar } from './AlchemistAvatar'
 import { ProfileImage } from './ProfileImage'
 import { playBell } from '../services/audioService'
-import { WISDOM_QUOTES } from '../data/wisdomQuotes'
+import { WISDOM_QUOTES, getQuotesByCategory } from '../data/wisdomQuotes'
 import {
   SCREEN_PAGE_SHELL,
   SCREEN_TITLE_PILL,
@@ -52,11 +52,17 @@ const getFocusAreaLabel = (focusArea: FocusArea | undefined): string => {
 
 const fetchWisdomFromAPI = async (
   category: string,
-  sessionId: string,
+  sessionId?: string,
 ): Promise<WisdomQuote | null> => {
   try {
+    const query = new URLSearchParams({
+      category,
+    })
+    if (sessionId?.trim()) {
+      query.set('session_id', sessionId)
+    }
     const res = await fetch(
-      `${WISDOM_API_BASE}/get-wisdom.php?category=${encodeURIComponent(category)}&session_id=${encodeURIComponent(sessionId)}`,
+      `${WISDOM_API_BASE}/get-wisdom.php?${query.toString()}`,
     )
     if (!res.ok) throw new Error('API error')
     return await res.json()
@@ -64,6 +70,17 @@ const fetchWisdomFromAPI = async (
     return null
   }
 }
+
+const formatWisdomQuote = (quote: WisdomQuote | null): WisdomQuote | null => {
+  if (!quote) return null
+  return {
+    text: quote.text,
+    author: quote.source ? `${quote.author} - ${quote.source}` : quote.author,
+  }
+}
+
+const getWisdomKey = (quote: WisdomQuote): string =>
+  `${quote.text}::${quote.author}`
 
 const getFallbackQuote = (category: string): WisdomQuote => {
   const quotes = WISDOM_QUOTES.filter(
@@ -82,6 +99,31 @@ const getFallbackQuote = (category: string): WisdomQuote => {
       ? `${quotes[idx].author} - ${quotes[idx].source}`
       : quotes[idx].author,
   }
+}
+
+const getAlternateFallbackQuote = (
+  category: string,
+  currentWisdomKey: string,
+): WisdomQuote => {
+  const categoryQuotes = getQuotesByCategory(
+    (category === 'GENERAL' ? 'GENERAL' : category) as Parameters<
+      typeof getQuotesByCategory
+    >[0],
+  )
+  const normalizedQuotes = categoryQuotes.map((quote) => ({
+    text: quote.text,
+    author: quote.source ? `${quote.author} - ${quote.source}` : quote.author,
+  }))
+  const alternatives = normalizedQuotes.filter(
+    (quote) => getWisdomKey(quote) !== currentWisdomKey,
+  )
+
+  if (alternatives.length === 0) {
+    return getFallbackQuote(category)
+  }
+
+  const idx = Math.floor(Math.random() * alternatives.length)
+  return alternatives[idx]
 }
 
 interface DashboardProps {
@@ -125,6 +167,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showJournal, setShowJournal] = useState(false)
   const [journalEntry, setJournalEntry] = useState('')
   const [journalStatus, setJournalStatus] = useState<string>('')
+  const [isSeekingWisdom, setIsSeekingWisdom] = useState(false)
   const [sessionId] = useState(() => {
     if (typeof window !== 'undefined') {
       let id = sessionStorage.getItem('wisdom_session_id')
@@ -140,18 +183,40 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const loadWisdom = useCallback(async () => {
     const focusLabel = getFocusAreaLabel(user.focusAreas[0]) || 'GENERAL'
     const apiQuote = await fetchWisdomFromAPI(focusLabel, sessionId)
-    if (apiQuote) {
-      setWisdom({
-        text: apiQuote.text,
-        author: apiQuote.source
-          ? `${apiQuote.author} - ${apiQuote.source}`
-          : apiQuote.author,
-      })
-    } else {
-      const fallback = getFallbackQuote(focusLabel)
-      setWisdom(fallback)
-    }
+    setWisdom(formatWisdomQuote(apiQuote) ?? getFallbackQuote(focusLabel))
   }, [user.focusAreas, sessionId])
+
+  const handleSeekWisdom = useCallback(async () => {
+    const focusLabel = getFocusAreaLabel(user.focusAreas[0]) || 'GENERAL'
+    const currentWisdomKey = getWisdomKey(wisdom)
+    setIsSeekingWisdom(true)
+
+    try {
+      let nextWisdom: WisdomQuote | null = null
+
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        const apiQuote = await fetchWisdomFromAPI(
+          focusLabel,
+          `${sessionId}-${Date.now()}-${attempt}`,
+        )
+        const candidate =
+          formatWisdomQuote(apiQuote) ?? getFallbackQuote(focusLabel)
+
+        if (getWisdomKey(candidate) !== currentWisdomKey) {
+          nextWisdom = candidate
+          break
+        }
+      }
+
+      if (nextWisdom) {
+        setWisdom(nextWisdom)
+      } else {
+        setWisdom(getAlternateFallbackQuote(focusLabel, currentWisdomKey))
+      }
+    } finally {
+      setIsSeekingWisdom(false)
+    }
+  }, [sessionId, user.focusAreas, wisdom])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -264,13 +329,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     window.setTimeout(() => setJournalStatus(''), 2200)
   }
 
-  const greeting = user.lastPracticeDate ? 'Welcome back' : 'Greetings'
-
   const textColor = screenTextColor(theme)
   const subTextColor = screenSubTextColor(theme)
   const whitePill = SCREEN_TITLE_PILL
-  const headerPill =
-    'inline-flex items-center rounded-full border border-amber-300/45 bg-gradient-to-r from-slate-950/82 to-slate-900/76 px-3 py-1.5 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)] backdrop-blur-sm'
   const streakPill = `${SCREEN_TITLE_PILL} gap-2`
   const heroCard = screenHeroCard(theme)
   const glassCard = `${screenGlassPanel(theme)} p-4`
@@ -311,8 +372,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className={pageShell}>
         {/* Header Section */}
         <div className="relative pt-4 px-4 pb-2">
-          <div className="flex justify-between items-start">
-            <div className="z-10 flex items-center gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="z-10 flex min-w-0 items-center gap-3">
               <button
                 type="button"
                 onClick={() => onOpenProfile?.()}
@@ -325,10 +386,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   size="md"
                 />
               </button>
-              <div className="space-y-1">
-                <div className={headerPill}>{greeting}</div>
+              <div className="min-w-0">
                 <p
-                  className={`text-base font-semibold ${
+                  className={`truncate text-base font-semibold ${
                     theme === 'light' ? 'text-slate-950' : 'text-white'
                   }`}
                 >
@@ -336,7 +396,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3 z-10">
+            <div className="z-10 flex shrink-0 items-center">
               <div className={streakPill}>
                 <Trophy size={14} className="text-amber-700" />
                 <span>
@@ -370,15 +430,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <button
                     onClick={() => {
                       playBell()
-                      loadWisdom()
+                      void handleSeekWisdom()
                     }}
+                    disabled={isSeekingWisdom}
                     className={`mt-2 text-[9px] font-medium uppercase tracking-wider opacity-60 transition-opacity hover:opacity-100 ${
                       theme === 'light' ? 'text-amber-700' : 'text-amber-400'
-                    }`}
-                    title="Get another wisdom"
+                    } ${isSeekingWisdom ? 'cursor-wait opacity-100' : ''}`}
+                    title="Seek fresh wisdom"
                   >
                     <SparklesIcon size={10} className="mr-1 inline" />
-                    New Wisdom
+                    {isSeekingWisdom ? 'Seeking...' : 'Seek Wisdom'}
                   </button>
                 </div>
               </div>
@@ -393,11 +454,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   theme === 'light' ? 'text-slate-950' : 'text-white'
                 }`}
               >
-                Your sacred gathering space
+                Tunakukaribisha
               </h1>
+              <p
+                className={`mt-2 text-base font-medium ${
+                  theme === 'light' ? 'text-slate-800' : 'text-slate-100'
+                }`}
+              >
+                We Welcome You
+              </p>
+              <p
+                className={`mt-2 text-lg font-semibold tracking-[0.08em] ${
+                  theme === 'light' ? 'text-amber-800' : 'text-amber-300'
+                }`}
+              >
+                {displayName}
+              </p>
+              <p
+                className={`mt-3 text-lg font-serif ${
+                  theme === 'light' ? 'text-slate-900' : 'text-white'
+                }`}
+              >
+                Your sacred gathering space
+              </p>
               <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
-                Return to your focus, enter practices, and choose your
-                soundscape. Recharge your I Am energies.
+                Here is where you return to your focus, enter practice
+                sessions, and choose your soundscape.
+              </p>
+              <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
+                Recharge and renew your I Am energies.
               </p>
             </div>
           </div>
