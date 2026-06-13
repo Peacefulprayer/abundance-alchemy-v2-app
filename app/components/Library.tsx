@@ -8,6 +8,7 @@ import {
   SCREEN_PRIMARY_BUTTON,
   screenHeroCard,
   screenInputBg,
+  screenItemCard,
   screenSectionFrame,
   screenSectionKicker,
   screenSubTextColor,
@@ -85,10 +86,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
   const sectionFrame = screenSectionFrame(theme)
   const heroCard = `${screenHeroCard(theme)} text-inherit`
   const cardBg = `${screenSurfaceCard(theme)} text-inherit`
-  const itemBorder =
-    theme === 'light'
-      ? 'border-amber-200/55 bg-white/92'
-      : 'border-amber-500/15 bg-slate-950/82'
+  const itemCard = screenItemCard(theme)
   const inputBg = screenInputBg(theme)
   const pageShell = `${SCREEN_PAGE_SHELL} pb-24`
   const sectionKicker = screenSectionKicker(theme)
@@ -164,7 +162,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
                   return (
                     <div
                       key={id}
-                      className={`rounded-[20px] border p-3 ${itemBorder}`}
+                      className={itemCard}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -249,7 +247,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
             </label>
             {userAudioFile ? (
               <div
-                className={`mt-3 rounded-[20px] border px-4 py-3 text-sm shadow-sm ${itemBorder}`}
+                className={`mt-3 ${itemCard} px-4 py-3 text-sm`}
               >
                 {userAudioFile.name}
               </div>
@@ -317,7 +315,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
             <div className="mt-4 space-y-3">
               {affirmations.length === 0 ? (
                 <div
-                  className={`rounded-[20px] border px-4 py-5 text-sm ${itemBorder}`}
+                  className={`${itemCard} px-4 py-5 text-sm`}
                 >
                   No affirmations yet.
                 </div>
@@ -325,7 +323,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
                 affirmations.map((a) => (
                   <div
                     key={a.id}
-                    className={`rounded-[20px] border p-3 ${itemBorder}`}
+                    className={itemCard}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -359,7 +357,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
           <div className={`mt-3 ${cardBg}`}>
             {gratitudeLogs.length === 0 ? (
               <div
-                className={`rounded-[20px] border px-4 py-5 text-sm ${itemBorder}`}
+                className={`${itemCard} px-4 py-5 text-sm`}
               >
                 No gratitude logs yet.
               </div>
@@ -371,7 +369,7 @@ export const Library: React.FC<LibraryProps> = (props) => {
                   .map((g) => (
                     <div
                       key={g.id}
-                      className={`rounded-[20px] border p-3 ${itemBorder}`}
+                      className={itemCard}
                     >
                       <div className={`text-[11px] ${subTextColor}`}>
                         {new Date(g.date).toLocaleDateString()} • {g.focusArea}

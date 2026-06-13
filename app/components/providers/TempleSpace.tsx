@@ -1,6 +1,11 @@
 // components/providers/TempleSpace.tsx
 import React, { useEffect, useMemo, useState } from 'react';
-import type { BackgroundConfig, BackgroundSlot } from '../../services/apiService';
+import type { BackgroundSlot } from '../../services/apiService';
+import {
+  isBackgroundSlot,
+  resolveBackground,
+  type ResolvedBackground,
+} from '../../services/backgrounds';
 import { useBackgrounds } from '../../services/useBackgrounds';
 
 interface TempleSpaceProps {
@@ -11,44 +16,6 @@ interface TempleSpaceProps {
 }
 
 type TempleSlotKey = BackgroundSlot | 'DEFAULT';
-
-const backgroundSlots = new Set<BackgroundSlot>([
-  'SECTION_ENTRY',
-  'SECTION_CORE',
-  'SECTION_AFFIRM_IAM',
-  'SECTION_AFFIRM_ILOVE',
-  'SECTION_MEDITATION',
-  'SECTION_PRAYER',
-  'PRE_SPLASH',
-  'SPLASH',
-  'SPLASH_WELCOME',
-  'WELCOME',
-  'NAMING_CEREMONY',
-  'AUTH',
-  'RETURN_PORTAL',
-  'ONBOARDING',
-  'TUTORIAL',
-  'DASHBOARD',
-  'LIBRARY',
-  'IAM_SETUP',
-  'IAM_PRACTICE',
-  'ILOVE_SETUP',
-  'ILOVE_PRACTICE',
-  'MEDITATION_SETUP',
-  'MEDITATION_PRACTICE',
-  'PRAYER_SETUP',
-  'PRAYER_GUIDE',
-  'PRAYER_SESSION',
-  'SETTINGS',
-  'PROFILE',
-  'STATS',
-  'PROGRESS',
-  'HOME',
-]);
-
-function isBackgroundSlot(input: string): input is BackgroundSlot {
-  return backgroundSlots.has(input as BackgroundSlot);
-}
 
 const defaultTargetCandidates: BackgroundSlot[] = [
   'SPLASH_WELCOME',
@@ -65,18 +32,6 @@ const defaultFallbackCandidates: BackgroundSlot[] = [
   'AUTH',
   'HOME',
 ];
-
-function firstAvailableBackground(
-  backgrounds: BackgroundConfig,
-  candidates: BackgroundSlot[]
-): string | undefined {
-  for (const candidate of candidates) {
-    const imageUrl = backgrounds[candidate]?.imageUrl;
-    if (imageUrl) return imageUrl;
-  }
-
-  return undefined;
-}
 
 function toSlotKey(input: string): TempleSlotKey {
   const raw = (input || '').trim();
@@ -110,6 +65,11 @@ function toSlotKey(input: string): TempleSlotKey {
   return 'DEFAULT';
 }
 
+const concreteBackground = (
+  background: ResolvedBackground,
+): ResolvedBackground | undefined =>
+  background.mode === 'inherit' ? undefined : background;
+
 export const TempleSpace: React.FC<TempleSpaceProps> = ({
   children,
   theme,
@@ -124,66 +84,60 @@ export const TempleSpace: React.FC<TempleSpaceProps> = ({
     [fallbackBackgroundType]
   );
 
-  // Resolve URLs from the backgrounds map
-  const targetUrl = useMemo(() => {
-    if (!backgrounds) return undefined;
-
-    // Best-effort resolution for "DEFAULT"
+  const targetBackground = useMemo(() => {
     if (targetSlot === 'DEFAULT') {
-      return firstAvailableBackground(backgrounds, defaultTargetCandidates);
+      return resolveBackground(defaultTargetCandidates, backgrounds);
     }
 
-    return backgrounds[targetSlot]?.imageUrl;
+    return resolveBackground([targetSlot], backgrounds);
   }, [backgrounds, targetSlot]);
 
-  const fallbackUrl = useMemo(() => {
-    if (!backgrounds || !fallbackSlot) return undefined;
-
+  const fallbackBackground = useMemo(() => {
+    if (!fallbackSlot) return undefined;
     if (fallbackSlot === 'DEFAULT') {
-      return firstAvailableBackground(backgrounds, defaultFallbackCandidates);
+      return resolveBackground(defaultFallbackCandidates, backgrounds);
     }
 
-    return backgrounds[fallbackSlot]?.imageUrl;
+    return resolveBackground([fallbackSlot], backgrounds);
   }, [backgrounds, fallbackSlot]);
 
-  // Active background shown immediately (fallback first if provided)
-  const [activeUrl, setActiveUrl] = useState<string | undefined>(() => fallbackUrl || targetUrl);
+  const initialBackground = useMemo(
+    () => concreteBackground(fallbackBackground ?? { mode: 'inherit' }) ?? concreteBackground(targetBackground),
+    [fallbackBackground, targetBackground],
+  );
+
+  const [activeBackground, setActiveBackground] = useState<ResolvedBackground | undefined>(initialBackground);
   const [isCrossfading, setIsCrossfading] = useState(false);
 
-  // Keep activeUrl in sync if fallback/target changes (without flashing)
   useEffect(() => {
-    // If we have no activeUrl yet, choose the best immediate option
-    if (!activeUrl) {
-      setActiveUrl(fallbackUrl || targetUrl);
+    if (!activeBackground && initialBackground) {
+      setActiveBackground(initialBackground);
+    }
+  }, [activeBackground, initialBackground]);
+
+  useEffect(() => {
+    if (targetBackground.mode === 'inherit') return;
+
+    if (targetBackground.mode !== 'image') {
+      setActiveBackground(targetBackground);
       return;
     }
 
-    // If activeUrl equals fallbackUrl and targetUrl changes, we crossfade to target when ready
-    // (handled by the preload effect below)
-  }, [activeUrl, fallbackUrl, targetUrl]);
-
-  // Option A: inherit fallback until target is decoded, then swap (crossfade)
-  useEffect(() => {
-    if (!targetUrl) return;
-
-    // If we’re already showing target, nothing to do.
-    if (activeUrl === targetUrl) return;
+    if (!targetBackground.imageUrl) return;
+    if (activeBackground?.mode === 'image' && activeBackground.imageUrl === targetBackground.imageUrl) return;
 
     let cancelled = false;
 
     const img = new Image();
     img.decoding = 'async';
-    img.src = targetUrl;
+    img.src = targetBackground.imageUrl;
 
     img.onload = () => {
       if (cancelled) return;
-      // trigger a gentle fade transition
       setIsCrossfading(true);
-      // swap background on next tick so opacity transition applies
       requestAnimationFrame(() => {
         if (cancelled) return;
-        setActiveUrl(targetUrl);
-        // end crossfade after transition duration
+        setActiveBackground(targetBackground);
         setTimeout(() => {
           if (!cancelled) setIsCrossfading(false);
         }, 220);
@@ -198,7 +152,10 @@ export const TempleSpace: React.FC<TempleSpaceProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [targetUrl, activeUrl]);
+  }, [targetBackground, activeBackground]);
+
+  const activeImageUrl = activeBackground?.mode === 'image' ? activeBackground.imageUrl : undefined;
+  const activeColorValue = activeBackground?.mode === 'color' ? activeBackground.colorValue : undefined;
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black">
@@ -206,11 +163,11 @@ export const TempleSpace: React.FC<TempleSpaceProps> = ({
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: activeUrl ? `url(${activeUrl})` : undefined,
+          backgroundImage: activeImageUrl ? `url(${activeImageUrl})` : undefined,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          backgroundColor: 'black',
+          backgroundColor: activeColorValue ?? 'black',
           // Gentle crossfade. (We keep it subtle to feel “Apple-like”.)
           transition: 'opacity 220ms ease-out',
           opacity: 1,

@@ -1,6 +1,18 @@
 import React, { useRef, useState } from 'react';
 import type { UserProfile, FocusArea } from '../types';
 import { ProfileImage } from './ProfileImage';
+import {
+  SCREEN_PAGE_SHELL,
+  SCREEN_TITLE_PILL,
+  screenActionRow,
+  screenBackButton,
+  screenHeroCard,
+  screenItemCard,
+  screenSectionFrame,
+  screenSectionKicker,
+  screenSubTextColor,
+  screenTextColor,
+} from '../styles/sacredScreen';
 
 interface ProfileProps {
   user: UserProfile;
@@ -70,28 +82,16 @@ export const Profile: React.FC<ProfileProps> = ({ user, theme, onBack, onUpdateP
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isSavingImage, setIsSavingImage] = useState(false);
   const [imageStatus, setImageStatus] = useState('');
-  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
-  const titlePill =
-    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm';
-  const sectionFrame =
-    theme === 'light'
-      ? 'rounded-[28px] border border-amber-200/60 bg-white/78 p-3 shadow-sm'
-      : 'rounded-[28px] border border-amber-500/18 bg-slate-950/45 p-3 shadow-[0_16px_40px_rgba(0,0,0,0.28)]';
-  const cardBg =
-    theme === 'light'
-      ? 'bg-gradient-to-br from-white/95 to-amber-50/70 border-amber-200/60'
-      : 'bg-gradient-to-br from-slate-900/70 to-slate-950/75 border-amber-500/20';
-  const itemBg = cardBg;
-  const pageShell = 'mx-auto w-full max-w-[440px] space-y-5 pb-24';
-  const sectionKicker =
-    theme === 'light'
-      ? 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-700'
-      : 'text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400/90';
-  const actionButton =
-    theme === 'light'
-      ? 'inline-flex items-center justify-center rounded-full border border-amber-200/70 bg-white/92 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 transition-colors hover:bg-white'
-      : 'inline-flex items-center justify-center rounded-full border border-amber-500/20 bg-slate-950/78 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-100 transition-colors hover:bg-slate-950';
+  const textColor = screenTextColor(theme);
+  const subTextColor = screenSubTextColor(theme);
+  const titlePill = SCREEN_TITLE_PILL;
+  const sectionFrame = screenSectionFrame(theme);
+  const cardBg = screenHeroCard(theme);
+  const itemBg = screenItemCard(theme);
+  const pageShell = `${SCREEN_PAGE_SHELL} pb-24`;
+  const sectionKicker = screenSectionKicker(theme);
+  const backButton = screenBackButton(theme);
+  const actionButton = `inline-flex items-center justify-center rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors ${screenActionRow(theme)}`;
 
   const handleProfileImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -119,11 +119,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, theme, onBack, onUpdateP
         <div className="flex items-center justify-between">
           <button
             onClick={onBack}
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] transition-colors ${
-              theme === 'light'
-                ? 'border-amber-200/70 bg-white/85 text-slate-700 hover:bg-white'
-                : 'border-amber-500/20 bg-slate-950/70 text-slate-100 hover:bg-slate-950'
-            }`}
+            className={backButton}
           >
             <span>←</span>
             <span>Back</span>
@@ -132,7 +128,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, theme, onBack, onUpdateP
         </div>
 
         <div className={sectionFrame}>
-          <div className={`rounded-[24px] border p-5 shadow-lg ${cardBg}`}>
+          <div className={`${cardBg} p-5`}>
             <p className={sectionKicker}>Sacred Identity</p>
             <div className="mt-4 flex items-center gap-4">
               <ProfileImage name={user.name} imageUrl={user.profileImage} size="lg" />
@@ -181,19 +177,19 @@ export const Profile: React.FC<ProfileProps> = ({ user, theme, onBack, onUpdateP
             <h3 className={titlePill}>Journey Details</h3>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <div className={`rounded-[24px] border p-4 shadow-sm ${itemBg}`}>
+            <div className={`${itemBg} p-4`}>
               <div className={`text-[10px] font-extrabold uppercase tracking-[0.22em] ${subTextColor}`}>Level</div>
               <div className="mt-3 text-2xl font-semibold">{user.level}</div>
             </div>
-            <div className={`rounded-[24px] border p-4 shadow-sm ${itemBg}`}>
+            <div className={`${itemBg} p-4`}>
               <div className={`text-[10px] font-extrabold uppercase tracking-[0.22em] ${subTextColor}`}>Streak</div>
               <div className="mt-3 text-2xl font-semibold">{user.streak}</div>
             </div>
-            <div className={`rounded-[24px] border p-4 shadow-sm ${itemBg}`}>
+            <div className={`${itemBg} p-4`}>
               <div className={`text-[10px] font-extrabold uppercase tracking-[0.22em] ${subTextColor}`}>Primary Focus</div>
               <div className="mt-3 text-sm font-semibold leading-snug">{focusLabel(user.focusAreas?.[0])}</div>
             </div>
-            <div className={`rounded-[24px] border p-4 shadow-sm ${itemBg}`}>
+            <div className={`${itemBg} p-4`}>
               <div className={`text-[10px] font-extrabold uppercase tracking-[0.22em] ${subTextColor}`}>Completed</div>
               <div className="mt-3 text-2xl font-semibold">{user.affirmationsCompleted}</div>
             </div>

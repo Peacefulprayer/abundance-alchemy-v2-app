@@ -6,6 +6,11 @@ import { startAmbience } from '../../services/audioService'
 import { SacredBackground } from '../SacredBackground'
 import { href } from '../../services/base'
 import {
+  normalizeBackgroundConfig,
+  resolveBackground,
+  type BackgroundSlot,
+} from '../../services/backgrounds'
+import {
   SACRED_LAYOUT,
   SACRED_ORB_WRAPPER,
   SACRED_TITLE_CARD,
@@ -20,12 +25,10 @@ interface SplashScreenProps {
   theme?: 'light' | 'dark'
 }
 
-type BackgroundMap = Record<string, { imageUrl?: string }>
-
 const API_BACKGROUND_ENDPOINT = '/abundance-alchemy/api/get-backgrounds.php'
 
 // Best-effort list (covers both new + returning paths) — capped for mobile safety
-const PRELOAD_SLOTS: string[] = [
+const PRELOAD_SLOTS: BackgroundSlot[] = [
   'WELCOME',
   'SPLASH_WELCOME',
   'AUTH',
@@ -73,14 +76,13 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         })
         if (!res.ok) return
 
-        const data = (await res.json()) as BackgroundMap
+        const backgrounds = normalizeBackgroundConfig(await res.json())
 
-        const urls: string[] = PRELOAD_SLOTS.map(
-          (slot) => data?.[slot]?.imageUrl,
+        const urls = PRELOAD_SLOTS.map((slot) =>
+          resolveBackground([slot], backgrounds),
         )
-          .filter(
-            (u): u is string => typeof u === 'string' && u.trim().length > 0,
-          )
+          .filter((background) => background.mode === 'image' && !!background.imageUrl)
+          .map((background) => background.imageUrl as string)
           .slice(0, 6)
           .map((u) => {
             try {

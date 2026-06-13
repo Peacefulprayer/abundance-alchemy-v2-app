@@ -5,6 +5,7 @@ import {
   SCREEN_TITLE_PILL,
   screenBackButton,
   screenHeroCard,
+  screenItemCard,
   screenSectionFrame,
   screenSectionKicker,
   screenSubTextColor,
@@ -32,6 +33,7 @@ export const Stats: React.FC<StatsProps> = ({ user, theme, onBack }) => {
   const sectionFrame = screenSectionFrame(theme)
   const cardBg = screenHeroCard(theme)
   const statCardBg = screenSurfaceCard(theme)
+  const statItemCard = screenItemCard(theme)
   const pageShell = `${SCREEN_PAGE_SHELL} pb-24`
   const sectionKicker = screenSectionKicker(theme)
 
@@ -68,7 +70,7 @@ export const Stats: React.FC<StatsProps> = ({ user, theme, onBack }) => {
           <div className="flex items-center justify-between px-1">
             <h3 className={titlePill}>Current Focus</h3>
           </div>
-          <div className={`mt-3 ${screenSurfaceCard(theme)} p-5`}>
+          <div className={`mt-3 ${statCardBg} p-5`}>
             <p className={sectionKicker}>Primary Intention</p>
             <h2 className="mt-2 text-xl font-medium">{primaryFocus}</h2>
             <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
@@ -84,7 +86,7 @@ export const Stats: React.FC<StatsProps> = ({ user, theme, onBack }) => {
           </div>
           <div className="mt-3 grid grid-cols-2 gap-3">
             <div
-              className={`rounded-[24px] border p-4 shadow-sm ${statCardBg}`}
+              className={`${statItemCard} p-4`}
             >
               <div
                 className={`text-[10px] font-extrabold uppercase tracking-[0.22em] ${subTextColor}`}
@@ -97,7 +99,7 @@ export const Stats: React.FC<StatsProps> = ({ user, theme, onBack }) => {
               </p>
             </div>
             <div
-              className={`rounded-[24px] border p-4 shadow-sm ${statCardBg}`}
+              className={`${statItemCard} p-4`}
             >
               <div
                 className={`text-[10px] font-extrabold uppercase tracking-[0.22em] ${subTextColor}`}

@@ -16,9 +16,12 @@ import { buttonSoundService } from '../services/buttonSoundService'
 import {
   SCREEN_PAGE_SHELL,
   SCREEN_TITLE_PILL,
+  screenAccentText,
+  screenActionRow,
   screenBackButton,
   screenHeroCard,
   screenInputBg,
+  screenItemCard,
   screenSectionFrame,
   screenSectionKicker,
   screenSubTextColor,
@@ -66,18 +69,13 @@ export const Settings: React.FC<SettingsProps> = ({
   const pageShell = `${SCREEN_PAGE_SHELL} pb-24`
   const sectionFrame = screenSectionFrame(theme)
   const cardBg = screenHeroCard(theme)
-  const actionCardBg =
-    theme === 'light'
-      ? 'bg-gradient-to-br from-slate-900/90 to-slate-800/88 border border-slate-700'
-      : 'bg-gradient-to-br from-slate-950/90 to-slate-900/88 border border-slate-700'
   const surfaceCard = screenSurfaceCard(theme)
+  const itemCard = screenItemCard(theme)
   const inputBg = screenInputBg(theme)
   const sectionKicker = screenSectionKicker(theme)
   const backButton = screenBackButton(theme)
-  const actionRow =
-    theme === 'light'
-      ? 'border border-amber-200/60 bg-white/85 text-slate-900 hover:bg-white'
-      : 'border border-amber-500/20 bg-slate-950/78 text-white hover:bg-slate-950'
+  const actionRow = screenActionRow(theme)
+  const accentText = screenAccentText(theme)
   const reminderRows: Array<{ id: ReminderPractice; label: string }> = [
     { id: 'MORNING_IAM', label: 'I Am' },
     { id: 'EVENING_ILOVE', label: 'I Love' },
@@ -320,7 +318,7 @@ export const Settings: React.FC<SettingsProps> = ({
               </div>
 
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className={surfaceCard}>
+                <div className={itemCard}>
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium">Sound Effects</p>
@@ -345,7 +343,7 @@ export const Settings: React.FC<SettingsProps> = ({
                   </div>
                 </div>
 
-                <div className={surfaceCard}>
+                <div className={itemCard}>
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium">Music</p>
@@ -373,8 +371,8 @@ export const Settings: React.FC<SettingsProps> = ({
             <div className={`${surfaceCard} p-5`}>
               <p className={sectionKicker}>Soundscape Assignments</p>
               <div className="mt-4 space-y-3">
-                <div className={surfaceCard}>
-                  <label className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-500">
+                <div className={itemCard}>
+                  <label className={sectionKicker}>
                     App Ambience
                   </label>
                   <select
@@ -393,8 +391,8 @@ export const Settings: React.FC<SettingsProps> = ({
                   </select>
                 </div>
 
-                <div className={surfaceCard}>
-                  <label className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-500">
+                <div className={itemCard}>
+                  <label className={sectionKicker}>
                     I Am Practice
                   </label>
                   <select
@@ -416,8 +414,8 @@ export const Settings: React.FC<SettingsProps> = ({
                   </select>
                 </div>
 
-                <div className={surfaceCard}>
-                  <label className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-500">
+                <div className={itemCard}>
+                  <label className={sectionKicker}>
                     I Love Practice
                   </label>
                   <select
@@ -439,8 +437,8 @@ export const Settings: React.FC<SettingsProps> = ({
                   </select>
                 </div>
 
-                <div className={surfaceCard}>
-                  <label className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-500">
+                <div className={itemCard}>
+                  <label className={sectionKicker}>
                     Meditation
                   </label>
                   <select
@@ -501,9 +499,7 @@ export const Settings: React.FC<SettingsProps> = ({
                   className={`flex cursor-pointer items-center justify-between gap-3 rounded-[20px] border border-dashed px-4 py-4 transition-colors ${
                     uploadFile
                       ? 'border-emerald-500 bg-emerald-500/10'
-                      : theme === 'light'
-                        ? 'border-amber-300/70 bg-white/85 hover:bg-white'
-                        : 'border-amber-500/25 bg-slate-950/75 hover:bg-slate-950'
+                        : `${actionRow}`
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -537,7 +533,7 @@ export const Settings: React.FC<SettingsProps> = ({
                 ) : null}
 
                 {userAudioFile ? (
-                  <div className={surfaceCard}>
+                  <div className={itemCard}>
                     <p className="text-sm font-medium">
                       Current uploaded track
                     </p>
@@ -582,8 +578,8 @@ export const Settings: React.FC<SettingsProps> = ({
 
             {settings.reminders.enabled ? (
               <div className="mt-4 space-y-3">
-                <div className={surfaceCard}>
-                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-500">
+                <div className={itemCard}>
+                  <p className={sectionKicker}>
                     Timezone
                   </p>
                   <div className="mt-3 flex items-center justify-between gap-3">
@@ -599,8 +595,8 @@ export const Settings: React.FC<SettingsProps> = ({
                   </div>
                 </div>
 
-                <div className={surfaceCard}>
-                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-500">
+                <div className={itemCard}>
+                  <p className={sectionKicker}>
                     Practice Times
                   </p>
                   <div className="mt-3 space-y-3">
@@ -610,7 +606,7 @@ export const Settings: React.FC<SettingsProps> = ({
                       return (
                         <div
                           key={row.id}
-                          className="flex items-center gap-3 rounded-[18px] border border-amber-200/25 p-3"
+                          className={`${itemCard} flex items-center gap-3`}
                         >
                           <button
                             onClick={() =>
@@ -650,8 +646,8 @@ export const Settings: React.FC<SettingsProps> = ({
                   </div>
                 </div>
 
-                <div className={surfaceCard}>
-                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-500">
+                <div className={itemCard}>
+                  <p className={sectionKicker}>
                     Default Snooze
                   </p>
                   <div className="mt-3 flex gap-2">
@@ -673,8 +669,8 @@ export const Settings: React.FC<SettingsProps> = ({
                   </div>
                 </div>
 
-                <div className={surfaceCard}>
-                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-500">
+                <div className={itemCard}>
+                  <p className={sectionKicker}>
                     Notification Permission
                   </p>
                   <p className={`mt-2 text-sm ${subTextColor}`}>
@@ -708,7 +704,7 @@ export const Settings: React.FC<SettingsProps> = ({
                 </div>
               </div>
             ) : (
-              <div className={`${surfaceCard} mt-4`}>
+              <div className={`${itemCard} mt-4`}>
                 <p className={`text-sm leading-relaxed ${subTextColor}`}>
                   Turn reminders on when you want the app to gently call you
                   back into practice.
@@ -723,7 +719,7 @@ export const Settings: React.FC<SettingsProps> = ({
             <h2 className={titlePill}>Actions</h2>
           </div>
           <div
-            className={`mt-3 rounded-[24px] p-5 shadow-lg ${actionCardBg}`}
+            className={`mt-3 ${surfaceCard} p-5`}
           >
             <div className="space-y-3">
               <button
@@ -731,12 +727,12 @@ export const Settings: React.FC<SettingsProps> = ({
                   buttonSoundService.play('click')
                   onChangeFocus()
                 }}
-                className="flex w-full items-center justify-between rounded-[20px] border border-amber-500/25 bg-amber-500/10 px-4 py-3 transition-colors hover:bg-amber-500/18"
+                className={`flex w-full items-center justify-between rounded-[20px] px-4 py-3 transition-colors ${actionRow}`}
               >
-                <span className="text-sm font-medium text-amber-300">
+                <span className={`text-sm font-medium ${accentText}`}>
                   Change Focus Area
                 </span>
-                <RefreshCw size={16} className="text-amber-300" />
+                <RefreshCw size={16} className={accentText} />
               </button>
 
               <button

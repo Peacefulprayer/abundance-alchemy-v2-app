@@ -9,10 +9,13 @@ import {
   INNER_PAGE_SHELL,
   INNER_PRIMARY_BUTTON,
   INNER_TITLE_PILL,
+  innerAccentText,
+  innerActionRow,
   innerBackButton,
   innerGlassPanel,
   innerHeroCard,
   innerInputBg,
+  innerItemCard,
   innerSectionFrame,
   innerSectionKicker,
   innerSecondaryButton,
@@ -85,11 +88,14 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
   const heroCard = innerHeroCard(theme)
   const surfaceCard = innerSurfaceCard(theme)
   const glassPanel = innerGlassPanel(theme)
+  const itemCard = innerItemCard(theme)
   const inputBg = innerInputBg(theme)
   const sectionKicker = innerSectionKicker(theme)
   const backButton = innerBackButton(theme)
   const secondaryButton = innerSecondaryButton(theme)
   const centeredSecondaryButton = secondaryButton.replace('w-full ', '')
+  const accentText = innerAccentText(theme)
+  const actionRow = innerActionRow(theme)
   const prayerSetupSectionWrap = 'space-y-3'
   const prayerSetupSectionCard = surfaceCard
   const prayerSetupInputBg = inputBg
@@ -198,15 +204,13 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
                       ? theme === 'light'
                         ? 'border-amber-400/80 bg-amber-100/80 shadow-sm'
                         : 'border-amber-400/60 bg-amber-500/12 shadow-[0_10px_25px_rgba(0,0,0,0.22)]'
-                      : theme === 'light'
-                        ? 'border-amber-200/60 bg-white/85 hover:border-amber-300'
-                        : 'border-amber-500/15 bg-slate-950/70 hover:border-amber-500/35'
+                      : `${actionRow} hover:border-amber-300/35`
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold">{path.label}</div>
-                      <div className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-400">
+                      <div className={`mt-1 text-[10px] font-extrabold uppercase tracking-[0.22em] ${accentText}`}>
                         {path.swahili}
                       </div>
                     </div>
@@ -368,7 +372,7 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
                 <label className={`text-xs font-semibold ${subTextColor}`}>
                   Prayer Volume
                 </label>
-                <span className="text-xs font-bold text-amber-400">
+                <span className={`text-xs font-bold ${accentText}`}>
                   {prayerVolume}%
                 </span>
               </div>
@@ -411,8 +415,8 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
                 saved
                   ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-300'
                   : theme === 'light'
-                    ? 'border-amber-200/60 bg-white/85 text-slate-700'
-                    : 'border-amber-500/20 bg-slate-950/70 text-slate-200'
+                    ? `${itemCard} text-slate-700`
+                    : `${itemCard} text-slate-200`
               }`}
             >
               {saved

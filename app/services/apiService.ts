@@ -1,3 +1,13 @@
+import {
+  normalizeBackgroundConfig,
+  type BackgroundConfig,
+  type BackgroundEntry,
+  type BackgroundMode,
+  type BackgroundSlot,
+} from './backgrounds';
+
+export type { BackgroundConfig, BackgroundEntry, BackgroundMode, BackgroundSlot };
+
 // Always point explicitly at the app's API directory
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy/api';
 const ENABLE_BACKEND = true;
@@ -82,47 +92,6 @@ const fetchWithTimeout = async (resource: string, options: RequestInit = {}) => 
 };
 
 // ---------- Dynamic backgrounds ----------
-
-export type BackgroundSlot =
-  | 'SECTION_ENTRY'
-  | 'SECTION_CORE'
-  | 'SECTION_AFFIRM_IAM'
-  | 'SECTION_AFFIRM_ILOVE'
-  | 'SECTION_MEDITATION'
-  | 'SECTION_PRAYER'
-  | 'PRE_SPLASH'
-  | 'SPLASH'
-  | 'SPLASH_WELCOME'
-  | 'WELCOME'
-  | 'NAMING_CEREMONY'
-  | 'AUTH'
-  | 'RETURN_PORTAL'
-  | 'ONBOARDING'
-  | 'TUTORIAL'
-  | 'DASHBOARD'
-  | 'LIBRARY'
-  | 'IAM_SETUP'
-  | 'IAM_PRACTICE'
-  | 'ILOVE_SETUP'
-  | 'ILOVE_PRACTICE'
-  | 'MEDITATION_SETUP'
-  | 'MEDITATION_PRACTICE'
-  | 'PRAYER_SETUP'
-  | 'PRAYER_GUIDE'
-  | 'PRAYER_SESSION'
-  | 'SETTINGS'
-  | 'PROFILE'
-  | 'STATS'
-  | 'PROGRESS'
-  | 'HOME';
-
-export interface BackgroundEntry {
-  imageUrl: string;
-  creatorName?: string;
-}
-
-export type BackgroundConfig = Partial<Record<BackgroundSlot, BackgroundEntry>>;
-
 export async function getBackgrounds(): Promise<BackgroundConfig> {
   if (!ENABLE_BACKEND) return {};
 
@@ -142,7 +111,7 @@ export async function getBackgrounds(): Promise<BackgroundConfig> {
 
     try {
       const data = JSON.parse(text);
-      return data as BackgroundConfig;
+      return normalizeBackgroundConfig(data);
     } catch (jsonErr) {
       console.error('getBackgrounds JSON parse error:', jsonErr, 'Raw:', text);
       return {};

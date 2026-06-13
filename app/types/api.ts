@@ -1,13 +1,11 @@
 import type {
   PracticeType,
 } from '../types'
+import type { BackgroundConfig } from '../services/backgrounds'
 
-export interface BackgroundEntry {
-  imageUrl: string
-  creatorName?: string
-}
+export type { BackgroundEntry, BackgroundMode, BackgroundSlot } from '../services/backgrounds'
 
-export type BackgroundMap = Record<string, BackgroundEntry>
+export type BackgroundMap = BackgroundConfig
 
 export interface MeUser {
   id: number

@@ -4,42 +4,13 @@ import { AppMode, PracticeType, ThemeMode } from '../types';
 import { useBackgrounds } from '../services/useBackgrounds';
 import type { BackgroundSlot } from '../services/apiService';
 import { useLoadedBackgroundImage } from '../hooks/useLoadedBackgroundImage';
+import { resolveBackground } from '../services/backgrounds';
 
 interface LayoutProps {
   mode: AppMode;
   practiceType?: PracticeType;
   theme: ThemeMode;
   children: React.ReactNode;
-}
-
-function normalizeImageUrl(url: string): string | undefined {
-  const trimmed = url.trim();
-  if (!trimmed) return;
-
-  // Already full URL
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    return trimmed;
-  }
-
-  // Root-relative paths from your API (e.g. "/abundance-alchemy/assets/images/...")
-  if (trimmed.startsWith('/')) {
-    return trimmed;
-  }
-
-  // Fallback: treat as relative under Vite base (if ever used)
-  const base = (import.meta as any).env?.BASE_URL || '/';
-  return `${base}${trimmed.replace(/^\/+/, '')}`;
-}
-
-function firstAvailableSlot(
-  candidates: BackgroundSlot[],
-  backgrounds?: Record<string, { imageUrl?: string } | undefined> | null
-): BackgroundSlot | null {
-  for (const candidate of candidates) {
-    const imageUrl = backgrounds?.[candidate]?.imageUrl;
-    if (imageUrl) return candidate;
-  }
-  return candidates[0] || null;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, children }) => {
@@ -156,24 +127,24 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
     ) as BackgroundSlot[];
   }, [screenSlotCandidates, useGlobalBackgroundLayer]);
 
-  const globalSlot = useMemo(
-    () => firstAvailableSlot(globalSlotCandidates, backgrounds),
+  const globalBackground = useMemo(
+    () => resolveBackground(globalSlotCandidates, backgrounds),
     [backgrounds, globalSlotCandidates]
   );
-  const stageSlot = useMemo(
-    () => firstAvailableSlot(stageSlotCandidates, backgrounds),
+  const stageBackground = useMemo(
+    () => resolveBackground(stageSlotCandidates, backgrounds),
     [backgrounds, stageSlotCandidates]
   );
 
-  const globalBgEntry = globalSlot ? backgrounds?.[globalSlot] : undefined;
-  const stageBgEntry = stageSlot ? backgrounds?.[stageSlot] : undefined;
-
   const globalBgImageUrl = forceBlackBackdrop
     ? ''
-    : (globalBgEntry?.imageUrl ? normalizeImageUrl(globalBgEntry.imageUrl) : '');
-  const stageBgImageUrl = stageBgEntry?.imageUrl
-    ? normalizeImageUrl(stageBgEntry.imageUrl)
-    : '';
+    : (globalBackground.mode === 'image' ? globalBackground.imageUrl : '');
+  const globalBgColor = !forceBlackBackdrop && globalBackground.mode === 'color'
+    ? globalBackground.colorValue
+    : undefined;
+  const stageBgImageUrl = stageBackground.mode === 'image' ? stageBackground.imageUrl : '';
+  const stageBgColor = stageBackground.mode === 'color' ? stageBackground.colorValue : undefined;
+  const hasStageOverride = stageBackground.mode !== 'inherit';
   const loadedGlobalBgImageUrl = useLoadedBackgroundImage(globalBgImageUrl || undefined);
   const loadedStageBgImageUrl = useLoadedBackgroundImage(stageBgImageUrl || undefined);
   const isGlobalImageLoading = !forceBlackBackdrop && !!globalBgImageUrl && !loadedGlobalBgImageUrl;
@@ -192,8 +163,14 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
     <div className={`relative min-h-screen w-full overflow-x-hidden ${textColor}`}>
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-black" />
-        {!forceBlackBackdrop && !globalBgImageUrl ? (
+        {!forceBlackBackdrop && !globalBgImageUrl && !globalBgColor ? (
           <div className={`absolute inset-0 ${baseBg}`} />
+        ) : null}
+        {!forceBlackBackdrop && globalBgColor ? (
+          <div
+            className="absolute inset-0"
+            style={{ backgroundColor: globalBgColor }}
+          />
         ) : null}
         {!forceBlackBackdrop && loadedGlobalBgImageUrl ? (
           <div
@@ -254,9 +231,15 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
         ].join(' ')}
       >
         {/* Stage-only background for core screens (prevents duplicate full-page image) */}
-        {!useGlobalBackgroundLayer ? (
+        {!useGlobalBackgroundLayer && hasStageOverride ? (
           <div className="absolute inset-0 z-0 pointer-events-none">
             <div className="absolute inset-0 bg-black" />
+            {stageBgColor ? (
+              <div
+                className="absolute inset-0"
+                style={{ backgroundColor: stageBgColor }}
+              />
+            ) : null}
             {loadedStageBgImageUrl ? (
               <div
                 className="absolute inset-0"

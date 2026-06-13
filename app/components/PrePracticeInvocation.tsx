@@ -3,10 +3,13 @@ import { ChevronRight } from 'lucide-react'
 import BreathingOrb from './BreathingOrb'
 import { playBell } from '../services/audioService'
 import {
+  SCREEN_TITLE_PILL,
   SCREEN_PRIMARY_BUTTON,
+  screenActionRow,
   screenBackButton,
   screenGlassPanel,
   screenHeroCard,
+  screenItemCard,
   screenSectionFrame,
   screenSectionKicker,
   screenSubTextColor,
@@ -155,12 +158,10 @@ const PrePracticeInvocation: React.FC<PrePracticeInvocationProps> = ({
   const heroCard = screenHeroCard(theme)
   const surfaceCard = screenSurfaceCard(theme)
   const glassPanel = screenGlassPanel(theme)
+  const itemCard = screenItemCard(theme)
   const backButton = screenBackButton(theme)
   const sectionKicker = screenSectionKicker(theme)
-  const secondaryButton =
-    theme === 'light'
-      ? 'flex w-full items-center justify-center gap-2 rounded-full border border-amber-200/60 bg-white/90 px-5 py-2.5 text-xs font-medium text-slate-600 transition-colors hover:bg-amber-50/60'
-      : 'flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-slate-900/70 px-5 py-2.5 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-800/70'
+  const secondaryButton = `flex w-full items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-medium transition-colors ${screenActionRow(theme)}`
 
   return (
     <div className={`h-full w-full overflow-y-auto overflow-x-hidden custom-scrollbar ${textColor}`}>
@@ -179,7 +180,7 @@ const PrePracticeInvocation: React.FC<PrePracticeInvocationProps> = ({
               <span>←</span>
               <span className="font-semibold tracking-wide uppercase">Back</span>
             </button>
-            <span className="inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)]">
+            <span className={SCREEN_TITLE_PILL}>
               {variant === 'iam'
                 ? 'I Am'
                 : variant === 'ilove'
@@ -210,7 +211,7 @@ const PrePracticeInvocation: React.FC<PrePracticeInvocationProps> = ({
           <div className={sectionFrame}>
             <div className={surfaceCard}>
               <p className={sectionKicker}>How to Practice</p>
-              <div className={`mt-4 rounded-[20px] border p-5 ${theme === 'light' ? 'bg-white/92' : 'bg-slate-950/70'} ${c.borderColor}`}>
+              <div className={`mt-4 ${itemCard} p-5 ${c.borderColor}`}>
                 <p
                   className={`text-sm leading-relaxed ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}
                   style={{ fontFamily: 'var(--font-body)' }}
@@ -228,9 +229,7 @@ const PrePracticeInvocation: React.FC<PrePracticeInvocationProps> = ({
               </div>
 
               <div
-                className={`mt-4 rounded-[20px] border p-4 ${c.borderColor} ${
-                  theme === 'light' ? 'bg-white/94' : 'bg-slate-950/78'
-                }`}
+                className={`mt-4 ${itemCard} p-4 ${c.borderColor}`}
               >
                 <p
                   className={`mb-3 text-[10px] font-bold uppercase tracking-[0.22em] ${c.accentText}`}
@@ -282,9 +281,7 @@ const PrePracticeInvocation: React.FC<PrePracticeInvocationProps> = ({
 
               {'quote' in c && c.quote && (
                 <div
-                  className={`rounded-[20px] border p-4 ${c.borderColor} ${
-                    theme === 'light' ? 'bg-white/94' : 'bg-slate-950/78'
-                  }`}
+                  className={`${itemCard} p-4 ${c.borderColor}`}
                 >
                   <p
                     className={`text-xs italic leading-relaxed break-words ${theme === 'light' ? 'text-slate-900' : 'text-slate-100'}`}

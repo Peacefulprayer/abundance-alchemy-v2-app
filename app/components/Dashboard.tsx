@@ -21,15 +21,17 @@ import {
   Wind,
 } from 'lucide-react'
 import { AlchemistAvatar } from './AlchemistAvatar'
-import { ProfileImage } from './ProfileImage'
 import { playBell } from '../services/audioService'
 import { WISDOM_QUOTES, getQuotesByCategory } from '../data/wisdomQuotes'
 import {
   SCREEN_PAGE_SHELL,
+  SCREEN_STATUS_PILL,
   SCREEN_TITLE_PILL,
   screenGlassPanel,
   screenHeroCard,
   screenInputBg,
+  screenAccentText,
+  screenActionRow,
   screenSectionFrame,
   screenSectionKicker,
   screenSubTextColor,
@@ -147,7 +149,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onStartPractice,
   onOpenMeditation,
   onOpenSettings,
-  onOpenProfile,
   musicOn,
   ambienceVolume,
   onToggleMusic,
@@ -334,15 +335,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const whitePill = SCREEN_TITLE_PILL
   const streakPill = `${SCREEN_TITLE_PILL} gap-2`
   const heroCard = screenHeroCard(theme)
-  const glassCard = `${screenGlassPanel(theme)} p-4`
+  const glassCard = screenGlassPanel(theme)
+  const compactGlassCard = screenGlassPanel(theme)
+  const sacredAccentText = screenAccentText(theme)
+  const sacredActionText = theme === 'light' ? 'text-amber-700' : 'text-amber-200'
   const buttonBg =
     theme === 'light'
       ? 'bg-slate-100 hover:bg-amber-100 border-slate-200'
-      : 'bg-slate-800/60 hover:bg-slate-700/60 border-white/5'
+      : 'border-amber-500/20 bg-slate-950/70 hover:bg-slate-900/80'
   const sectionTitleChip = whitePill
-  const daysLeftChip =
-    'inline-flex items-center rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm'
-  const infoCardBg = `${screenSurfaceCard(theme)} p-3`
+  const daysLeftChip = SCREEN_STATUS_PILL
+  const infoCardBg = screenSurfaceCard(theme)
+  const lowCardLabelText = screenAccentText(theme)
+  const lowCardBodyText = theme === 'light' ? 'text-slate-800' : 'text-slate-100'
   const pageShell = `${SCREEN_PAGE_SHELL} pb-24`
   const sectionFrame = screenSectionFrame(theme)
   const sectionKicker = screenSectionKicker(theme)
@@ -354,7 +359,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const journalToggleBg =
     theme === 'light'
       ? 'bg-slate-100 hover:bg-amber-100 text-slate-800 border border-slate-200/60'
-      : 'bg-slate-900/60 hover:bg-slate-900 text-slate-100 border border-white/10'
+      : `${screenActionRow(theme)} text-slate-100`
   const lowerSectionTitle = `${sectionTitleChip} mx-auto`
 
   const getAvatarMood = () => {
@@ -371,47 +376,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
     <div className="h-full w-full overflow-y-auto overflow-x-hidden pb-24">
       <div className={pageShell}>
         {/* Header Section */}
-        <div className="relative pt-4 px-4 pb-2">
-          <div className="flex items-center justify-between gap-3">
-            <div className="z-10 flex min-w-0 items-center gap-3">
-              <button
-                type="button"
-                onClick={() => onOpenProfile?.()}
-                className="rounded-full transition-transform hover:scale-[1.02]"
-                aria-label="Open profile"
-              >
-                <ProfileImage
-                  name={displayName}
-                  imageUrl={user.profileImage}
-                  size="md"
-                />
-              </button>
-              <div className="min-w-0">
-                <p
-                  className={`truncate text-base font-semibold ${
-                    theme === 'light' ? 'text-slate-950' : 'text-white'
-                  }`}
-                >
-                  {displayName}
-                </p>
-              </div>
-            </div>
-            <div className="z-10 flex shrink-0 items-center">
-              <div className={streakPill}>
-                <Trophy size={14} className="text-amber-700" />
-                <span>
-                  {user.streak} {user.streak === 1 ? 'Day' : 'Days'} Streak
-                </span>
-              </div>
+        <div className="relative pt-4 px-4 pb-1">
+          <div className="flex justify-center">
+            <div className={streakPill}>
+              <Trophy size={14} className="text-amber-200" />
+              <span>
+                {user.streak} {user.streak === 1 ? 'Day' : 'Days'} Streak
+              </span>
             </div>
           </div>
 
-          <div className={`mt-4 ${sectionFrame}`}>
-            <div className={`relative overflow-hidden group ${glassCard}`}>
+          <div className={`mt-3 ${sectionFrame}`}>
+            <div className={`relative overflow-hidden group ${compactGlassCard}`}>
+              <div
+                className={`pointer-events-none absolute inset-x-12 top-3 h-20 rounded-full blur-3xl ${
+                  theme === 'light'
+                    ? 'bg-amber-200/35'
+                    : 'bg-amber-300/10'
+                }`}
+              />
               <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                <SparklesIcon size={40} className="text-amber-500" />
+                <SparklesIcon size={34} className={sacredAccentText} />
               </div>
-              <div className="relative z-10 flex flex-col items-center justify-start gap-3 pt-1 text-center">
+              <div className="relative z-10 flex flex-col items-center justify-start gap-3 text-center">
                 <div className="flex-shrink-0">
                   <AlchemistAvatar
                     size="sm"
@@ -421,10 +408,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   />
                 </div>
                 <div className="w-full">
-                  <p className={`text-sm italic font-medium leading-relaxed ${subTextColor}`}>
+                  <p className={`text-xs italic font-medium leading-relaxed ${subTextColor}`}>
                     "{wisdom.text}"
                   </p>
-                  <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-amber-500">
+                  <p className={`mt-2 text-[9px] font-bold uppercase tracking-widest ${sacredAccentText}`}>
                     - {wisdom.author}
                   </p>
                   <button
@@ -434,7 +421,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     }}
                     disabled={isSeekingWisdom}
                     className={`mt-2 text-[9px] font-medium uppercase tracking-wider opacity-60 transition-opacity hover:opacity-100 ${
-                      theme === 'light' ? 'text-amber-700' : 'text-amber-400'
+                      sacredActionText
                     } ${isSeekingWisdom ? 'cursor-wait opacity-100' : ''}`}
                     title="Seek fresh wisdom"
                   >
@@ -446,42 +433,40 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
 
-          <div className={`mt-4 ${sectionFrame}`}>
-            <div className={`${heroCard} text-center`}>
+          <div className={`mt-3 ${sectionFrame}`}>
+            <div className={`${heroCard} text-center py-4`}>
               <p className={sectionKicker}>Dashboard / Dashibodi</p>
               <h1
-                className={`mt-3 text-2xl font-serif font-medium ${
+                className={`mt-2 text-xl font-serif font-medium ${
                   theme === 'light' ? 'text-slate-950' : 'text-white'
                 }`}
               >
                 Tunakukaribisha
               </h1>
               <p
-                className={`mt-2 text-base font-medium ${
+                className={`mt-1 text-sm font-medium ${
                   theme === 'light' ? 'text-slate-800' : 'text-slate-100'
                 }`}
               >
                 We Welcome You
               </p>
               <p
-                className={`mt-2 text-lg font-semibold tracking-[0.08em] ${
-                  theme === 'light' ? 'text-amber-800' : 'text-amber-300'
-                }`}
+                className={`mt-2 text-base font-semibold tracking-[0.08em] ${sacredAccentText}`}
               >
                 {displayName}
               </p>
               <p
-                className={`mt-3 text-lg font-serif ${
+                className={`mt-2 text-base font-serif ${
                   theme === 'light' ? 'text-slate-900' : 'text-white'
                 }`}
               >
                 Your sacred gathering space
               </p>
-              <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
+              <p className={`mt-2 text-xs leading-relaxed ${subTextColor}`}>
                 Here is where you return to your focus, enter practice
                 sessions, and choose your soundscape.
               </p>
-              <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
+              <p className={`mt-1 text-xs leading-relaxed ${subTextColor}`}>
                 Recharge and renew your I Am energies.
               </p>
             </div>
@@ -505,7 +490,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
 
               <div
-                className={`p-4 rounded-2xl border transition-all ${glassCard}`}
+                className={`transition-all ${glassCard}`}
               >
                 <div className="flex justify-between items-start mb-2">
                   <div className="space-y-1">
@@ -620,54 +605,34 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full shadow-md transition-all duration-500 ease-out ${
                     mode === PracticeType.MORNING_IAM
                       ? 'left-1 bg-gradient-to-r from-amber-400 to-orange-500'
-                      : 'left-[calc(50%+4px)] bg-gradient-to-r from-yellow-300 to-amber-400'
+                      : 'left-[calc(50%+4px)] bg-gradient-to-r from-amber-400 to-orange-500'
                   }`}
                 />
               </div>
 
               <div
-                className={`rounded-2xl p-3 relative overflow-hidden transition-all duration-700 border ${
-                  mode === PracticeType.MORNING_IAM
-                    ? 'bg-gradient-to-br from-amber-500 to-orange-600 border-amber-300/50 shadow-lg shadow-amber-500/20'
-                    : 'bg-gradient-to-br from-yellow-200 to-amber-300 border-amber-400/50 shadow-lg shadow-amber-500/20'
-                }`}
+                className={`relative overflow-hidden transition-all duration-700 ${heroCard}`}
               >
                 <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
                   {mode === PracticeType.MORNING_IAM ? (
-                    <Sun size={90} className="text-white rotate-12" />
+                    <Sun size={90} className="rotate-12 text-amber-300" />
                   ) : (
-                    <Moon size={90} className="text-amber-600 -rotate-12" />
+                    <Moon size={90} className="-rotate-12 text-amber-300" />
                   )}
                 </div>
 
                 <div className="relative z-10 text-center">
                   <p
-                    className={`text-[10px] font-extrabold uppercase tracking-[0.18em] mb-2 ${
-                      mode === PracticeType.MORNING_IAM
-                        ? 'text-black/65'
-                        : 'text-slate-700'
-                    }`}
+                    className={`mb-2 text-[10px] font-extrabold uppercase tracking-[0.18em] ${sectionKicker}`}
                   >
                     Guided Session
                   </p>
-                  <h2
-                    className={`text-base font-normal mb-1 ${
-                      mode === PracticeType.MORNING_IAM
-                        ? 'text-black'
-                        : 'text-slate-900'
-                    }`}
-                  >
+                  <h2 className={`mb-1 text-base font-normal ${textColor}`}>
                     {mode === PracticeType.MORNING_IAM
                       ? 'Begin I Am Practice'
                       : 'Begin I Love Practice'}
                   </h2>
-                  <p
-                    className={`text-[11px] mb-4 leading-snug ${
-                      mode === PracticeType.MORNING_IAM
-                        ? 'text-black/70'
-                        : 'text-slate-700'
-                    }`}
-                  >
+                  <p className={`mb-4 text-[11px] leading-snug ${subTextColor}`}>
                     {mode === PracticeType.MORNING_IAM
                       ? 'Align your vibration with your highest self through powerful affirmations.'
                       : 'Release the day and return to love through gratitude and forgiveness.'}
@@ -758,7 +723,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <span
                         className={`block text-[10px] font-bold uppercase tracking-widest group-hover:opacity-100 opacity-70 transition-opacity ${
                           mode === PracticeType.MORNING_IAM
-                            ? 'text-black'
+                            ? sacredActionText
                             : 'mx-auto w-fit rounded-full bg-black/75 px-3 py-1 text-white shadow-md'
                         }`}
                       >
@@ -767,7 +732,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <span
                         className={`mt-1 block text-[10px] opacity-50 group-hover:opacity-70 transition-opacity ${
                           mode === PracticeType.MORNING_IAM
-                            ? 'text-black'
+                            ? subTextColor
                             : 'mx-auto w-fit rounded-full bg-black/70 px-3 py-1 text-white shadow-md'
                         }`}
                       >
@@ -786,19 +751,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <h3 className={lowerSectionTitle}>Meditation</h3>
               </div>
               <div
-                className={`rounded-2xl border shadow-xl ${
-                  theme === 'light'
-                    ? 'bg-gradient-to-br from-violet-50/90 to-purple-50/80 border-violet-300/40'
-                    : 'bg-gradient-to-br from-violet-950/60 to-slate-900/70 border-violet-500/25'
-                }`}
+                className={infoCardBg}
               >
-                <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         theme === 'light'
                           ? 'bg-violet-100 border border-violet-300/50 text-violet-600'
-                          : 'bg-violet-500/15 border border-violet-500/30 text-violet-300'
+                          : 'bg-amber-500/12 border border-amber-500/25 text-amber-200'
                       }`}
                     >
                       <Wind size={20} />
@@ -808,7 +769,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         className={`font-bold text-sm ${
                           theme === 'light'
                             ? 'text-violet-900'
-                            : 'text-violet-100'
+                            : 'text-white'
                         }`}
                       >
                         Meditation Practice
@@ -817,7 +778,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         className={`text-[10px] ${
                           theme === 'light'
                             ? 'text-violet-700'
-                            : 'text-violet-300'
+                            : 'text-slate-200'
                         }`}
                       >
                         Guided Stillness: Choose duration and soundscape for
@@ -833,7 +794,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     className={`py-2 rounded-lg font-bold text-sm transition-all px-4 ${
                       theme === 'light'
                         ? 'bg-violet-600 hover:bg-violet-700 text-white'
-                        : 'bg-violet-600/80 hover:bg-violet-500/80 text-white'
+                        : 'bg-amber-500 hover:bg-amber-400 text-black'
                     }`}
                   >
                     Open
@@ -851,12 +812,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className={infoCardBg}>
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="flex items-center space-x-2 text-[10px] uppercase font-bold tracking-wider text-amber-500">
-                    <Music size={12} />
+                  <div className={`flex items-center space-x-2 text-xs uppercase font-bold tracking-wider ${lowCardLabelText}`}>
+                    <Music size={14} />
                     <span>Now Playing</span>
                   </div>
                   <span
-                    className={`mt-1 block text-xs font-medium truncate ${textColor}`}
+                    className={`mt-1 block truncate text-sm font-semibold ${lowCardBodyText}`}
                   >
                     {currentTrackName}
                   </span>
@@ -866,7 +827,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     playBell()
                     onOpenSettings()
                   }}
-                  className="shrink-0 text-[10px] font-bold text-amber-500 hover:underline"
+                  className={`shrink-0 text-xs font-extrabold tracking-wide hover:underline ${lowCardLabelText}`}
                 >
                   CHANGE
                 </button>
@@ -876,11 +837,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className={`${infoCardBg} mt-3 space-y-2`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Music size={12} className="text-amber-500" />
+                  <Music size={14} className={lowCardLabelText} />
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-wider ${
-                      theme === 'light' ? 'text-slate-600' : 'text-slate-200'
-                    }`}
+                    className={`text-xs font-bold uppercase tracking-wider ${lowCardBodyText}`}
                   >
                     Music
                   </span>
@@ -904,9 +863,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <div className="flex items-center gap-3">
                 <span
-                  className={`shrink-0 text-[10px] font-bold uppercase tracking-wider ${
-                    theme === 'light' ? 'text-slate-600' : 'text-slate-200'
-                  }`}
+                  className={`shrink-0 text-xs font-bold uppercase tracking-wider ${lowCardBodyText}`}
                 >
                   Vol
                 </span>
@@ -919,20 +876,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className="flex-1"
                   aria-label="Music volume"
                 />
-                <span className="w-7 text-right text-[10px] font-bold text-amber-500">
+                <span className={`w-8 text-right text-xs font-bold ${lowCardLabelText}`}>
                   {ambienceVolume}%
                 </span>
               </div>
             </div>
           </div>
 
-          <div className={`${infoCardBg} space-y-1 text-center`}>
-            <p className="text-[10px] font-medium text-amber-500">
+          <div className={`${infoCardBg} space-y-1.5 text-center`}>
+            <p className={`text-xs font-semibold ${lowCardBodyText}`}>
               Based on the book "I Am Practice" by
             </p>
             <p
-              className={`text-[11px] font-serif font-bold ${
-                theme === 'light' ? 'text-slate-950' : 'text-amber-400'
+              className={`text-sm font-serif font-bold ${
+                theme === 'light' ? 'text-slate-950' : 'text-amber-100'
               }`}
             >
               Michael Soaries
@@ -941,10 +898,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
               href="https://abundantthought.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center space-x-1 text-[10px] text-amber-500 hover:text-amber-400 font-bold tracking-wider uppercase"
+              className={`inline-flex items-center space-x-1 text-xs font-bold tracking-wider uppercase hover:underline ${lowCardLabelText}`}
             >
               <span>Visit AbundantThought.com</span>
-              <ExternalLink size={10} />
+              <ExternalLink size={12} />
             </a>
 
             <div className="pt-1">
