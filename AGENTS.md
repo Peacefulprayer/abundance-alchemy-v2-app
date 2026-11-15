@@ -53,3 +53,20 @@ Verify mapped access to recovered source; create isolated Windows C: working cop
 
 ## Definition of done
 One versioned source and reproducible artifact; required real DB and ownership/auth flows pass; bell/orb/audio and companion pages work; cross-device persistence is verified; backups/restores and rollback are tested; same artifact passes staging acceptance.
+
+
+## Collaborator work allocation (choose one lane)
+Before starting, declare a lane in an issue/PR and list the exact paths you intend to edit. The GitHub default branch may **not** contain the recovered working candidate, so review the source manifest/version first and never cherry-pick blindly.
+
+| Lane | Files/area to inspect (verify actual paths) | Deliverable | Acceptance evidence |
+| --- | --- | --- | --- |
+| A — Focus-cycle QA | `app/services/focusCycle.ts`, `app/src/test/focusCycle.test.ts`, nearby tests | Future-start/DST/timezone regression tests; no speculative rewrite | Full Vitest + TypeScript results; tested TZ settings; source diff |
+| B — Local runtime | Windows mini C: isolated copy, runtime/config and scripts | Private PHP/MariaDB test environment, no production routes | Versions, localhost binding, safe config, repeatable start/stop commands |
+| C — Data and auth | `api/`, schema/migration files, auth/progress code | Reviewed migrations and real-DB account/ownership test fixtures | Passing login/CSRF/admin-isolation/progress scenarios; rollback |
+| D — Experience | UI/practice/audio/companion pages | Cross-browser/device accessibility and regression report | Bell/Orb/audio/screens checklist, browser/device/version details |
+| E — Release | Build scripts, deployment manifests, backup docs | Reproducible sanitized staging candidate and rollback | Artifact hash, backup/restore proof, staging acceptance |
+
+Rules: pick a lane only after verifying current source; create a scoped branch/PR; don't edit shared Mac files concurrently; link dependent issues; note owner and status; submit tests and handoff notes. The user approves any production writes, migrations, destructive actions, and release changes. PR descriptions must explicitly state whether changes target recovered candidate or older GitHub source.
+
+## Most recent local report — November 15
+The user ran a read-only-inspected correction to the recovered candidate's `app/services/focusCycle.ts`, restoring local date-component normalization using `Date.UTC` and clamping elapsed days to zero. User-provided Vitest output: `src/test/focusCycle.test.ts`, **5 tests passed** with Vitest 4.1.4. Backup: `focusCycle.ts.backup-20261115-135608`. This is not a committed GitHub patch and has **not** been validated with new DST/future-start tests, full suite, TypeScript or integration tests. Do not reapply blindly.
