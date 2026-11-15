@@ -35,3 +35,18 @@ Use `[x]` only with actual evidence; put date, command/log, source version next 
 
 ## Working agreements
 Avoid broad redesign, unrelated AI tooling, autonomous changes to production, force-push, and undocumented migration. Keep app design, rituals, audio, and companion content intact.
+
+## Immediate QA gate — focus cycles (before DB integration)
+- [x] User reported applying corrected local calendar-day calculation to recovered `app/services/focusCycle.ts` (2026-11-15); original copy saved as timestamped backup.
+- [x] User reported **5/5 existing focusCycle tests passed** using Vitest 4.1.4 (2026-11-15; not an independently rerun full suite).
+- [ ] Add and run future-start, invalid-date, cross-month/year, leap-day, spring/fall DST tests; verify daily/weekly/monthly and completion semantics.
+- [ ] Run **entire** frontend Vitest suite and TypeScript no-emit check; record versions, exact command and outputs.
+- [ ] Compare restored behavior against documented Nov 4 semantics, especially start day, last active day, day after completion, and 30-day monthly duration.
+
+## Independent contributor work packages
+- [ ] **A / QA:** own focus-cycle test additions and TypeScript/Vitest evidence; changes restricted to tests unless a confirmed defect is reproduced.
+- [ ] **B / runtime:** own isolated Windows C: PHP/MariaDB installation/config report; no live production API/data.
+- [ ] **C / auth-data:** own reviewed schema/migrations and private login/progress/ownership integration tests; synthetic fixtures only.
+- [ ] **D / experience:** own bell/Orb/audio/companion pages cross-browser regression matrix; don't alter design.
+- [ ] **E / release:** own staging artifact, backup/restore and rollback documentation after A–D pass.
+- [ ] Assign an owner and branch/issue for each lane; avoid overlapping source writes, and require evidence-linked PRs.
