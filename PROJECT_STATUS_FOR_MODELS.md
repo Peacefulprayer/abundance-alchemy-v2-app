@@ -45,3 +45,14 @@ Required evidence for completion:
 
 ## On completion of a milestone
 Append: date, machine, source/branch/commit, exact commands run, results, files changed, remaining blockers, and next action. **Never silently mark a reported state as newly verified.**
+
+## November 15 focus-cycle hotfix — user-reported, pending regression verification
+- Corrected recovered candidate file: `/Volumes/Alchemy/abundance-alchemy-v2/output/recovery-2026-11-04/source/app/services/focusCycle.ts`.
+- Restore strategy: calculate calendar days from local Y/M/D components normalized through `Date.UTC`; clamp negative elapsed days to zero.
+- Backup: `app/services/focusCycle.ts.backup-20261115-135608`.
+- User supplied Vitest 4.1.4 output: `src/test/focusCycle.test.ts` **5/5 passed** at 13:56 local time. Not independently rerun here.
+- Still pending: explicit future-start/invalid-start tests, spring/fall DST tests, full frontend suite, TypeScript, live database integration and cross-device semantics.
+- This specific fix has **not** been committed or pushed from the Mac. Do not infer GitHub source parity.
+
+## Contributor queue
+Read the lane table in `AGENTS.md`. High-priority unclaimed lanes are A (regression tests), B (Windows runtime), and C (real database/auth). Each contributor must select an isolated workstream, verify actual source, post file paths/ownership, and return a tested diff or a reproducible failure. Do not merge untested timezone changes.
