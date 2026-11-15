@@ -70,3 +70,6 @@ Rules: pick a lane only after verifying current source; create a scoped branch/P
 
 ## Most recent local report — November 15
 The user ran a read-only-inspected correction to the recovered candidate's `app/services/focusCycle.ts`, restoring local date-component normalization using `Date.UTC` and clamping elapsed days to zero. User-provided Vitest output: `src/test/focusCycle.test.ts`, **5 tests passed** with Vitest 4.1.4. Backup: `focusCycle.ts.backup-20261115-135608`. This is not a committed GitHub patch and has **not** been validated with new DST/future-start tests, full suite, TypeScript or integration tests. Do not reapply blindly.
+
+## Qwen3 Coder entry point
+For Workstream A, read [`QWEN_START_HERE.md`](QWEN_START_HERE.md) and follow its exact verification, test-only patch, and evidence requirements. It supersedes earlier ad hoc Qwen prompts, not the source-preservation rules above.
