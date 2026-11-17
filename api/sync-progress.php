@@ -112,9 +112,9 @@ if (!empty($data['lastPracticeDate']) && is_string($data['lastPracticeDate'])) {
 }
 
 $setClauses = [
-    'streak = GREATEST(streak, :streak)',
-    'level = GREATEST(level, :level)',
-    $hasCompletionEvents ? 'affirmations_completed = GREATEST(affirmations_completed, :ac) + :new_completions' : 'affirmations_completed = GREATEST(affirmations_completed, :ac)',
+    'streak = GREATEST(COALESCE(streak, 0), :streak)',
+    'level = GREATEST(COALESCE(level, 1), :level)',
+    $hasCompletionEvents ? 'affirmations_completed = GREATEST(COALESCE(affirmations_completed, 0), :ac) + :new_completions' : 'affirmations_completed = GREATEST(COALESCE(affirmations_completed, 0), :ac)',
     'focus_area = :fa',
 ];
 if (aa_has_col($userCols, 'last_practice_date') && $lastPracticeDate !== null) {
@@ -128,7 +128,7 @@ if (aa_has_col($userCols, 'last_practice_date') && $lastPracticeDate !== null) {
     } catch (Throwable $e) {
         aa_error_response('Invalid practice date', 400, ['success' => false]);
     }
-    $setClauses[0] = 'streak = CASE WHEN DATE(:streak_same_day) = DATE(last_practice_date) THEN GREATEST(streak, :same_day_streak) WHEN last_practice_date IS NULL OR :streak_date >= last_practice_date THEN :streak ELSE streak END';
+    $setClauses[0] = 'streak = CASE WHEN DATE(:streak_same_day) = DATE(last_practice_date) THEN GREATEST(COALESCE(streak, 0), :same_day_streak) WHEN last_practice_date IS NULL OR :streak_date >= last_practice_date THEN :streak ELSE COALESCE(streak, 0) END';
     $setClauses[] = "last_practice_date = GREATEST(COALESCE(last_practice_date, '1000-01-01'), :lpd)";
 }
 if ($lastPracticeDate !== null && !aa_has_col($userCols, 'last_practice_date')) {
