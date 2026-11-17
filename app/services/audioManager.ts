@@ -2,11 +2,14 @@
 import {
   playBell,
   startAmbience,
+  previewAmbience,
+  stopPreview,
   stopAll,
   setMasterVolume
 } from './audioService';
 
 export const audioManager = {
+  stopPreview,
   playBell: () => playBell(),
   
   setVolume: (volume: number) => setMasterVolume(volume),
@@ -17,11 +20,12 @@ export const audioManager = {
   
   previewSoundscape: (soundscape: any) => {
     console.log('Previewing:', soundscape);
-    const url = typeof soundscape === 'string' ? soundscape : soundscape?.url;
-    if (url) {
-      const preview = new Audio(url);
-      preview.volume = 0.5;
-      preview.play().catch(() => {});
+    if (typeof soundscape === 'string') {
+      void previewAmbience({id:soundscape,label:'Preview',url:soundscape}, 50);
+      return;
+    }
+    if (soundscape?.url) {
+      void previewAmbience(soundscape, 50);
     }
   },
   

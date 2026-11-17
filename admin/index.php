@@ -1,6 +1,6 @@
 <?php
 // /abundance-alchemy/admin/index.php
-session_start();
+require_once __DIR__ . '/admin_init.php';
 
 // If already logged in, send to the main admin screen (users). Otherwise to login.
 if (isset($_SESSION['admin_id'])) {

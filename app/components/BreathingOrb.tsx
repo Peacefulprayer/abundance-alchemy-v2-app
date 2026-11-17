@@ -18,7 +18,6 @@ const BreathingOrb: FC<BreathingOrbProps> = ({
   onClick
 }) => {
   const [isActive, setIsActive] = useState(false);
-  const [breathPhase, setBreathPhase] = useState(0.5);
   const orbRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | null>(null);
 
@@ -36,9 +35,7 @@ const BreathingOrb: FC<BreathingOrbProps> = ({
       // Audio modulation
       const audioModifier = isAudioPlaying ? 1 + audioIntensity * 0.3 : 1;
       const currentBreathPhase = breath * audioModifier;
-      
-      setBreathPhase(currentBreathPhase);
-      
+
       // Update CSS variables
       if (orbRef.current) {
         const baseGlow = 15 + breath * 10;

@@ -1,17 +1,17 @@
 <?php
 include_once 'config.php';
 
-header('Content-Type: application/json; charset=utf-8');
+aa_require_method('GET');
 
 try {
-    // Get parameters
-    $user_email = $_GET['user_email'] ?? null;
+    $identity = aa_get_session_identity();
+    $userEmail = $identity['userEmail'] !== '' ? $identity['userEmail'] : null;
+    $apiBasePath = rtrim(str_replace('\\', '/', dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/'))), '/');
     $purpose = $_GET['purpose'] ?? null;
     $category = $_GET['category'] ?? null;
     $energy = $_GET['energy'] ?? null;
-    $is_public_only = isset($_GET['public_only']) && $_GET['public_only'] == '1';
-    
-    // Build query
+    $isPublicOnly = isset($_GET['public_only']) && $_GET['public_only'] === '1';
+
     $sql = "SELECT 
                 id, name, url, category, usage_purpose, user_email,
                 creator_name, creator_website, source_name, source_url,
@@ -20,104 +20,94 @@ try {
                 created_at
             FROM soundscapes 
             WHERE is_active = 1";
-    
+
     $params = [];
-    
-    // Filter logic
-    if ($is_public_only) {
-        $sql .= " AND is_public = 1";
-    } elseif ($user_email) {
-        // Show user's private tracks + all public tracks
-        $sql .= " AND (is_public = 1 OR user_email = :user_email)";
-        $params[':user_email'] = $user_email;
+
+    if ($isPublicOnly || !$userEmail) {
+        $sql .= ' AND is_public = 1';
+    } else {
+        $sql .= ' AND (is_public = 1 OR user_email = :user_email)';
+        $params[':user_email'] = $userEmail;
     }
-    
-    if ($purpose && in_array($purpose, ['ambience', 'meditation', 'iam_practice', 'ilove_practice', 'button', 'voice', 'transition'])) {
-        $sql .= " AND usage_purpose = :purpose";
+
+    if ($purpose && in_array($purpose, ['ambience', 'meditation', 'iam_practice', 'ilove_practice', 'button', 'voice', 'transition'], true)) {
+        $sql .= ' AND usage_purpose = :purpose';
         $params[':purpose'] = $purpose;
     }
-    
+
     if ($category) {
-        $sql .= " AND category = :category";
+        $sql .= ' AND category = :category';
         $params[':category'] = $category;
     }
-    
-    if ($energy && in_array($energy, ['low', 'medium', 'high'])) {
-        $sql .= " AND energy_level = :energy";
+
+    if ($energy && in_array($energy, ['low', 'medium', 'high'], true)) {
+        $sql .= ' AND energy_level = :energy';
         $params[':energy'] = $energy;
     }
-    
-    $sql .= " ORDER BY 
-                CASE WHEN user_email IS NOT NULL THEN 0 ELSE 1 END,
-                created_at DESC";
-    
+
+    $sql .= ' ORDER BY CASE WHEN user_email IS NOT NULL THEN 0 ELSE 1 END, created_at DESC';
+
     $stmt = $conn->prepare($sql);
-    
     foreach ($params as $key => $value) {
         $stmt->bindValue($key, $value);
     }
-    
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Format response - FIXED URL CONSTRUCTION
+
+    $appBasePath = '/abundance-alchemy';
     foreach ($rows as &$row) {
-        // Add formatted duration
         if ($row['duration_seconds']) {
             $minutes = floor($row['duration_seconds'] / 60);
             $seconds = $row['duration_seconds'] % 60;
-            $row['duration_formatted'] = sprintf("%d:%02d", $minutes, $seconds);
+            $row['duration_formatted'] = sprintf('%d:%02d', $minutes, $seconds);
         } else {
             $row['duration_formatted'] = null;
         }
-        
-        // FIXED: Build correct audio URL
-        $url = $row['url'];
-        
-        // Remove any leading slash
-        $url = ltrim($url, '/');
-        
-        // Check what we have and build correct URL
-        if (strpos($url, 'http') === 0) {
-            // Already full URL
-            $row['audio_url'] = $url;
-        } elseif (strpos($url, 'assets/audio/') === 0) {
-            // Already has correct prefix
-            $row['audio_url'] = 'https://abundantthought.com/abundance-alchemy/' . $url;
+
+        $rawUrl = trim((string)($row['url'] ?? ''));
+        if ($rawUrl === '') {
+            $row['audio_url'] = null;
+        } elseif (aa_is_private_soundscape_url($rawUrl)) {
+            $row['audio_url'] = ($apiBasePath !== '' ? $apiBasePath : '') . '/private-audio.php?id=' . (int)$row['id'];
+        } elseif (preg_match('#^https?://#i', $rawUrl)) {
+            $row['audio_url'] = $rawUrl;
         } else {
-            // Just filename, add prefix
-            $row['audio_url'] = 'https://abundantthought.com/abundance-alchemy/assets/audio/' . $url;
+            $normalized = str_replace('\\', '/', ltrim($rawUrl, '/'));
+            if (strpos($normalized, 'abundance-alchemy/') === 0) {
+                $row['audio_url'] = '/' . $normalized;
+            } elseif (strpos($normalized, 'assets/') === 0 || strpos($normalized, 'admin/') === 0) {
+                $row['audio_url'] = $appBasePath . '/' . $normalized;
+            } elseif (strpos($normalized, 'uploads/') === 0 || strpos($normalized, 'user_uploads/') === 0) {
+                $row['audio_url'] = $appBasePath . '/admin/' . $normalized;
+            } elseif (strpos($normalized, '/') === false) {
+                $row['audio_url'] = $appBasePath . '/assets/audio/' . $normalized;
+            } else {
+                $row['audio_url'] = $appBasePath . '/' . $normalized;
+            }
         }
-        
-        // Add user upload flag
+
         $row['is_user_upload'] = !empty($row['user_email']);
-        
-        // Add practice length flag (1-2 minutes for I AM/LOVE practices)
-        if ($row['duration_seconds'] && $row['duration_seconds'] >= 55 && $row['duration_seconds'] <= 125) {
-            $row['is_practice_length'] = true;
-        } else {
-            $row['is_practice_length'] = false;
-        }
+        $row['is_private_upload'] = aa_is_private_soundscape_url($rawUrl);
+        $row['is_practice_length'] = (bool)($row['duration_seconds'] && $row['duration_seconds'] >= 55 && $row['duration_seconds'] <= 125);
     }
-    
-    echo json_encode([
+    unset($row);
+
+    aa_json_response([
         'success' => true,
         'data' => $rows,
         'count' => count($rows),
         'filters_applied' => [
-            'user_email' => $user_email ? true : false,
+            'user_email' => $userEmail ? true : false,
             'purpose' => $purpose,
             'category' => $category,
             'energy' => $energy,
-            'public_only' => $is_public_only
-        ]
+            'public_only' => $isPublicOnly || !$userEmail,
+        ],
     ]);
-    
 } catch (Throwable $e) {
-    http_response_code(500);
-    echo json_encode([
+    error_log('[api/get-soundscapes.php] Failed to load soundscapes: ' . $e->getMessage());
+    aa_json_response([
         'success' => false,
-        'error' => $e->getMessage(),
-        'trace' => $e->getTraceAsString() // Remove in production
-    ]);
+        'message' => 'Failed to load soundscapes',
+    ], 500);
 }

@@ -14,10 +14,10 @@ export default function UniversalLayout({ children, showBottomMenu }: UniversalL
   if (!showBottomMenu) return <>{children}</>;
 
   return (
-    <div className="min-h-screen w-full bg-transparent">
+    <div className="min-h-screen w-full bg-transparent overflow-x-hidden">
       <div className="min-h-screen w-full flex justify-center">
         {/* “Sacred stage” width matches the earlier card-driven screens */}
-        <div className="w-full max-w-[520px] px-4 md:px-6">
+        <div className="w-full max-w-[560px] px-0 md:px-6">
           {children}
         </div>
       </div>

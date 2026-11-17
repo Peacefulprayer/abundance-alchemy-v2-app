@@ -1,129 +1,133 @@
 <?php
-require_once '../config.php';
-require_once '../db.php';
+include_once 'config.php';
 
-// Handle preflight OPTIONS request for CORS
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-    http_response_code(200);
-    exit();
+function aa_is_safe_email_recipient(string $email): bool
+{
+    return filter_var($email, FILTER_VALIDATE_EMAIL) !== false
+        && preg_match('/[\r\n]/', $email) !== 1;
 }
 
-// CORS + JSON response
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json; charset=UTF-8');
+function aa_sanitize_mail_domain(?string $host): string
+{
+    $candidate = trim((string)$host);
+    $candidate = preg_replace('/[\r\n]+/', '', $candidate) ?? '';
+    $candidate = preg_replace('/:\d+$/', '', $candidate) ?? '';
 
-// Get JSON input
-$raw  = file_get_contents("php://input");
-$data = json_decode($raw);
+    if ($candidate === '') {
+        return 'localhost';
+    }
 
-// Basic validation
-if (!$data || !isset($data->name, $data->email, $data->password)) {
-    http_response_code(400);
-    echo json_encode(["message" => "Missing required fields"]);
-    exit();
+    $parsedHost = parse_url(str_contains($candidate, '://') ? $candidate : 'http://' . $candidate, PHP_URL_HOST);
+    if (is_string($parsedHost) && $parsedHost !== '') {
+        $candidate = strtolower($parsedHost);
+    } else {
+        $candidate = strtolower($candidate);
+    }
+
+    if (!preg_match('/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/', $candidate)) {
+        return 'localhost';
+    }
+
+    return $candidate;
 }
 
-$name     = trim((string) $data->name);
-$email    = trim((string) $data->email);
-$password = (string) $data->password;
+aa_require_method('POST');
+$data = aa_read_json_input();
+
+if (!$data || !isset($data['name'], $data['email'], $data['password'])) {
+    aa_error_response('Missing required fields', 400);
+}
+
+$name = trim((string)$data['name']);
+$email = trim((string)$data['email']);
+$password = (string)$data['password'];
 
 if ($name === '' || $email === '') {
-    http_response_code(400);
-    echo json_encode(["message" => "Name and email are required"]);
-    exit();
+    aa_error_response('Name and email are required', 400);
 }
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    http_response_code(400);
-    echo json_encode(["message" => "Invalid email address"]);
-    exit();
+if (!aa_is_safe_email_recipient($email)) {
+    aa_error_response('Invalid email address', 400);
+}
+
+if (strlen($password) < 8) {
+    aa_error_response('Password must be at least 8 characters', 400);
+}
+
+$rateLimit = aa_rate_limit_consume('api_register', 8, 60 * 60, $email);
+if (!$rateLimit['allowed']) {
+    aa_log_auth_event($conn, 'register_rate_limited', false, $email, null, 'user');
+    aa_error_response('Too many registration attempts. Please try again later.', 429, [
+        'retryAfter' => $rateLimit['retry_after'],
+    ]);
 }
 
 try {
-    // Check if email already exists
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = ?");
+    $stmt = $conn->prepare('SELECT COUNT(*) FROM users WHERE email = ?');
     $stmt->execute([$email]);
     if ($stmt->fetchColumn() > 0) {
-        http_response_code(409);
-        echo json_encode(["message" => "An account with this email already exists"]);
-        exit();
+        aa_log_auth_event($conn, 'register_failed_duplicate', false, $email, null, 'user');
+        aa_error_response('An account with this email already exists', 409);
     }
 
-    // Hash password
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-
-    // Optional focus areas (front-end may send array of strings)
     $focusArea = '';
-    if (isset($data->focusAreas) && is_array($data->focusAreas)) {
-        $focusArea = implode(',', array_map('strval', $data->focusAreas));
+    if (isset($data['focusAreas']) && is_array($data['focusAreas'])) {
+        $focusArea = implode(',', array_map('strval', $data['focusAreas']));
     }
 
-    // Insert user: match your schema
-    // users: id, name, email, password_hash, created_at, last_login,
-    //        level, streak, focus_area, push_token, profile_img, more_info, affirmations_completed
     $sql = "INSERT INTO users
                 (name, email, password_hash, level, streak, focus_area, profile_img, more_info)
             VALUES
                 (:name, :email, :password_hash, :level, :streak, :focus_area, :profile_img, :more_info)";
 
-    $stmt = $pdo->prepare($sql);
+    $stmt = $conn->prepare($sql);
     $stmt->execute([
-        ':name'          => $name,
-        ':email'         => $email,
+        ':name' => $name,
+        ':email' => $email,
         ':password_hash' => $passwordHash,
-        ':level'         => 1,
-        ':streak'        => 0,
-        ':focus_area'    => $focusArea,
-        ':profile_img'   => '',
-        ':more_info'     => '',
+        ':level' => 1,
+        ':streak' => 0,
+        ':focus_area' => $focusArea,
+        ':profile_img' => '',
+        ':more_info' => '',
     ]);
 
-    $userId = (int) $pdo->lastInsertId();
+    $userId = (int)$conn->lastInsertId();
 
-    // ------------------------------------------------------------------
-    // SEND WELCOME EMAIL (same template as admin/add-user.php)
-    // ------------------------------------------------------------------
-    $welcome_path = __DIR__ . '/../admin/email_templates/welcome.txt';
-    $welcome_dir  = dirname($welcome_path);
+    session_regenerate_id(true);
+    $_SESSION['user_id'] = $userId;
+    $_SESSION['user_email'] = $email;
+    $_SESSION['user_name'] = $name;
+    $_SESSION['api_authenticated_at'] = time();
+    $_SESSION['api_last_activity'] = time();
+    aa_log_auth_event($conn, 'register_succeeded', true, $email, $userId, 'user');
 
-    if (!is_dir($welcome_dir)) {
-        mkdir($welcome_dir, 0777, true);
+    $welcomePath = __DIR__ . '/../admin/email_templates/welcome.txt';
+    $template = @file_get_contents($welcomePath);
+    if ($template !== false) {
+        if (aa_is_safe_email_recipient($email)) {
+            $body = str_replace(['{name}', '{email}'], [$name, $email], $template);
+            $serverName = $_SERVER['SERVER_NAME'] ?? ($_SERVER['HTTP_HOST'] ?? 'localhost');
+            $fromDomain = aa_sanitize_mail_domain($serverName);
+            $headers = 'From: admin@' . $fromDomain;
+            @mail($email, 'Welcome to Abundance Alchemy', $body, $headers);
+        } else {
+            error_log('[api/register.php] Skipped welcome email due to invalid recipient format');
+        }
     }
 
-    if (!file_exists($welcome_path)) {
-        $default_tpl = "Welcome {name}!\n\nThank you for joining Abundance Alchemy.";
-        file_put_contents($welcome_path, $default_tpl);
-    }
-
-    $email_tpl = @file_get_contents($welcome_path);
-    if ($email_tpl !== false) {
-        $body = str_replace(
-            ['{name}', '{email}'],
-            [$name, $email],
-            $email_tpl
-        );
-
-        $serverName = $_SERVER['SERVER_NAME'] ?? 'abundantthought.com';
-        @mail($email, "Welcome to Abundance Alchemy", $body, "From: admin@" . $serverName);
-    }
-
-    // ------------------------------------------------------------------
-    // Return success with ID - matches your original API shape
-    // ------------------------------------------------------------------
-    http_response_code(201);
-    echo json_encode([
-        "id"     => $userId,
-        "name"   => $name,
-        "email"  => $email,
-        "streak" => 0,
-        "level"  => 1,
-    ]);
-
-} catch (PDOException $e) {
-    http_response_code(500);
-    // You can hide the error in production if you want
-    echo json_encode(["message" => "Database error: " . $e->getMessage()]);
+    aa_json_response([
+        'id' => $userId,
+        'name' => $name,
+        'email' => $email,
+        'streak' => 0,
+        'level' => 1,
+        'focusAreas' => $focusArea ? array_values(array_filter(array_map('trim', explode(',', $focusArea)))) : [],
+        'affirmationsCompleted' => 0,
+    ], 201);
+} catch (Throwable $e) {
+    error_log('[api/register.php] Registration failed: ' . $e->getMessage());
+    aa_log_auth_event($conn, 'register_error', false, $email, null, 'user', ['error' => 'server_error']);
+    aa_error_response('Database error', 500);
 }

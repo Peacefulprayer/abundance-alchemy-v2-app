@@ -1,0 +1,862 @@
+id,text,type,category,is_active,created_at
+1,I love how everything is always working out for me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+2,I love being loved every day in so many ways,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+3,I love the gift of life I am blessed with,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+4,I love feeling blessed,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+5,I love how my love translates into joyful living,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+6,I love being a fun and joyful being,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+7,I love knowing I’m a loved child of the universe,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+8,I love being a blessing to others,EVENING_ILOVE,Wealth & Abundance,1,11/24/25 22:57
+9,I love living a prosperous life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+10,I love being rich now,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+11,I love embodying health now,EVENING_ILOVE,Health & Wholeness,1,11/24/25 22:57
+12,I love being wealthy,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+13,I love the ancestral wisdom flowing through me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+14,I love being open and friendly,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+15,I love embodying compassion,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+16,I love being open and receptive to my Divine Good,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+17,I love the peace that surrounds and fills me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+18,I love feeling happy,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+19,I love showing up with confidence,EVENING_ILOVE,Confidence & Inner Strength,1,11/24/25 22:57
+20,I love being generous,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+21,I love being a clean bundle of divine genetic material in motion,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+22,I love being a burst of sunshine in others’ lives,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+23,I love being a good parent,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+24,I love being a good friend,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+25,I love being a good neighbor,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+26,I love feeling at home wherever I am,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+27,I love being a positive contribution to the well-being of this planet,EVENING_ILOVE,Health & Wholeness,1,11/24/25 22:57
+28,I love supporting the well-being of my family,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+29,I love contributing to the well-being of my community,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+30,I love living as an abundant being,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+31,I love my own beauty,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+32,I love being warm and friendly,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+33,I love my playful nature,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+34,I love my creativity,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+35,I love expressing myself artistically,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+36,I love being thoughtful,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+37,I love caring for others,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+38,I love my kindness,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+39,I love that I am that I am,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+40,I love being humble,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+41,I love feeling at home in quiet spaces,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+42,I love being a joyful noise,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+43,I love being well fed,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+44,I love being clothed in the richness of Divine Substance,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+45,I love being well cared for,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+46,I love feeling safe,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+47,I love being protected,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+48,I love being a child of a generous creator,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+49,I love becoming the change I have been waiting for,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+50,I love being the love I have been looking for,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+51,I love being an affirmation of life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+52,I love feeling powerful,EVENING_ILOVE,Confidence & Inner Strength,1,11/24/25 22:57
+53,I love being the word made manifest,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+54,I love knowing that I am that I am and that I am is amazing,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+55,I love being in a fun-loving frame of mind,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+56,I love being in love with You and the world,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+57,I love being trustworthy,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+58,I love always being on time,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+59,I love being in the right place at the right time,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+60,I love always being where I am supposed to be,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+61,I love being creatively carefree and loving all that unfolds from this state of being,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+62,I love living in a wonderful house,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+63,I love living in a wonderful neighborhood,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+64,I love being loving,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+65,I love blessing others every day in every way through what I do and what I say,EVENING_ILOVE,Wealth & Abundance,1,11/24/25 22:57
+66,I love always saying yes to my good,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+67,I love being a force for good,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+68,I love feeling full of youthful energy,EVENING_ILOVE,Health & Wholeness,1,11/24/25 22:57
+69,I love getting better and better every day in every way,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+70,I love the air that I breathe,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+71,I love the good food I eat,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+72,I love the water I drink,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+73,I love feeling calm,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+74,I love being mindful,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+75,I love being energetic,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+76,I love being a money magnet,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+77,I love being a love magnet,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+78,I love being a joy magnet,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+79,I love being a peace magnet,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+80,I love being a sacred space,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+81,I love being an experience of peace,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+82,I love being an experience of joy,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+83,I love being an experience of love,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+84,I love intimacy,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+85,I love being open and sharing,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+86,I love being a channel of the Divine,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+87,I love being funny,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+88,I love having a sense of humor,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+89,I love always meeting great and wonderful people,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+90,I love always seeing the good in others,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+91,I love being able to let go of what no longer serves me with love and respect,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+92,I love being free,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+93,I love being financially free,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+94,I love being emotionally free of the past,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+95,I love being the Divine Word in a form that fits in the world,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+96,I love always sharing with joy and gratitude,EVENING_ILOVE,Peace,1,11/24/25 22:57
+97,I love the feeling that comes with being of service,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+98,I love and allow others to be of service to me,EVENING_ILOVE,Purpose,1,11/24/25 22:57
+99,I love being a healer,EVENING_ILOVE,Health & Wholeness,1,11/24/25 22:57
+100,I love being aware,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+101,I love being aware of the power of good that flows through me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+102,I love being aware of the power of good that flows through others,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+103,I love being aware of the Divine all around me,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+104,I love always getting enough sleep,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+105,I love being well rested,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+106,I love feeling whole,EVENING_ILOVE,Health & Wholeness,1,11/24/25 22:57
+107,I love being complete,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+108,I love being one with everything and everyone,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+109,I love being open,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+110,I love always having good positive experiences,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+111,I love being positive,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+112,I love choosing to be happy,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+113,I love choosing to be wealthy,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+114,I love choosing to be right here right now,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+115,I love intentionally embracing my space in the here and the now,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+116,I love being free of the past,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+117,I love planting seeds of wealth now,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+118,I love planting seeds of joy now,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+119,I love planting seeds of prosperity now,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+120,I love being a Divine seed,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+121,I love living in the fruit of prosperity,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+122,I love being a Divine receptacle,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+123,I love being honest,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+124,I love feeling worthy,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+125,I love deserving all the good the universe has for me,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+126,I love being a star,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+127,I love being merciful,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+128,I love being beneficent,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+129,I love being on an amazing journey,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+130,I love growing spiritually every day in every way,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+131,I love being spirit,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+132,I love being a good and worthy choice,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+133,I love my quiet time,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+134,I love the time I spend with friends and family,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+135,I love diversity,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+136,I love being a diverse spiritual being,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+137,I love knowing I am enough,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+138,I love knowing I am more than enough,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+139,I love being the cup that runneth over,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+140,I love money and all the good and fun things I can do with it,EVENING_ILOVE,Confidence & Inner Strength,1,11/24/25 22:57
+141,I love the world,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+142,I love justice,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+143,I love truth,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+144,I love being the hero of my story,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+145,I love being the consciousness of my life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+146,I love being the center of my world,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+147,I love being the center of the universe,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+148,I love knowing I am made of the substance of the stars,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+149,I love change and welcome it with joy,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+150,I love plants and flowers and grass and summer breezes,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+151,I love snow and cold crisp winter air,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+152,I love the heat and bright sunshine of summer,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+153,I love the universe,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+154,I love the Divine as it is expressed in the world around me,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+155,I love being perfect as I am,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+156,I love my face,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+157,I love my eyes,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+158,I love my stomach,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+159,I love my periods,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+160,I love my toes,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+161,I love every breath I take,EVENING_ILOVE,Health & Wholeness,1,11/24/25 22:57
+162,I love my fingers,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+163,I love my hair,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+164,I love my head,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+165,I love my ears,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+166,I love my teeth,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+167,I love being forever,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+168,I love being eternal,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+169,I love being a Divine song,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+170,I love being a Divine story of peace,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+171,I love possibility,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+172,I love choosing wisely,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+173,I love being a miracle today,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+174,I love always choosing the best for myself and others,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+175,I love being a beautiful dance of consciousness,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+176,I love being visible,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+177,I love being responsible,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+178,I love being a helping hand,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+179,I love being a gift,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+180,I love sharing my gifts with others,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+181,I love receiving gifts from others,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+182,I love imagining a world that works for everybody,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+183,I love belief,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+184,I love faith,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+185,I love strength,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+186,I love vulnerability,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+187,I love all the time I have to do all the things I love,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+188,I love being able to do all the things I love,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+189,I love my life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+190,I love the food in my refrigerator,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+191,I love the fire in my stove,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+192,I love the ground I walk on,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+193,I love making and experiencing art,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+194,I love music,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+195,I love the music of the world,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+196,I love the fish in the sea,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+197,I love the animals that walk this earth with me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+198,I love the birds in the air,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+199,I love the thoughts I think,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+200,I love letting go of the past,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+201,I love letting go of all I thought I knew that no longer serves me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+202,I love being open to Divine knowledge,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+203,I love being open to Divine understanding,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+204,I love being the will of the Divine,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+205,I love waking up happier and happier every day in every way,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+206,I love being in a wealthy state of mind,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+207,I love being in a grateful state of mind,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+208,I love pleasure,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+209,I love being in a peaceful state of mind,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+210,I love being relaxed,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+211,I love being a Divine story of love,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+212,I love being a Divine story of prosperity,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+213,I love being a pleasurable experience,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+214,I love being the soul of my life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+215,I love being a prayer,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+216,I love praying now,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+217,I love being a voice for good,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+218,I love being the voice of love in my life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+219,I love being the voice of peace in my life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+220,I love being the voice of possibility in my life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+221,I love being the voice of compassion in my life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+222,I love being the voice of reason in my life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+223,I love being the voice of joy in my life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+224,I love being a beautiful singer,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+225,I love being the embodiment of praise,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+226,I love praising now,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+227,I love being the best me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+228,I love my alone time,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+229,I love my meditation practice,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+230,I love love,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+231,I love joy,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+232,I love positive vibrations,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+233,I love being a positive vibration,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+234,I love being respectful and full of respect,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+235,I love being a good speaker,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+236,I love my sexuality,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+237,I love the sexuality of others,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+238,I love all the ways the Divine expresses in the world,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+239,I love the stars in a night sky,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+240,I love the feel of the sun on my skin,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+241,I love my skin,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+242,I love my chest,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+243,I love compliments,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+244,I love complimenting others,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+245,I love saying yes to money,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+246,I love saying yes to new things,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+247,I love attracting what is right for me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+248,I love attracting what is good for me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+249,I love attracting what is safe for me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+250,I love being a safe space,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+251,I love being a peaceful space,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+252,I love being a channel of Divine generosity,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+253,I love being a channel of Divine I Am,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+254,I love being a channel of Divine music,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+255,I love being a channel of Divine creativity,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+256,I love being a channel of Divine love,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+257,I love being the light of my life,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+258,I love being a child of a loving God,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+259,I love bliss,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+260,I love being enlightenment given form,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+261,I love being a peaceful journey through time,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+262,I love being big enough,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+263,I love being strong enough,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+264,I love being tough enough,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+265,I love being better today than I was yesterday,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+267,I love being comfortable,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+268,I love being a comfortable experience,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+269,I love being free of the need to be free,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+270,I love being forgiven,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+271,I love how I feel when I forgive,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+272,I love how I feel when I share,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+273,I love how I feel when I do what is right and good for me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+274,I love how I feel when I do what is right and good for others,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+275,I love how I feel when I stay true to who I am,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+276,I love how I feel when I speak my truth,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+277,I love how I feel when I listen to the voice of the Divine within me,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+278,I love how I feel when I feel,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+279,I love being enlightened,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+280,I love being sometimes simple and sometimes complex,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+281,I love being on purpose,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+282,I love being my greatest purpose,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+283,I love being the one I have been waiting for,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+284,I love being my best friend,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+285,I love being alive,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+286,I love life in all its forms,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+287,I love being good company,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+288,I love how I feel when I say no,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+289,I love being in love all the time,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+290,I love how I feel when I cook myself a nice dinner,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+291,I love how I feel when I cook dinner for someone else,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+292,I love how prosperous I feel in my skin right now,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+293,I love being an expression of enlightenment,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+294,I love my voice,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+295,I love being a spontaneous burst of playful joy,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+296,I love the child within me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+297,I love the parent in me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+298,I love the adult in me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+299,I love luxury,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+300,I love beautiful things,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+301,I love being the master of my destiny,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+302,I love being the captain of my fate,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+303,I love the Divine in me,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+304,I love being an expression of Divine Substance in big and small ways,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+305,"I love focusing on the good, the beautiful, and the true",EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+306,I love my heart,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+307,I love putting gratitude into action,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+308,I love being love personified,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+309,I love being the heart of my life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+310,I love being the heart of consciousness,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+311,I love being somebody,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+312,I love being somebody’s child,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+313,I love being somebody’s friend,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+314,I love being somebody’s partner,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+315,I love being somebody’s lover,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+316,I love being uniquely me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+317,I love being a rainbow of love,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+318,I love being a rainbow of peace,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+319,I love being a rainbow of joy,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+320,I love accomplishing my goals,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+321,I love free will,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+322,I love being infinite,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+323,I love being smart,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+324,I love being intelligent,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+325,I love being inspired,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+326,I love being inspiring,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+327,I love being anchored in amazing possibilities,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+328,I love being one with the Divine Intelligent Substance of the Universe,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+329,I love being one with all living beings,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+330,I love being the abundance I see around me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+331,I love the sound of my voice,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+332,I love being so excited to be able to be,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+333,I love being a source of good in the lives of others,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+334,I love being proud,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+335,I love being proud of my accomplishments,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+336,I love being proud of the accomplishments of others,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+337,I love being detached in a loving way,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+338,I love being clever,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+339,I love being ok right now as I am,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+340,"I love letting go, with love, of what no longer works for me",EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+341,I love being in perfect health,EVENING_ILOVE,Health & Wholeness,1,11/24/25 22:57
+342,I love being committed to my highest good,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+343,I love being a living celebration,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+344,I love being a spirit radiating joy from the tips of my toes to the tips of the hair on my head,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+345,I love receiving answers to my prayers right now,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+346,I love embracing and seeing the good in all things,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+347,I love being optimistic,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+348,I love being open to miracles,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+349,I love being fully present to this version of now and all it has to offer,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+350,I love being nourished and soul-fed by all the beauty around me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+351,I love being a magnet for joyful moments,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+352,I love sailing in the Divine flow of the mighty Universal river of fulfilled wishes,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+353,I love being the answer to a prayer of love,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+354,I love living a rich and luxurious life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+355,I love being gratitude in action,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+356,I love being cause and knowing my life is effect,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+357,I love being aware of the Divine in all I see,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+358,I love being aware of the Divine in the air that I breathe,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+359,I love being aware in this moment right now,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+360,I love being awareness personified,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+361,I love being the I Am presence as me,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+362,I love being the answer to someone's prayer,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+363,I love being the purpose of my life,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+364,I love being loved because I am,EVENING_ILOVE,Love & Relationships,1,11/24/25 22:57
+365,I love being a seed that produces a most divine flower that unfolds as a most divine life,EVENING_ILOVE,Self-Love & Worthiness,1,11/24/25 22:57
+731,I am Divine,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+732,I am a Divinely inspired,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+733,I am the divine being in this skin,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+734,I am happy and excited that everything is always working out for me,MORNING_IAM,Peace,1,11/24/25 23:03
+735,I am loved,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+736,I am loving the life I am living,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+737,I am living the life I am loving,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+738,I am blessed,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+739,I am joy,MORNING_IAM,Peace,1,11/24/25 23:03
+740,I am listened to,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+741,I am heard,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+742,I am visible,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+743,I am seen,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+744,I am fun and a joyful being,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+745,I am the loved child of a generous universe,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+746,I am a blessing to others,MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+747,I am prosperous,MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+748,I am the best version of me that has everything I want,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+749,"I am whole, healed, abundantly prospered and stable",MORNING_IAM,Health & Wholeness,1,11/24/25 23:03
+750,I am wealthy now,MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+751,I am bursting with ancestral wisdom,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+752,I am an open and friendly person,MORNING_IAM,Purpose,1,11/24/25 23:03
+753,I am compassion,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+754,I am open and receptive to all my Divine Good,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+755,I am peace,MORNING_IAM,Peace,1,11/24/25 23:03
+756,I am happy,MORNING_IAM,Peace,1,11/24/25 23:03
+757,I am confident,MORNING_IAM,Confidence & Inner Strength,1,11/24/25 23:03
+758,I am generous,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+759,I am an ecstatic bundle of divine genetic material,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+760,I am a burst of sunshine in the lives of others,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+761,I am a good parent,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+762,I am a good friend,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+763,I am a good neighbor,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+764,I am the embodiment of the good shepherd,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+765,I am a positive contribution to the well-being of this planet,MORNING_IAM,Health & Wholeness,1,11/24/25 23:03
+766,I am a positive contribution to the well-being of my family,MORNING_IAM,Health & Wholeness,1,11/24/25 23:03
+767,I am a positive contribution to the well-being of my community,MORNING_IAM,Health & Wholeness,1,11/24/25 23:03
+768,I am an abundant being,MORNING_IAM,General,1,11/24/25 23:03
+769,I am beautiful,MORNING_IAM,General,1,11/24/25 23:03
+770,I am warm and friendly,MORNING_IAM,General,1,11/24/25 23:03
+771,I am playful,MORNING_IAM,General,1,11/24/25 23:03
+772,I am creative,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+773,I am artistic,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+774,I am thoughtful,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+775,I am caring,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+776,I am kind,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+777,I am that I am,MORNING_IAM,General,1,11/24/25 23:03
+778,I am humble,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+779,I am at home in quiet spaces,MORNING_IAM,Peace,1,11/24/25 23:03
+780,I am a joyful noise,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+781,I am well fed,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+782,I am clothed in the richness of Divine Substance,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+783,I am well cared for,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+784,I am safe,MORNING_IAM,Peace,1,11/24/25 23:03
+785,I am protected,MORNING_IAM,Peace,1,11/24/25 23:03
+786,I am the child of a generous creator,MORNING_IAM,Purpose,1,11/24/25 23:03
+787,I am the change I have been waiting for,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+788,I am the love I have been looking for,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+789,I am an affirmation of life,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+790,I am powerful,MORNING_IAM,Confidence & Inner Strength,1,11/24/25 23:03
+791,I am the word in perfect form,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+792,I am that I am and that I am is amazing,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+793,I am always in a fun-loving frame of mind,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+794,I am a bundle of love in the world,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+795,I am trustworthy,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+796,I am always on time,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+797,I am always in the right place at the right time,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+798,I am always where I am supposed to be,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+799,I am creatively carefree and love all that unfolds from this state of being,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+800,I am safely held in this wonderful home,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+801,I am at home in this wonderful neighborhood,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+802,I am loving,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+803,I am blessing others every day in every way by what I do and what I say,MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+804,I am always saying yes to my good,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+805,I am a force for good,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+806,I am full of energy,MORNING_IAM,Health & Wholeness,1,11/24/25 23:03
+807,I am getting better and better every day in every way,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+808,I am in love with the air that I breathe,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+809,I am in love with the good food I eat,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+810,I am in love with the water I drink,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+811,I am calm,MORNING_IAM,Peace,1,11/24/25 23:03
+812,I am mindful,MORNING_IAM,Peace,1,11/24/25 23:03
+813,I am a perfect fit,MORNING_IAM,General,1,11/24/25 23:03
+814,I am a money magnet,MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+815,I am a love magnet,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+816,I am a joy magnet,MORNING_IAM,Peace,1,11/24/25 23:03
+817,I am a peace magnet,MORNING_IAM,Peace,1,11/24/25 23:03
+818,I am a sacred space,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+819,I am an experience of peace,MORNING_IAM,Peace,1,11/24/25 23:03
+820,I am an experience of joy,MORNING_IAM,Peace,1,11/24/25 23:03
+821,I am an experience of love,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+822,I am in love with intimacy,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+823,I am basking in the luxurious life of the divine,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+824,I am a channel of the Divine,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+825,I am funny,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+826,I am lighthearted,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+827,I am always meeting great and wonderful people,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+828,I am always seeing the good in others,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+829,I am able to let go of what no longer serves me with love and respect,MORNING_IAM,Confidence & Inner Strength,1,11/24/25 23:03
+830,I am free,MORNING_IAM,Peace,1,11/24/25 23:03
+831,I am now financially free,MORNING_IAM,Peace,1,11/24/25 23:03
+832,I am now emotionally free,MORNING_IAM,Peace,1,11/24/25 23:03
+833,I am music to someone’s ears,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+834,I am always sharing with joy and gratitude,MORNING_IAM,Peace,1,11/24/25 23:03
+835,I am lucky,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+836,I am winning all the time,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+837,I am a healer,MORNING_IAM,Health & Wholeness,1,11/24/25 23:03
+838,I am a manifester,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+839,I am aware of the power of good that flows through me,MORNING_IAM,Peace,1,11/24/25 23:03
+840,I am aware of the power of good that flows through others,MORNING_IAM,Peace,1,11/24/25 23:03
+841,I am aware of the Divine all around me,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+842,I am always getting enough sleep,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+843,I am well rested,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+844,I am whole,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+845,I am complete,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+846,I am one with everything and everyone,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+847,I am good at setting boundaries when I need them,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+848,I am always having good positive experiences,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+849,I am positive,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+850,I am choosing to be happy,MORNING_IAM,Peace,1,11/24/25 23:03
+851,I am choosing to be wealthy,MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+852,I am choosing to be right here right now,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+853,I am intentionally embracing my space in the here and the now,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+854,I am free of the past,MORNING_IAM,Peace,1,11/24/25 23:03
+855,I am planting seeds of wealth now,MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+856,I am planting seeds of joy now,MORNING_IAM,Peace,1,11/24/25 23:03
+857,I am planting seeds of prosperity now,MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+858,I am a Divine seed,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+859,I am comfortable in the lap of luxury,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+860,I am a Divine receptacle,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+861,I am honest,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+862,I am worthy,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+863,I am deserving of all the good the universe has for me,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+864,I am a star,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+865,I am merciful,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+866,I am beneficent,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+867,I am on an amazing journey,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+868,I am growing spiritually every day in every way,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+869,I am a calm and gentle spirit,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+870,I am a good and worthy choice,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+871,I am in love with my quiet time,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+872,I am in love with the time I spend with friends and family,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+873,I am in love with diversity,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+874,I am a diverse spiritual being,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+875,I am enough,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+876,I am more than enough,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+877,I am the cup that runneth over,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+878,"I am wealth in motion, expressing through everything I choose to create and enjoy.",MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+879,I am in love with the world,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+880,I am justice,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+881,I am truth,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+882,I am the hero of my story,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+883,I am the consciousness of my life,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+884,I am the center of my world,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+885,I am the center of the universe,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+886,I am made of the substance of the stars,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+887,I am in love with change and welcome it with joy,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+888,I am in love with plants and flowers and grass and summer breezes,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+889,I am in love with snow and cold crisp winter air,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+890,I am in love with the heat and bright sunshine of summer,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+891,I am in love with the universe,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+892,I am in love with the Divine as it is expressed in the world around me,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+893,I am perfect as I am,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+894,I am in love with my face,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+895,I am in love with my eyes,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+896,I am in love with my stomach,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+897,I am in love with my periods,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+898,I am in love with my toes,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+899,I am in love with every breath I take,MORNING_IAM,Health & Wholeness,1,11/24/25 23:03
+900,I am in love with my fingers,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+901,I am in love with my hair,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+902,I am in love with my head,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+903,I am in love with my ears,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+904,I am in love with my teeth,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+905,I am forever,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+906,I am eternal,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+907,I am a Divine song,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+908,I am a Divine story of peace,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+909,I am possibility,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+910,I am choosing wisely,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+911,I am a miracle,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+912,I am always choosing the best for myself and others,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+913,I am a beautiful dance of consciousness,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+914,I am I am such an I am I am,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+915,I am responsible,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+916,I am a helping hand,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+917,I am a gift,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+918,I am needed,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+919,I am happy to share my gifts with others,MORNING_IAM,Peace,1,11/24/25 23:03
+920,I am happy to receive gifts from others,MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+921,I am imagining a world that works for everybody,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+922,I am belief,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+923,I am faith,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+924,I am strength,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+925,I am in love with all the time I have to do all the things I love,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+926,I am grateful to be able to do all the things I love,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+927,I am grateful for my life,MORNING_IAM,Peace,1,11/24/25 23:03
+928,I am grateful for the food in my refrigerator,MORNING_IAM,Peace,1,11/24/25 23:03
+929,I am grateful for the fire in my stove,MORNING_IAM,Peace,1,11/24/25 23:03
+930,I am grateful for the ground I walk on,MORNING_IAM,Peace,1,11/24/25 23:03
+931,I am grateful for art,MORNING_IAM,Peace,1,11/24/25 23:03
+932,I am grateful for music,MORNING_IAM,Peace,1,11/24/25 23:03
+933,I am in love with the musical sound of the world,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+934,I am grateful for the fish in the sea,MORNING_IAM,Peace,1,11/24/25 23:03
+935,I am grateful for the animals that walk this earth with me,MORNING_IAM,Peace,1,11/24/25 23:03
+936,I am grateful for the birds in the air,MORNING_IAM,Peace,1,11/24/25 23:03
+937,I am grateful for the thoughts I think,MORNING_IAM,Peace,1,11/24/25 23:03
+938,"I am letting go of the past, even the past I loved",MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+939,I am letting go of all I thought I knew that no longer serves me,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+940,I am open to Divine knowledge,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+941,I am open to Divine understanding,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+942,I am the will of the Divine,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+943,I am waking up happier and happier every day in every way,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+944,I am always in a wealthy state of mind,MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+945,I am always in a grateful state of mind,MORNING_IAM,Peace,1,11/24/25 23:03
+946,I am pleasure,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+947,I am in a peaceful state of mind,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+948,I am relaxed,MORNING_IAM,Peace,1,11/24/25 23:03
+949,I am a Divine story of love,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+950,I am a Divine story of prosperity,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+951,I am a soulfully pleasurable experience,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+952,I am the soul of my life,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+953,I am a prayer,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+954,I am praying now,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+955,I am a voice for good,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+956,I am the voice of love in my life,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+957,I am the voice of peace in my life,MORNING_IAM,Peace,1,11/24/25 23:03
+958,I am the voice of possibility in my life,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+959,I am the voice of compassion in my life,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+960,I am the voice of reason in my life,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+961,I am the voice of joy in my life,MORNING_IAM,Peace,1,11/24/25 23:03
+962,I am a beautiful speaker,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+963,I am the embodiment of praise,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+964,I am praising now,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+965,I am the best me,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+966,I am in love with my alone time,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+967,I am in love with my meditation practice,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+968,I am in love with love,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+969,I am in love with joy,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+970,I am in love with positive vibrations,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+971,I am a positive vibration,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+972,I am respect and respectful,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+973,I am a good speaker,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+974,I am in love with my sexuality,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+975,I am in love with the sexuality of others,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+976,I am in love with all the ways the Divine expresses in the world,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+977,I am in love with the stars in a night sky,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+978,I am in love with the feel of the sun on my skin,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+979,I am in love with my skin,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+980,I am in love with my chest,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+981,I am in love with compliments,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+982,I am always complimenting others,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+983,I am always saying yes to money,MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+984,I am always saying yes to new things,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+985,I am always attracting what is right for me,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+986,I am always attracting what is good for me,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+987,I am always attracting what is safe for me,MORNING_IAM,Peace,1,11/24/25 23:03
+988,I am a safe space,MORNING_IAM,Peace,1,11/24/25 23:03
+989,I am a peaceful space,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+990,I am a channel of a Divine generosity,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+991,I am a channel of the Divine I Am,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+992,I am a channel of Divine music,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+993,I am a channel of Divine creativity,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+994,I am a channel of Divine love,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+995,I am the light of my life,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+996,I am a light on the path helping others to see,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+997,I am bliss,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+998,I am enlightenment given form,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+999,I am a peaceful journey through time,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1000,I am big enough,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1001,I am strong enough,MORNING_IAM,Confidence & Inner Strength,1,11/24/25 23:03
+1002,I am tough enough,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1003,I am better today than I was yesterday,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1004,I am at home wherever I am,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1005,I am comfortable,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1006,I am a comfortable experience,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1007,I am free of the need to be free,MORNING_IAM,Peace,1,11/24/25 23:03
+1008,I am forgiven,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1009,I am in love with how I feel when I forgive,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1010,I am in love with how I feel when I share,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1011,I am in love with how I feel when I do what is right and good for me,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1012,I am in love with how I feel when I do what is right and good for others,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1013,I am in love with how I feel when I stay true to who I am,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1014,I am in love with how I feel when I speak my truth,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1015,I am in love with how I feel when I listen to that voice of the Divine within me,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1016,I am in love with how I feel when I feel,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1017,I am enlightened,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1018,I am an I am that is sometimes simple and sometimes complex,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1019,I am on purpose,MORNING_IAM,Purpose,1,11/24/25 23:03
+1020,I am my greatest purpose,MORNING_IAM,Purpose,1,11/24/25 23:03
+1021,I am the one I have been waiting for,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1022,I am my best friend,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1023,I am alive,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1024,I am life in human form,MORNING_IAM,General,1,11/24/25 23:03
+1025,I am good company,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1026,I am someone who serves with love and purpose,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1027,I am a steady presence of love,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1028,"I am the chef of my life, creating nourishment with care and intention",MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1029,I am someone who nourishes others with care and generosity,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1030,"I am at home in my body, grounded with ease in peace and quiet luxury",MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1031,I am an expression of enlightened being,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1032,I am confident in my voice and I use it freely,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1033,I am a spontaneous burst of playful joy,MORNING_IAM,Peace,1,11/24/25 23:03
+1034,I am connected to the child within me with care and compassion,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1035,I am a wise and caring guide to myself,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1036,"I am grounded, responsible, and fully present in my life",MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1037,"I am in alignment with a life of peace, beauty, and refinement",MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1038,I am someone who creates and appreciates beauty,MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+1039,I am the master of my destiny,MORNING_IAM,Purpose,1,11/24/25 23:03
+1040,I am the captain of my fate,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1041,I am in love with the Divine in me,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1042,I am a great expression of Divine Substance,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1043,"I am choosing to focus on the good, the beautiful, and the true",MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1044,I am someone who stays true to my heart,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1045,I am gratitude in action,MORNING_IAM,Peace,1,11/24/25 23:03
+1046,I am love personified,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1047,I am the heart of my life,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1048,I am the heart of consciousness,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1049,I am somebody,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1050,I am somebody's child,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1051,I am somebody's friend,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1052,I am somebody's partner,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1053,I am somebody's lover,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1054,I am uniquely me,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1055,I am a rainbow of love,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1056,I am a rainbow of peace,MORNING_IAM,Peace,1,11/24/25 23:03
+1057,I am a rainbow of joy,MORNING_IAM,Peace,1,11/24/25 23:03
+1058,I am accomplishing all my goals,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1059,I am free will,MORNING_IAM,Peace,1,11/24/25 23:03
+1060,I am infinite,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1061,I am smart,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1062,I am intelligent,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1063,I am inspired,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1064,I am inspiring,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1065,I am anchored in amazing possibilities,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1066,I am one with the Divine Intelligent Substance of the Universe,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1067,I am one with all living beings,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1068,I am the abundance I see around me,MORNING_IAM,Wealth & Abundance,1,11/24/25 23:03
+1069,I am in love with the sound of my voice,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1070,I am so excited to be able to be,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1071,I am a source of good in the lives of others,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1072,I am proud,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1073,I am proud of my accomplishments,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1074,I am proud of the accomplishments of others,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1075,I am detached in a loving way,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1076,I am clever,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1077,I am ok right now as I am,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1078,"I am letting go, with love, of what no longer works for me",MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1079,I am in perfect health,MORNING_IAM,Health & Wholeness,1,11/24/25 23:03
+1080,I am committed to my highest good,MORNING_IAM,Purpose,1,11/24/25 23:03
+1081,I am a living celebration,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1082,I am a spirit radiating joy from the tips of my toes to the tips of the hairs on my head,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1083,I am receiving answers to my prayers right now,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1084,I am embracing and seeing the good in all things,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1085,I am optimistic,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1086,I am open to miracles,MORNING_IAM,Purpose,1,11/24/25 23:03
+1087,I am fully present to this version of now and all it has to offer,MORNING_IAM,Peace,1,11/24/25 23:03
+1088,I am nourished and soul-fed by all the beauty around me,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1089,I am a magnet for joyful moments and people to share them with,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1090,I am sailing in the Divine flow of the mighty Universal river of fulfilled wishes,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1091,I am the answer to a prayer of love,MORNING_IAM,Love & Relationships,1,11/24/25 23:03
+1092,I am a footprint in the sands of life,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1094,"I am cause, my life is effect",MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1095,I am aware of the Divine in all I see,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1096,I am aware of the Divine in the air that I breathe,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1097,I am awake to this moment right now,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1098,I am awareness personified,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1099,I am the I Am presence as me,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1100,I am the answer to my mothers prayer,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1101,I am the purpose of my life,MORNING_IAM,Purpose,1,11/24/25 23:03
+1102,I am loved because I am,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1103,I am a seed that produces the most divine flowers that unfold into a most divine life,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1104,I am and have always been my father’s child,MORNING_IAM,Self-Love & Worthiness,1,11/24/25 23:03
+1105,"I Am The Cause, The World is the effect",MORNING_IAM,Purpose,1,2/24/26 10:55
+1107,I am guided toward what is meant for me,MORNING_IAM,Purpose,1,2/24/26 10:57
+1108,I am clear about the direction of my life,MORNING_IAM,Purpose,1,2/24/26 10:57
+1109,I am open to the next step on my path,MORNING_IAM,Purpose,1,2/24/26 10:57
+1110,"I am called to live a meaningful, fulfilling life",MORNING_IAM,Purpose,1,2/24/26 10:57
+1111,I am living a life that reflects my values,MORNING_IAM,Purpose,1,2/24/26 10:57
+1112,I am passionate about the work I do,MORNING_IAM,Purpose,1,2/24/26 10:57
+1113,I am focused on what truly matters to me,MORNING_IAM,Purpose,1,2/24/26 10:57
+1114,I am willing to take inspired action every day,MORNING_IAM,Purpose,1,2/24/26 10:57
+1115,I am walking in my purpose with confidence,MORNING_IAM,Purpose,1,2/24/26 10:57
+1116,I love how clearly my purpose reveals itself each day,EVENING_ILOVE,Purpose,1,2/24/26 10:57
+1117,I love discovering new ways to express my gifts,EVENING_ILOVE,Purpose,1,2/24/26 10:57
+1118,I love saying yes to what feels aligned and true,EVENING_ILOVE,Confidence & Inner Strength,1,2/24/26 10:57
+1119,I love that my life has deep meaning and direction,EVENING_ILOVE,Purpose,1,2/24/26 10:57
+1120,I love feeling guided and supported on my path,EVENING_ILOVE,Purpose,1,2/24/26 10:57
+1121,I love how my vision gets stronger as I move forward,EVENING_ILOVE,Purpose,1,2/24/26 10:57
+1122,I love the mission that my heart is here to fulfill,EVENING_ILOVE,Purpose,1,2/24/26 10:57
+1123,I love the unique contribution I am here to make,EVENING_ILOVE,Purpose,1,2/24/26 10:57
+1124,I love trusting the timing of my dreams and goals,EVENING_ILOVE,Purpose,1,2/24/26 10:57
+1125,I love becoming the person my purpose is calling me to be,EVENING_ILOVE,Purpose,1,2/24/26 10:57
+1126,I am aligned with my highest purpose,MORNING_IAM,Purpose,1,2/24/26 10:57
+1127,I am a natural receiver of abundance in all forms,MORNING_IAM,Wealth & Abundance,1,5/3/26 18:10
+1128,I am aligned with the steady flow of financial increase,MORNING_IAM,Wealth & Abundance,1,5/3/26 18:10
+1129,I am at ease with money and it moves freely to me and through me,MORNING_IAM,Wealth & Abundance,1,5/3/26 18:10
+1130,I am a wise and confident steward of the money I receive,MORNING_IAM,Wealth & Abundance,1,5/3/26 18:10
+1131,I am someone who makes decisions that grow my wealth daily,MORNING_IAM,Wealth & Abundance,1,5/3/26 18:10
+1132,"I am disciplined, focused, and consistent",MORNING_IAM,Wealth & Abundance,1,5/3/26 18:10
+1133,I am open to new and expanding sources of income,MORNING_IAM,Wealth & Abundance,1,5/3/26 18:10
+1134,I am always recognizing and acting on opportunities for growth,MORNING_IAM,Wealth & Abundance,1,5/3/26 18:10
+1135,I am supported by a constant and reliable flow of provision,MORNING_IAM,Wealth & Abundance,1,5/3/26 18:10
+1136,I am living in the divine overflow of more than enough,MORNING_IAM,Wealth & Abundance,1,5/3/26 18:10
+1137,I am confident in who I am,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1138,I am grounded and steady in myself,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1139,"I am strong in mind, body, and spirit",MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1140,I am secure in my worth,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1141,I am comfortable being myself in all situations,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1142,I am someone who trusts my decisions,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1143,I am someone who follows through on what I start,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1144,I am someone who acts with clarity and purpose,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1145,I am someone who stands by my word,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1146,I am someone who shows up fully for my life,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1147,I am calm and centered under pressure,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1148,I am in control of my thoughts and responses,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1149,I am emotionally steady and self-directed,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1150,I am at ease in the face of uncertainty,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1151,I am patient and composed in all situations,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1152,I am resilient and I rise from every challenge,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1153,I am stronger than any obstacle before me,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1154,I am able to adapt and grow through anything,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1155,"I am learning, growing, and improving every day",MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1156,I am committed to becoming my best self,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1157,I am clear in my voice and I express myself freely,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1158,I am honest and direct in my communication,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1159,I am unafraid to speak my truth,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1160,I am respected because I respect myself,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1161,I am setting and maintaining healthy boundaries,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1162,I am disciplined and consistent in my actions,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1163,I am focused on what matters most,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1164,I am taking action even when it feels uncomfortable,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1165,I am building confidence through what I do daily,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1166,I am becoming stronger with every step I take,MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1167,"I am enough exactly as I am, and I continue to grow",MORNING_IAM,Confidence & Inner Strength,1,5/3/26 18:16
+1168,"I am healthy in mind, body, and spirit",MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1169,I am whole and complete as I am,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1170,I am connected to the wisdom of my body,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1171,I am aligned with habits that support my well-being,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1172,"I am grounded, balanced, and at ease",MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1173,I am someone who takes care of my body daily,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1174,I am someone who listens to what my body needs,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1175,I am someone who nourishes myself with intention,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1176,I am someone who prioritizes my health,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1177,I am someone who rests when I need to,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1178,I am energized and alive in my body,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1179,I am breathing deeply and fully,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1180,I am relaxed and at ease in my body,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1181,I am releasing tension and stress with ease,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1182,I am present and aware in this moment,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1183,I am healing more and more every day,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1184,I am supporting my body’s natural ability to heal,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1185,I am restoring balance in all areas of my life,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1186,I am patient with my process of growth and healing,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1187,I am allowing my body to recover and renew,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1188,I am disciplined in caring for my physical health,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1189,I am choosing foods and habits that support my well-being,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1190,I am moving my body in ways that feel good and strong,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1191,"I am building strength, flexibility, and endurance",MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1192,I am consistent in the actions that support my health,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1193,"I am calm, centered, and in control of my energy",MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1194,I am protecting my peace and well-being,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1195,I am letting go of what no longer serves my health,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1196,I am creating a life that supports my vitality,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1197,I am living in a state of balance and well-being,MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1198,"I am whole, well, and continually renewing",MORNING_IAM,Health & Wholeness,1,5/3/26 18:20
+1199,I am worthy of love and respect,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1200,I am enough exactly as I am,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1201,I am deserving of good things in my life,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1202,I am valuable and I recognize my value,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1203,I am at peace with who I am becoming,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1204,I am someone who treats myself with care and respect,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1205,I am someone who speaks to myself with kindness,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1206,I am someone who honors my needs and boundaries,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1207,I am someone who shows up for myself consistently,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1208,I am someone who forgives myself and moves forward,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1209,I am releasing self-judgment and criticism,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1210,I am letting go of the need to be perfect,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1211,I am accepting myself fully and honestly,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1212,I am allowing myself to grow at my own pace,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1213,I am patient and compassionate with myself,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1214,I am proud of who I am and how far I’ve come,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1215,I am recognizing my progress every day,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1216,I am building a strong and loving relationship with myself,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1217,I am trusting myself more each day,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1218,I am choosing to see the good in myself,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1219,I am setting standards that reflect my worth,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1220,I am saying yes to what supports me,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1221,I am saying no to what does not serve me,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1222,I am surrounding myself with people who respect me,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1223,I am protecting my energy and my peace,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1224,I am open to receiving love from myself and others,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1225,I am allowing myself to be seen and appreciated,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1226,I am comfortable being who I am,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1227,I am worthy without needing to prove anything,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1228,I am choosing myself in every moment,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24
+1229,I am deeply rooted in my own worth,MORNING_IAM,Self-Love & Worthiness,1,5/3/26 18:24

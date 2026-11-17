@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/admin_init.php';
 require_once '../db.php';
 if (!isset($_SESSION['admin_id'])) {
     header("Location: login.php");
@@ -15,6 +15,30 @@ if (!in_array($type_filter, $valid_types)) {
     $type_filter = ''; // default to all types if invalid
 }
 
+$focus_categories = [
+    'General',
+    'Peace',
+    'Purpose',
+    'Love & Relationships',
+    'Wealth & Abundance',
+    'Confidence & Inner Strength',
+    'Health & Wholeness',
+    'Self-Love & Worthiness',
+];
+
+function normalize_type(string $type, array $valid_types): string {
+    return in_array($type, $valid_types, true) ? $type : 'MORNING_IAM';
+}
+
+function normalize_category(string $category, array $focus_categories): string {
+    return in_array($category, $focus_categories, true) ? $category : 'General';
+}
+
+$category_filter = isset($_GET['category_filter']) ? trim((string)$_GET['category_filter']) : '';
+if ($category_filter !== '' && !in_array($category_filter, $focus_categories, true)) {
+    $category_filter = '';
+}
+
 // For heading label
 $section_label = 'All Affirmations';
 if ($type_filter === 'MORNING_IAM') {
@@ -25,33 +49,39 @@ if ($type_filter === 'MORNING_IAM') {
 
 // Single and bulk add, checks for duplicates
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    aa_require_valid_csrf();
+
     // Single add
     if (isset($_POST['mode']) && $_POST['mode'] === 'single' && !empty($_POST['text']) && !empty($_POST['type']) && !empty($_POST['category'])) {
+        $single_type = normalize_type((string)$_POST['type'], $valid_types);
+        $single_category = normalize_category(trim((string)$_POST['category']), $focus_categories);
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM affirmations WHERE text=? AND type=? AND category=?");
-        $stmt->execute([trim($_POST['text']), $_POST['type'], $_POST['category']]);
+        $stmt->execute([trim((string)$_POST['text']), $single_type, $single_category]);
         if ($stmt->fetchColumn() > 0) {
             $msg = "Duplicate found! Not added.";
         } else {
             $stmt = $pdo->prepare("INSERT INTO affirmations (text, type, category, is_active) VALUES (?, ?, ?, 1)");
-            $stmt->execute([trim($_POST['text']), $_POST['type'], $_POST['category']]);
+            $stmt->execute([trim((string)$_POST['text']), $single_type, $single_category]);
             $msg = "Affirmation added!";
         }
     }
 
     // Bulk multi-line paste
     if (isset($_POST['mode']) && $_POST['mode'] === 'bulk_text' && !empty($_POST['bulk_affirmations'])) {
+        $bulk_type = normalize_type((string)($_POST['bulk_type'] ?? ''), $valid_types);
+        $bulk_category = normalize_category(trim((string)($_POST['bulk_category'] ?? '')), $focus_categories);
         $bulk = explode("\n", $_POST['bulk_affirmations']);
         $added = 0; $skipped = [];
         foreach ($bulk as $line) {
             $line = trim($line);
             if ($line !== '') {
                 $stmt = $pdo->prepare("SELECT COUNT(*) FROM affirmations WHERE text=? AND type=? AND category=?");
-                $stmt->execute([$line, $_POST['bulk_type'], $_POST['bulk_category']]);
+                $stmt->execute([$line, $bulk_type, $bulk_category]);
                 if ($stmt->fetchColumn() > 0) {
                     $skipped[] = $line;
                 } else {
                     $stmt = $pdo->prepare("INSERT INTO affirmations (text, type, category, is_active) VALUES (?, ?, ?, 1)");
-                    $stmt->execute([$line, $_POST['bulk_type'], $_POST['bulk_category']]);
+                    $stmt->execute([$line, $bulk_type, $bulk_category]);
                     $added++;
                 }
             }
@@ -62,6 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Bulk CSV/txt upload
     if (isset($_POST['mode']) && $_POST['mode'] === 'bulk_csv' && !empty($_FILES['csv_file']['tmp_name'])) {
+        $csv_type = normalize_type((string)($_POST['csv_type'] ?? ''), $valid_types);
+        $csv_category = normalize_category(trim((string)($_POST['csv_category'] ?? '')), $focus_categories);
         $added = 0; $skipped = [];
         $ext = strtolower(pathinfo($_FILES['csv_file']['name'], PATHINFO_EXTENSION));
         if (($ext === 'csv' || $ext === 'txt') && is_uploaded_file($_FILES['csv_file']['tmp_name'])) {
@@ -70,12 +102,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $text = isset($row[0]) ? trim($row[0]) : '';
                 if ($text !== '') {
                     $stmt = $pdo->prepare("SELECT COUNT(*) FROM affirmations WHERE text=? AND type=? AND category=?");
-                    $stmt->execute([$text, $_POST['csv_type'], $_POST['csv_category']]);
+                    $stmt->execute([$text, $csv_type, $csv_category]);
                     if ($stmt->fetchColumn() > 0) {
                         $skipped[] = $text;
                     } else {
                         $stmt = $pdo->prepare("INSERT INTO affirmations (text, type, category, is_active) VALUES (?, ?, ?, 1)");
-                        $stmt->execute([$text, $_POST['csv_type'], $_POST['csv_category']]);
+                        $stmt->execute([$text, $csv_type, $csv_category]);
                         $added++;
                     }
                 }
@@ -90,8 +122,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Inline edit
     if (isset($_POST['mode']) && $_POST['mode'] === 'edit_row' && isset($_POST['id'])) {
+        $edit_type = normalize_type((string)($_POST['type'] ?? ''), $valid_types);
+        $edit_category = normalize_category(trim((string)($_POST['category'] ?? '')), $focus_categories);
         $stmt = $pdo->prepare("UPDATE affirmations SET text=?, type=?, category=? WHERE id=?");
-        $stmt->execute([$_POST['text'], $_POST['type'], $_POST['category'], intval($_POST['id'])]);
+        $stmt->execute([trim((string)$_POST['text']), $edit_type, $edit_category, intval($_POST['id'])]);
         $msg = "Affirmation updated!";
     }
 
@@ -107,27 +141,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Delete
-    if (isset($_POST['del_id'])) {
+    if (isset($_POST['del_id']) && (!isset($_POST['mode']) || $_POST['mode'] !== 'export')) {
         $stmt = $pdo->prepare("DELETE FROM affirmations WHERE id=?");
         $stmt->execute([$_POST['del_id']]);
         $msg = "Affirmation deleted.";
     }
 
     // Export
-    if (isset($_POST['mode']) && $_POST['mode'] === 'export' && !empty($_POST['export_ids'])) {
-        $ids = array_map('intval', $_POST['export_ids']);
-        if (!empty($ids)) {
-            $ids_sql = implode(',', $ids);
-            $data = $pdo->query("SELECT * FROM affirmations WHERE id IN ($ids_sql)")->fetchAll(PDO::FETCH_ASSOC);
-            if (!empty($data)) {
-                header('Content-Type: text/csv');
-                header('Content-Disposition: attachment; filename="affirmations_export.csv"');
-                $f = fopen('php://output', 'w');
-                fputcsv($f, array_keys($data[0]));
-                foreach ($data as $row) fputcsv($f, $row);
-                fclose($f);
-                exit;
+    if (isset($_POST['mode']) && $_POST['mode'] === 'export') {
+        if (!empty($_POST['export_ids'])) {
+            $ids = array_map('intval', $_POST['export_ids']);
+            if (!empty($ids)) {
+                $ids_sql = implode(',', $ids);
+                $data = $pdo->query("SELECT * FROM affirmations WHERE id IN ($ids_sql)")->fetchAll(PDO::FETCH_ASSOC);
+                if (!empty($data)) {
+                    header('Content-Type: text/csv');
+                    header('Content-Disposition: attachment; filename="affirmations_export.csv"');
+                    $f = fopen('php://output', 'w');
+                    fputcsv($f, array_keys($data[0]));
+                    foreach ($data as $row) fputcsv($f, $row);
+                    fclose($f);
+                    exit;
+                }
             }
+        } else {
+            $msg = "No affirmations selected for export.";
         }
     }
 }
@@ -138,12 +176,17 @@ $per_page = 50;
 $offset = ($page - 1) * $per_page;
 
 // Build WHERE clause for filter
-$where_sql = '';
+$where_parts = [];
 $params = [];
 if ($type_filter !== '') {
-    $where_sql = 'WHERE type = :type_filter';
+    $where_parts[] = 'type = :type_filter';
     $params[':type_filter'] = $type_filter;
 }
+if ($category_filter !== '') {
+    $where_parts[] = 'category = :category_filter';
+    $params[':category_filter'] = $category_filter;
+}
+$where_sql = $where_parts ? 'WHERE ' . implode(' AND ', $where_parts) : '';
 
 // Total count (with filter)
 if ($where_sql) {
@@ -174,17 +217,114 @@ $af = $stmt->fetchAll();
 $total_pages = ceil($total / $per_page);
 
 // Helper for pagination links to preserve filter
-$filter_query = $type_filter ? '&type_filter='.urlencode($type_filter) : '';
+$filter_params = [];
+if ($type_filter !== '') {
+    $filter_params['type_filter'] = $type_filter;
+}
+if ($category_filter !== '') {
+    $filter_params['category_filter'] = $category_filter;
+}
+$filter_query = $filter_params ? '&' . http_build_query($filter_params) : '';
+
+$tab_all_params = [];
+if ($category_filter !== '') {
+    $tab_all_params['category_filter'] = $category_filter;
+}
+$tab_iam_params = ['type_filter' => 'MORNING_IAM'];
+if ($category_filter !== '') {
+    $tab_iam_params['category_filter'] = $category_filter;
+}
+$tab_ilove_params = ['type_filter' => 'EVENING_ILOVE'];
+if ($category_filter !== '') {
+    $tab_ilove_params['category_filter'] = $category_filter;
+}
+$tab_all_href = 'affirmations.php' . ($tab_all_params ? '?' . http_build_query($tab_all_params) : '');
+$tab_iam_href = 'affirmations.php?' . http_build_query($tab_iam_params);
+$tab_ilove_href = 'affirmations.php?' . http_build_query($tab_ilove_params);
+
+$default_form_type = $type_filter !== '' ? $type_filter : 'MORNING_IAM';
+$default_form_category = $category_filter !== '' ? $category_filter : 'General';
 ?>
 <!DOCTYPE html>
 <html>
 <head>
     <title>Manage Affirmations - Abundance Alchemy</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-    body { font-family: Trebuchet MS, sans-serif; background: #fff; }
-    .btn-primary { background: #FF6600; border: none; }
-    .edit-row { background: #f5f5f5; }
+    :root {
+        --aa-primary: #ff6a1a;
+        --aa-primary-hover: #e95e16;
+    }
+    body {
+        font-family: "Trebuchet MS", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top left, #ffffff 0, #f5f6fa 45%, #eceff4 100%);
+        min-height: 100vh;
+    }
+    .btn-primary { background: var(--aa-primary); border-color: var(--aa-primary); }
+    .btn-primary:hover { background: var(--aa-primary-hover); border-color: var(--aa-primary-hover); }
+    .aa-card {
+        border-radius: 1rem;
+        border: 1px solid rgba(15,23,42,.05);
+        box-shadow: 0 4px 6px -1px rgba(15,23,42,.04), 0 18px 45px rgba(15,23,42,.08);
+        background: #ffffff;
+        overflow: hidden;
+    }
+    .aa-card-header-soft {
+        background: linear-gradient(90deg, #ffffff, #fff7f2);
+        border-bottom: 1px solid rgba(0,0,0,.02);
+        padding: 1rem 1.25rem;
+    }
+    .edit-row { background: #f8f8fc; }
+    .nav-tabs {
+        border-bottom: 2px solid #f0f0f5;
+    }
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: #6c757d;
+        font-weight: 500;
+        padding: .75rem 1rem;
+        transition: all .2s;
+    }
+    .nav-tabs .nav-link:hover {
+        color: var(--aa-primary);
+        border-color: transparent;
+    }
+    .nav-tabs .nav-link.active {
+        color: var(--aa-primary);
+        background: transparent;
+        border-bottom-color: var(--aa-primary);
+    }
+    .category-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        margin-bottom: 1.5rem;
+    }
+    .category-tab {
+        display: inline-flex;
+        align-items: center;
+        padding: .4rem .85rem;
+        border-radius: 999px;
+        font-size: .85rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all .2s ease;
+        border: 1px solid transparent;
+        background: #fff;
+        color: #6c757d;
+        box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .category-tab:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,.1);
+    }
+    .category-tab.active {
+        background: var(--aa-primary);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(255,106,26,.3);
+    }
     </style>
     <script>
     function toggleEdit(id) {
@@ -201,6 +341,24 @@ $filter_query = $type_filter ? '&type_filter='.urlencode($type_filter) : '';
             checkboxes[i].checked = source.checked;
         }
     }
+    function deleteAffirmation(id) {
+        if (!confirm('Delete affirmation?')) return;
+        var form = document.createElement('form');
+        form.method = 'post';
+        form.style.display = 'none';
+        var csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = 'csrf_token';
+        csrf.value = '<?=htmlspecialchars($_SESSION['csrf_token'] ?? '')?>';
+        var del = document.createElement('input');
+        del.type = 'hidden';
+        del.name = 'del_id';
+        del.value = id;
+        form.appendChild(csrf);
+        form.appendChild(del);
+        document.body.appendChild(form);
+        form.submit();
+    }
     </script>
 </head>
 <body>
@@ -215,36 +373,65 @@ $filter_query = $type_filter ? '&type_filter='.urlencode($type_filter) : '';
     <!-- Tabs: All / I Am / I Love -->
     <ul class="nav nav-tabs mb-3">
         <li class="nav-item">
-            <a class="nav-link <?= $type_filter=='' ? 'active' : '' ?>" href="affirmations.php">
+            <a class="nav-link <?= $type_filter=='' ? 'active' : '' ?>" href="<?=htmlspecialchars($tab_all_href)?>">
                 All Affirmations
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link <?= $type_filter=='MORNING_IAM' ? 'active' : '' ?>" href="affirmations.php?type_filter=MORNING_IAM">
+            <a class="nav-link <?= $type_filter=='MORNING_IAM' ? 'active' : '' ?>" href="<?=htmlspecialchars($tab_iam_href)?>">
                 I Am Library
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link <?= $type_filter=='EVENING_ILOVE' ? 'active' : '' ?>" href="affirmations.php?type_filter=EVENING_ILOVE">
+            <a class="nav-link <?= $type_filter=='EVENING_ILOVE' ? 'active' : '' ?>" href="<?=htmlspecialchars($tab_ilove_href)?>">
                 I Love Library
             </a>
         </li>
     </ul>
 
+    <form method="get" class="mb-3 row g-2 align-items-end">
+        <?php if ($type_filter !== ''): ?>
+            <input type="hidden" name="type_filter" value="<?=htmlspecialchars($type_filter)?>">
+        <?php endif; ?>
+        <div class="col-auto">
+            <label class="form-label mb-1">Category Filter</label>
+            <select name="category_filter" class="form-select">
+                <option value="">All Categories</option>
+                <?php foreach ($focus_categories as $cat): ?>
+                    <option value="<?=htmlspecialchars($cat)?>" <?=$category_filter === $cat ? 'selected' : ''?>><?=htmlspecialchars($cat)?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary">Apply Filter</button>
+        </div>
+        <div class="col-auto">
+            <?php
+            $clear_filter_href = 'affirmations.php' . ($type_filter !== '' ? '?type_filter=' . urlencode($type_filter) : '');
+            ?>
+            <a class="btn btn-outline-secondary" href="<?=htmlspecialchars($clear_filter_href)?>">Clear Category</a>
+        </div>
+    </form>
+
     <!-- Single add -->
     <form method="post" class="mb-3 row g-2">
+        <?php aa_csrf_field(); ?>
         <input type="hidden" name="mode" value="single">
         <div class="col">
             <input type="text" name="text" class="form-control" placeholder="Affirmation Text" required>
         </div>
         <div class="col">
             <select name="type" class="form-select" required>
-                <option value="MORNING_IAM">I Am</option>
-                <option value="EVENING_ILOVE">I Love</option>
+                <option value="MORNING_IAM" <?=$default_form_type === 'MORNING_IAM' ? 'selected' : ''?>>I Am</option>
+                <option value="EVENING_ILOVE" <?=$default_form_type === 'EVENING_ILOVE' ? 'selected' : ''?>>I Love</option>
             </select>
         </div>
         <div class="col">
-            <input type="text" name="category" class="form-control" placeholder="Category" required>
+            <select name="category" class="form-select" required>
+                <?php foreach ($focus_categories as $cat): ?>
+                    <option value="<?=htmlspecialchars($cat)?>" <?=$default_form_category === $cat ? 'selected' : ''?>><?=htmlspecialchars($cat)?></option>
+                <?php endforeach; ?>
+            </select>
         </div>
         <div class="col-auto">
             <button class="btn btn-primary">Add</button>
@@ -253,18 +440,23 @@ $filter_query = $type_filter ? '&type_filter='.urlencode($type_filter) : '';
 
     <!-- Bulk multiline paste -->
     <form method="post" class="mb-3 row g-2">
+        <?php aa_csrf_field(); ?>
         <input type="hidden" name="mode" value="bulk_text">
         <div class="col-6">
             <textarea name="bulk_affirmations" class="form-control" rows="5" placeholder="Paste multiple affirmations (one per line)"></textarea>
         </div>
         <div class="col">
             <select name="bulk_type" class="form-select" required>
-                <option value="MORNING_IAM">I Am</option>
-                <option value="EVENING_ILOVE">I Love</option>
+                <option value="MORNING_IAM" <?=$default_form_type === 'MORNING_IAM' ? 'selected' : ''?>>I Am</option>
+                <option value="EVENING_ILOVE" <?=$default_form_type === 'EVENING_ILOVE' ? 'selected' : ''?>>I Love</option>
             </select>
         </div>
         <div class="col">
-            <input type="text" name="bulk_category" class="form-control" placeholder="Category" required>
+            <select name="bulk_category" class="form-select" required>
+                <?php foreach ($focus_categories as $cat): ?>
+                    <option value="<?=htmlspecialchars($cat)?>" <?=$default_form_category === $cat ? 'selected' : ''?>><?=htmlspecialchars($cat)?></option>
+                <?php endforeach; ?>
+            </select>
         </div>
         <div class="col-auto">
             <button class="btn btn-primary">Bulk Add</button>
@@ -273,18 +465,23 @@ $filter_query = $type_filter ? '&type_filter='.urlencode($type_filter) : '';
 
     <!-- Bulk CSV/txt upload -->
     <form method="post" class="mb-3 row g-2" enctype="multipart/form-data">
+        <?php aa_csrf_field(); ?>
         <input type="hidden" name="mode" value="bulk_csv">
         <div class="col">
             <input type="file" name="csv_file" accept=".csv,.txt" class="form-control" required>
         </div>
         <div class="col">
             <select name="csv_type" class="form-select" required>
-                <option value="MORNING_IAM">I Am</option>
-                <option value="EVENING_ILOVE">I Love</option>
+                <option value="MORNING_IAM" <?=$default_form_type === 'MORNING_IAM' ? 'selected' : ''?>>I Am</option>
+                <option value="EVENING_ILOVE" <?=$default_form_type === 'EVENING_ILOVE' ? 'selected' : ''?>>I Love</option>
             </select>
         </div>
         <div class="col">
-            <input type="text" name="csv_category" class="form-control" placeholder="Category" required>
+            <select name="csv_category" class="form-select" required>
+                <?php foreach ($focus_categories as $cat): ?>
+                    <option value="<?=htmlspecialchars($cat)?>" <?=$default_form_category === $cat ? 'selected' : ''?>><?=htmlspecialchars($cat)?></option>
+                <?php endforeach; ?>
+            </select>
         </div>
         <div class="col-auto">
             <button class="btn btn-primary">Upload File</button>
@@ -293,6 +490,7 @@ $filter_query = $type_filter ? '&type_filter='.urlencode($type_filter) : '';
 
     <!-- Bulk actions: activate/deactivate, export -->
     <form method="post">
+        <?php aa_csrf_field(); ?>
         <div class="mb-2">
             <input type="hidden" name="mode" value="">
             <select name="set_active" class="form-select d-inline w-auto">
@@ -324,14 +522,12 @@ $filter_query = $type_filter ? '&type_filter='.urlencode($type_filter) : '';
                     <td><?=($a['is_active']?'Yes':'No')?></td>
                     <td>
                         <button type="button" class="btn btn-sm btn-info" onclick="toggleEdit(<?=$a['id']?>)">Edit</button>
-                        <form method="post" style="display:inline">
-                            <input type="hidden" name="del_id" value="<?=$a['id']?>">
-                            <button class="btn btn-sm btn-danger" onclick="return confirm('Delete affirmation?')">Delete</button>
-                        </form>
+                        <button class="btn btn-sm btn-danger" onclick="deleteAffirmation(<?=$a['id']?>)">Delete</button>
                     </td>
                 </tr>
                 <tr class="edit-row" id="edit<?=$a['id']?>" style="display:none;">
                     <form method="post">
+                        <?php aa_csrf_field(); ?>
                         <input type="hidden" name="mode" value="edit_row">
                         <input type="hidden" name="id" value="<?=$a['id']?>">
                         <td></td>
@@ -345,7 +541,14 @@ $filter_query = $type_filter ? '&type_filter='.urlencode($type_filter) : '';
                             </select>
                         </td>
                         <td>
-                            <input type="text" name="category" class="form-control" value="<?=htmlspecialchars($a['category'])?>" required>
+                            <select name="category" class="form-select" required>
+                                <?php if (!in_array($a['category'], $focus_categories, true)): ?>
+                                    <option value="<?=htmlspecialchars($a['category'])?>" selected><?=htmlspecialchars($a['category'])?> (Existing)</option>
+                                <?php endif; ?>
+                                <?php foreach ($focus_categories as $cat): ?>
+                                    <option value="<?=htmlspecialchars($cat)?>" <?=$a['category'] === $cat ? 'selected' : ''?>><?=htmlspecialchars($cat)?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </td>
                         <td></td>
                         <td>

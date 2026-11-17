@@ -9,19 +9,39 @@
 }
 
 :root {
-  --app-bg: #020617; /* slate-950 */
+  --app-bg: #020617;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Source Sans 3', 'Trebuchet MS', system-ui, sans-serif;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   width: 100%;
   background-color: var(--app-bg);
-  font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif;
+  font-family: var(--font-body);
+  overflow-x: hidden;
 }
 
-/* Base Styles */
-.font-serif {
-  font-family: Georgia, 'Times New Roman', Times, serif;
+/* Typography */
+/* Prevent Safari's form-focus auto-zoom without disabling user pinch zoom. */
+@media (max-width: 767px) {
+  input:not([type='range']):not([type='checkbox']):not([type='radio']),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+input[type='range'] { min-width: 0; max-width: 100%; }
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
 }
 
 .bg-clip-text {
@@ -32,8 +52,12 @@ html, body, #root {
 
 /* Core Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .fade-in {
@@ -41,8 +65,14 @@ html, body, #root {
 }
 
 @keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .animate-in {
@@ -51,55 +81,192 @@ html, body, #root {
 
 /* Alchemist Custom Animations */
 @keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes spin-reverse-slow {
-  from { transform: rotate(360deg); }
-  to { transform: rotate(0deg); }
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
 }
 
 @keyframes breath {
-  0%, 100% { 
-    transform: scale(0.96); 
+  0%,
+  100% {
+    transform: scale(0.96);
     filter: brightness(1) contrast(1);
   }
-  50% { 
-    transform: scale(1.04); 
+  50% {
+    transform: scale(1.04);
     filter: brightness(1.2) contrast(1.1);
   }
 }
 
 @keyframes breathe {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.8; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
 }
 
 @keyframes pulse-slow {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 @keyframes completed-pulse {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes sacred-pulse {
-  0%, 100% { 
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
   }
-  50% { 
+  50% {
     box-shadow: 0 0 20px 5px rgba(251, 191, 36, 0.7);
   }
 }
 
+@keyframes subtle-glow {
+  0%,
+  100% {
+    opacity: 0.9;
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.2);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 16px rgba(251, 191, 36, 0.5);
+  }
+}
+
+/* Breathing Orb Animations */
+@keyframes breathing-in {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+@keyframes breathing-out {
+  0%,
+  100% {
+    transform: scale(1.15);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
+
+@keyframes orb-glow-iam {
+  0%,
+  100% {
+    box-shadow:
+      0 0 30px 10px rgba(251, 191, 36, 0.3),
+      0 0 60px 20px rgba(251, 191, 36, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 0 50px 20px rgba(251, 191, 36, 0.5),
+      0 0 80px 30px rgba(251, 191, 36, 0.25);
+  }
+}
+
+@keyframes orb-glow-love {
+  0%,
+  100% {
+    box-shadow:
+      0 0 30px 10px rgba(251, 146, 60, 0.25),
+      0 0 60px 20px rgba(251, 146, 60, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 50px 20px rgba(251, 146, 60, 0.4),
+      0 0 80px 30px rgba(251, 146, 60, 0.2);
+  }
+}
+
+@keyframes resonance-pulse {
+  0%,
+  100% {
+    transform: scaleY(0.6);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 0.7;
+  }
+}
+
+@keyframes glow-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes affirmation-rise {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes radial-light {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Animation Classes */
 .animate-spin-slow {
   animation: spin-slow 15s linear infinite;
 }
@@ -132,6 +299,127 @@ html, body, #root {
   animation: sacred-pulse 2s ease-in-out infinite;
 }
 
+.animate-pulse-subtle {
+  animation: subtle-glow 3s ease-in-out infinite;
+}
+
+.animate-affirmation-rise {
+  animation: affirmation-rise 0.5s ease-out forwards;
+}
+
+/* Sacred Visual Primitives */
+.sacred-radial-light {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(140vmax, 1200px);
+  height: min(140vmax, 1200px);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(251, 191, 36, 0.08) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 0;
+  animation: radial-light 6s ease-in-out infinite;
+}
+
+.sacred-halo {
+  position: relative;
+}
+
+.sacred-halo::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(251, 191, 36, 0.1) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+.sacred-orb {
+  position: relative;
+}
+
+.sacred-orb::before,
+.sacred-orb::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  pointer-events: none;
+}
+
+.sacred-orb::before {
+  width: 150%;
+  height: 150%;
+  animation: glow-ring 3s ease-out infinite;
+}
+
+.sacred-orb::after {
+  width: 200%;
+  height: 200%;
+  animation: glow-ring 3s ease-out infinite 1.5s;
+}
+
+.sacred-geometry-line {
+  position: absolute;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(251, 191, 36, 0.3),
+    transparent
+  );
+  height: 1px;
+  width: 60%;
+  left: 20%;
+}
+
+.sacred-geometry-line.top {
+  top: 0;
+}
+
+.sacred-geometry-line.bottom {
+  bottom: 0;
+}
+
+.sacred-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.sacred-divider::before,
+.sacred-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(251, 191, 36, 0.3),
+    transparent
+  );
+}
+
+/* Sacred glass */
+.sacred-glass {
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+  backdrop-filter: blur(12px) saturate(1.15);
+}
+
 /* UI Support */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
@@ -146,7 +434,7 @@ html, body, #root {
   border-radius: 10px;
 }
 
-input[type="range"] {
+input[type='range'] {
   -webkit-appearance: none;
   height: 6px;
   background: rgba(255, 255, 255, 0.1);
@@ -154,7 +442,7 @@ input[type="range"] {
   outline: none;
 }
 
-input[type="range"]::-webkit-slider-thumb {
+input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 18px;
@@ -162,4 +450,13 @@ input[type="range"]::-webkit-slider-thumb {
   background: #fbbf24;
   border-radius: 50%;
   cursor: pointer;
+}
+
+/* Keep Focus navigation outside its scrollable choices on short phone screens. */
+.onboarding-layout { min-height: 100svh; }
+.onboarding-body { display: flex; flex-direction: column; max-height: calc(100svh - 240px); }
+.onboarding-body > :first-child { flex-shrink: 0; }
+@media (max-height: 650px) {
+  .onboarding-layout { justify-content: flex-start; padding-top: 12px; padding-bottom: 12px; gap: 8px; }
+  .onboarding-body { max-height: calc(100svh - 200px); }
 }

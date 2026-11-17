@@ -1,7 +1,8 @@
 <?php
 // /admin/users.php
-session_start();
+require_once __DIR__ . '/admin_init.php';
 require_once '../db.php'; // provides $pdo (PDO)
+require_once __DIR__ . '/../api/helpers.php';
 
 // --- Auth gate (same as other admin pages)
 if (!isset($_SESSION['admin_id'])) {
@@ -58,6 +59,8 @@ $hasSSCreatedAt = hasCol($soundCols, 'created_at');
 $flash = ['success'=>null,'error'=>null];
 
 if ($_SERVER['REQUEST_METHOD']==='POST') {
+    aa_require_valid_csrf();
+
     // Bulk Welcome toggle (if column exists)
     if ($hasWelcome && isset($_POST['bulk_action']) && $_POST['bulk_action']==='welcome' && !empty($_POST['selected'])) {
         $value = isset($_POST['value']) && $_POST['value']=='1' ? 1 : 0;
@@ -92,26 +95,33 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
         }
     }
 
-    // Trigger password reset email via API endpoint
+    // Trigger password reset email directly through shared helper
     if (isset($_POST['password_reset_email'])) {
         $email = trim($_POST['password_reset_email']);
         if ($email) {
-            $publicApi = "../api/request-password-reset.php";
-            $payload = json_encode(['email'=>$email]);
-            $opts = [
-                'http'=>[
-                    'method'=>'POST',
-                    'header'=>"Content-Type: application/json\r\n",
-                    'content'=>$payload,
-                    'timeout'=>6,
-                ]
-            ];
-            $ctx = stream_context_create($opts);
-            $ok = @file_get_contents($publicApi,false,$ctx);
-            if ($ok!==false) {
-                $flash['success'] = "Password reset email requested for $email.";
-            } else {
-                $flash['error'] = "Password reset request failed (check API).";
+            try {
+                $stmt = $pdo->prepare('SELECT id, name, email FROM users WHERE email = ? LIMIT 1');
+                $stmt->execute([$email]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($user && !empty($user['email'])) {
+                    $ok = aa_issue_password_reset(
+                        $pdo,
+                        (int)($user['id'] ?? 0),
+                        (string)$user['email'],
+                        (string)($user['name'] ?? '')
+                    );
+
+                    if ($ok) {
+                        $flash['success'] = "Password reset email sent for $email.";
+                    } else {
+                        $flash['error'] = "Password reset request failed (mail not sent).";
+                    }
+                } else {
+                    $flash['error'] = "No user found for $email.";
+                }
+            } catch (Throwable $e) {
+                $flash['error'] = "Password reset request failed: " . $e->getMessage();
             }
         }
     }
@@ -457,6 +467,7 @@ if (!$detailUser) {
             <div class="card-body">
               <div class="mini-label mb-2">Send Email</div>
               <form method="post" class="row g-2">
+                <?php aa_csrf_field(); ?>
                 <input type="hidden" name="send_email_to" value="<?= h($detailUser['email'] ?? '') ?>">
                 <div class="col-12 col-md-12">
                   <input type="text" name="email_subject" class="form-control form-control-sm" placeholder="Subject">
@@ -481,6 +492,7 @@ if (!$detailUser) {
             <div class="card-body">
               <div class="mini-label mb-2 text-danger">Danger Zone</div>
               <form method="post" onsubmit="return confirm('Permanently delete this user<?= !empty($detailUser['email']) ? ' (' . h($detailUser['email']) . ')' : '' ?>? This cannot be undone.');">
+                <?php aa_csrf_field(); ?>
                 <input type="hidden" name="delete_user_id" value="<?= (int)$detailUser['id'] ?>">
                 <?php if (!empty($detailUser['email'])): ?>
                   <div class="form-check mb-2">
@@ -641,6 +653,7 @@ if (!$detailUser) {
     </form>
 
     <form method="post" class="card card-compact shadow-sm">
+      <?php aa_csrf_field(); ?>
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <div class="mini-label">Results</div>
@@ -699,6 +712,7 @@ if (!$detailUser) {
                   <td class="d-flex gap-1">
                     <a class="btn btn-sm btn-outline-primary" href="users.php?user=<?= (int)$r['id'] ?>">View</a>
                     <form method="post" onsubmit="return confirm('Permanently delete user #<?= (int)$r['id'] ?>? This cannot be undone.');">
+                      <?php aa_csrf_field(); ?>
                       <input type="hidden" name="delete_user_id" value="<?= (int)$r['id'] ?>">
                       <button class="btn btn-sm btn-outline-danger">Delete</button>
                     </form>

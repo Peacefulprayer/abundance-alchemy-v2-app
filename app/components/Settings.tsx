@@ -1,460 +1,755 @@
-import React, { useState } from 'react';
-import { AppSettings, Soundscape } from '../types';
-import { ArrowLeft, Sun, Moon, Volume2, Bell, Music, RefreshCw, LogOut, Palette, Clock, Upload } from 'lucide-react';
-import { buttonSoundService } from '../services/buttonSoundService';
+import React, { useState } from 'react'
+import { AppSettings, ReminderPractice, Soundscape } from '../types'
+import {
+  ArrowLeft,
+  Volume2,
+  Music,
+  RefreshCw,
+  LogOut,
+  Clock,
+  Upload,
+} from 'lucide-react'
+import { buttonSoundService } from '../services/buttonSoundService'
+import BreathingOrb from './BreathingOrb'
+import {
+  SCREEN_PAGE_SHELL,
+  SCREEN_TITLE_PILL,
+  screenAccentText,
+  screenActionRow,
+  screenBackButton,
+  screenHeroCard,
+  screenInputBg,
+  screenItemCard,
+  screenSectionFrame,
+  screenSectionKicker,
+  screenSubTextColor,
+  screenSurfaceCard,
+  screenTextColor,
+} from '../styles/sacredScreen'
 
 interface SettingsProps {
-  settings: AppSettings;
-  onChangeSettings: (settings: AppSettings) => void;
-  onChangeFocus: () => void;
-  onBack: () => void;
-  onSignOut: () => void;
-  onReplayTutorial: () => void;
-  onAudioUpload: (file: File, category: string) => void;
-  theme: 'light' | 'dark';
-  userAudioFile: File | null;
-  availableSoundscapes: Soundscape[];
+  settings: AppSettings
+  onChangeSettings: (settings: AppSettings) => void
+  onRequestReminderPermission?: () => void
+  onPreviewSoundscape?: (id: string) => void
+  onChangeFocus: () => void
+  onBack: () => void
+  onSignOut: () => void
+  onReplayTutorial: () => void
+  onReplayWelcomeInvocation: () => void
+  onAudioUpload: (file: File, category: string) => void
+  theme: 'light' | 'dark'
+  userAudioFile: File | null
+  availableSoundscapes: Soundscape[]
 }
 
 export const Settings: React.FC<SettingsProps> = ({
   settings,
   onChangeSettings,
+  onRequestReminderPermission,
+  onPreviewSoundscape,
   onChangeFocus,
   onBack,
   onSignOut,
   onReplayTutorial,
+  onReplayWelcomeInvocation,
   onAudioUpload,
   theme,
   userAudioFile,
-  availableSoundscapes
+  availableSoundscapes,
 }) => {
-  const [uploadCategory, setUploadCategory] = useState('MEDITATION');
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadCategory, setUploadCategory] = useState('MEDITATION')
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
 
-  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-400';
-  const cardBg = theme === 'light' ? 'bg-white border-slate-200' : 'bg-slate-900/70 border-slate-700';
-  const inputBg = theme === 'light' ? 'bg-slate-50 border-slate-300' : 'bg-slate-800 border-slate-600';
+  const textColor = screenTextColor(theme)
+  const subTextColor = screenSubTextColor(theme)
+  const titlePill = SCREEN_TITLE_PILL
+  const pageShell = `${SCREEN_PAGE_SHELL} pb-24`
+  const sectionFrame = screenSectionFrame(theme)
+  const cardBg = screenHeroCard(theme)
+  const surfaceCard = screenSurfaceCard(theme)
+  const itemCard = screenItemCard(theme)
+  const inputBg = screenInputBg(theme)
+  const sectionKicker = screenSectionKicker(theme)
+  const backButton = screenBackButton(theme)
+  const actionRow = screenActionRow(theme)
+  const accentText = screenAccentText(theme)
+  const reminderRows: Array<{ id: ReminderPractice; label: string }> = [
+    { id: 'MORNING_IAM', label: 'I Am' },
+    { id: 'EVENING_ILOVE', label: 'I Love' },
+    { id: 'MEDITATION', label: 'Meditation' },
+    { id: 'PRAYER', label: 'Omba (Prayer)' },
+  ]
 
-  // Helper to safely check category
-  const normalize = (cat: string | undefined) => (cat || '').toUpperCase();
+  const normalize = (cat: string | undefined) => (cat || '').toUpperCase()
 
-  // Filter soundscapes by category - Case Insensitive for robustness
-  // Admin 'Ambience' or 'GENERAL' -> App Ambience
-  const ambienceTracks = availableSoundscapes.filter(s => {
-    const cat = normalize(s.category as string);
-    return !['MEDITATION', 'MORNING_IAM', 'EVENING_ILOVE', 'CHANT', 'OM'].includes(cat);
-  });
-  
-  // Admin 'Music' or 'MUSIC' or 'MORNING_IAM' -> I Am Practice
-  const iAmTracks = availableSoundscapes.filter(s => 
-    ['MORNING_IAM', 'MUSIC', 'GENERAL'].includes(normalize(s.category as string))
-  );
-  
-  // Admin 'Music' or 'MUSIC' or 'EVENING_ILOVE' -> I Love Practice
-  const iLoveTracks = availableSoundscapes.filter(s => 
-    ['EVENING_ILOVE', 'MUSIC', 'GENERAL'].includes(normalize(s.category as string))
-  );
-  
-  // Admin 'Meditation' / 'MEDITATION' / 'MUSIC' -> Meditation Practice
-  const meditationTracks = availableSoundscapes.filter(s => 
-    ['MEDITATION', 'MUSIC'].includes(normalize(s.category as string))
-  );
+  const ambienceTracks = availableSoundscapes.filter((s) => {
+    const cat = normalize(s.category as string)
+    return ![
+      'MEDITATION',
+      'MORNING_IAM',
+      'EVENING_ILOVE',
+      'CHANT',
+      'OM',
+    ].includes(cat)
+  })
 
-  const toggleTheme = () => {
-    buttonSoundService.play('click');
-    onChangeSettings({ ...settings, theme: theme === 'light' ? 'dark' : 'light' });
-  };
+  const iAmTracks = availableSoundscapes.filter((s) =>
+    ['MORNING_IAM', 'MUSIC', 'GENERAL'].includes(
+      normalize(s.category as string),
+    ),
+  )
+
+  const iLoveTracks = availableSoundscapes.filter((s) =>
+    ['EVENING_ILOVE', 'MUSIC', 'GENERAL'].includes(
+      normalize(s.category as string),
+    ),
+  )
+
+  const meditationTracks = availableSoundscapes.filter((s) =>
+    ['MEDITATION', 'MUSIC'].includes(normalize(s.category as string)),
+  )
 
   const toggleSoundEffects = () => {
-    buttonSoundService.play('click');
-    onChangeSettings({ ...settings, soundEffectsOn: !settings.soundEffectsOn });
-  };
+    buttonSoundService.play('click')
+    onChangeSettings({ ...settings, soundEffectsOn: !settings.soundEffectsOn })
+  }
 
   const toggleMusic = () => {
-    buttonSoundService.play('click');
-    onChangeSettings({ ...settings, musicOn: !settings.musicOn });
-  };
+    buttonSoundService.play('click')
+    onChangeSettings({ ...settings, musicOn: !settings.musicOn })
+  }
 
   const updateVolume = (volume: number) => {
-    onChangeSettings({ ...settings, ambienceVolume: volume });
-  };
+    onChangeSettings({ ...settings, ambienceVolume: volume })
+  }
 
-  // Helper to handle specific soundscape updates
   const updateSpecificSoundscape = (key: keyof AppSettings, id: string) => {
-    buttonSoundService.play('click');
-    onChangeSettings({ ...settings, [key]: id });
-  };
+    buttonSoundService.play('click')
+    onChangeSettings({ ...settings, [key]: id })
+    if (id && key !== 'soundscapeId' && onPreviewSoundscape) {
+      onPreviewSoundscape(id)
+    }
+  }
 
-  // Reminder Handlers
   const toggleReminders = () => {
-    buttonSoundService.play('click');
-    onChangeSettings({ 
-      ...settings, 
-      reminders: { ...settings.reminders, enabled: !settings.reminders.enabled } 
-    });
-  };
+    buttonSoundService.play('click')
+    onChangeSettings({
+      ...settings,
+      reminders: {
+        ...settings.reminders,
+        enabled: !settings.reminders.enabled,
+      },
+    })
+  }
 
-  const updateReminderMode = (mode: 'INTERVAL' | 'SPECIFIC_TIMES') => {
-    buttonSoundService.play('click');
-    onChangeSettings({ 
-      ...settings, 
-      reminders: { ...settings.reminders, mode } 
-    });
-  };
+  const updatePracticeReminder = (
+    practice: ReminderPractice,
+    patch: Partial<{ enabled: boolean; time: string }>,
+  ) => {
+    buttonSoundService.play('click')
+    const current = settings.reminders.practiceTimes[practice]
+    onChangeSettings({
+      ...settings,
+      reminders: {
+        ...settings.reminders,
+        practiceTimes: {
+          ...settings.reminders.practiceTimes,
+          [practice]: {
+            ...current,
+            ...patch,
+          },
+        },
+      },
+    })
+  }
 
-  const updateInterval = (minutes: number) => {
-    buttonSoundService.play('click');
-    onChangeSettings({ 
-      ...settings, 
-      reminders: { ...settings.reminders, intervalMinutes: minutes } 
-    });
-  };
+  const updateSnoozeMinutes = (minutes: 15 | 30 | 60) => {
+    buttonSoundService.play('click')
+    onChangeSettings({
+      ...settings,
+      reminders: { ...settings.reminders, snoozeMinutes: minutes },
+    })
+  }
+
+  const applyDeviceTimezone = () => {
+    buttonSoundService.play('click')
+    let timezone = settings.reminders.timezone
+    try {
+      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || timezone
+    } catch {
+      // keep current timezone
+    }
+    onChangeSettings({
+      ...settings,
+      reminders: { ...settings.reminders, timezone },
+    })
+  }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    buttonSoundService.play('click');
+    buttonSoundService.play('click')
     if (e.target.files && e.target.files[0]) {
-      setUploadFile(e.target.files[0]);
+      setUploadFile(e.target.files[0])
     }
-  };
+  }
 
   const handleUploadSubmit = () => {
     if (uploadFile) {
-      buttonSoundService.play('confirm');
-      onAudioUpload(uploadFile, uploadCategory);
-      setUploadFile(null);
+      buttonSoundService.play('confirm')
+      onAudioUpload(uploadFile, uploadCategory)
+      setUploadFile(null)
     }
-  };
+  }
 
-  // Helper to append badge to label
   const getSourceLabel = (s: Soundscape) => {
-    // If ID is numeric (from DB) or url has 'user_', it's Cloud. Default/Hardcoded is System.
-    const isCloud = !isNaN(Number(s.id)) || s.url?.includes('user_');
-    return isCloud ? `${s.label} (Cloud)` : `${s.label} (System)`;
-  };
+    const isCloud = !isNaN(Number(s.id)) || s.url?.includes('user_')
+    return isCloud ? `${s.label} (Uploaded)` : `${s.label} (Included)`
+  }
 
   return (
-    <div className={`h-full flex flex-col p-4 max-w-md mx-auto ${textColor} pb-24 overflow-y-auto custom-scrollbar`}>
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={() => {
-            buttonSoundService.play('back');
-            onBack();
-          }}
-          className={`flex items-center space-x-2 text-sm ${subTextColor} hover:opacity-100 transition-opacity`}
-        >
-          <ArrowLeft size={16} />
-          <span>Back</span>
-        </button>
-        <h1 className="text-xl font-serif font-bold">Settings</h1>
-        <div className="w-16"></div>
-      </div>
-
-      <div className="space-y-4">
-        {/* Appearance */}
-        <div className={`rounded-2xl p-4 border shadow-lg ${cardBg}`}>
-          <h3 className="text-sm font-bold mb-4 flex items-center space-x-2">
-            <Palette size={16} className="text-purple-500" />
-            <span>Appearance</span>
-          </h3>
-          
+    <div
+      className={`h-full w-full overflow-y-auto px-4 pt-4 custom-scrollbar ${textColor}`}
+    >
+      <div className={pageShell}>
+        <div className="flex items-center justify-between">
           <button
-            onClick={toggleTheme}
-            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${
-              theme === 'light' 
-                ? 'bg-slate-100 border-slate-300' 
-                : 'bg-slate-800 border-slate-600'
-            }`}
+            onClick={() => {
+              buttonSoundService.play('back')
+              onBack()
+            }}
+            className={backButton}
           >
-            <div className="flex items-center space-x-3">
-              {theme === 'light' ? <Sun size={20} className="text-amber-500" /> : <Moon size={20} className="text-indigo-400" />}
-              <div className="text-left">
-                <p className="text-sm font-bold">{theme === 'light' ? 'Day Mode' : 'Night Mode'}</p>
-                <p className={`text-xs ${subTextColor}`}>Tap to switch</p>
-              </div>
-            </div>
-            <div className={`w-12 h-6 rounded-full transition-colors ${theme === 'dark' ? 'bg-indigo-600' : 'bg-slate-300'} relative`}>
-              <div className={`absolute top-1 ${theme === 'dark' ? 'right-1' : 'left-1'} w-4 h-4 bg-white rounded-full transition-all`} />
-            </div>
+            <ArrowLeft size={16} />
+            <span>Back</span>
           </button>
+          <span className={titlePill}>Settings</span>
         </div>
 
-        {/* Audio Settings */}
-        <div className={`rounded-2xl p-4 border shadow-lg ${cardBg}`}>
-          <h3 className="text-sm font-bold mb-4 flex items-center space-x-2">
-            <Volume2 size={16} className="text-emerald-500" />
-            <span>Audio</span>
-          </h3>
+        <div className="mt-4 flex justify-center">
+          <BreathingOrb size={80} breathingSpeed={4000} />
+        </div>
 
-          <div className="space-y-6">
-            {/* Global Volume */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Master Volume</span>
-                <span className="text-xs text-amber-500 font-bold">{settings.ambienceVolume}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={settings.ambienceVolume}
-                onChange={(e) => updateVolume(Number(e.target.value))}
-                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-              />
-              <p className="text-[10px] text-slate-400 mt-1 italic">Controls volume for ambience and music.</p>
-            </div>
+        <div className={sectionFrame}>
+          <div className={`${cardBg} p-5`}>
+            <p className={sectionKicker}>Personalize Your Sacred Space</p>
+            <h1 className="mt-3 text-center font-serif text-xl leading-tight">
+              <span className="block">Shape the Atmosphere</span>
+              <span className="block">Around You</span>
+            </h1>
+            <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
+              Adjust the look, sound, reminders, and support tools that hold
+              your daily practice together.
+            </p>
+          </div>
+        </div>
 
-            {/* Toggles */}
-            <div className="flex justify-start gap-8">
-               <div className="flex items-center space-x-4">
-                <span className="text-sm w-12">Effects</span>
-                <button onClick={toggleSoundEffects} className={`w-10 h-5 rounded-full transition-colors ${settings.soundEffectsOn ? 'bg-emerald-600' : 'bg-slate-600'} relative`}>
-                  <div className={`absolute top-0.5 ${settings.soundEffectsOn ? 'right-0.5' : 'left-0.5'} w-4 h-4 bg-white rounded-full transition-all`} />
-                </button>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm w-12">Music</span>
-                <button onClick={toggleMusic} className={`w-10 h-5 rounded-full transition-colors ${settings.musicOn ? 'bg-emerald-600' : 'bg-slate-600'} relative`}>
-                  <div className={`absolute top-0.5 ${settings.musicOn ? 'right-0.5' : 'left-0.5'} w-4 h-4 bg-white rounded-full transition-all`} />
-                </button>
-              </div>
-            </div>
-
-            {/* Soundscape Sections */}
-            <div className="space-y-3 pt-2 border-t border-slate-700/30">
-              <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">Soundscapes</h4>
-              
-              <div className="space-y-1">
-                <label className="text-xs font-medium">App Ambience (Background)</label>
-                <select
-                  value={settings.soundscapeId}
-                  onChange={(e) => updateSpecificSoundscape('soundscapeId', e.target.value)}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm ${inputBg} ${textColor}`}
-                >
-                  <option value="">Select Ambience</option>
-                  {ambienceTracks.map((s) => (
-                    <option key={s.id} value={s.id}>{getSourceLabel(s)}</option>
-                  ))}
-                </select>
+        <div className={sectionFrame}>
+          <div className="px-1">
+            <h2 className={titlePill}>Audio</h2>
+          </div>
+          <div className="mt-3 space-y-3">
+            <div className={`${surfaceCard} p-5`}>
+              <p className={sectionKicker}>Core Audio</p>
+              <div className="mt-3 flex items-start gap-3">
+                <Volume2 size={18} className="mt-1 text-emerald-500" />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium uppercase tracking-[0.18em]">
+                      Master Volume
+                    </span>
+                    <span className="text-xs font-medium text-amber-500">
+                      {settings.ambienceVolume}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={settings.ambienceVolume}
+                    onChange={(e) => updateVolume(Number(e.target.value))}
+                    className="mt-3 w-full cursor-pointer appearance-none rounded-lg accent-amber-500"
+                  />
+                  <p className={`mt-2 text-xs ${subTextColor}`}>
+                    Controls ambience and music levels throughout the app.
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-medium">I Am Practice Music</label>
-                <select
-                  value={settings.iAmSoundscapeId}
-                  onChange={(e) => updateSpecificSoundscape('iAmSoundscapeId', e.target.value)}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm ${inputBg} ${textColor}`}
-                >
-                  <option value="">Use Default</option>
-                  {iAmTracks.map((s) => (
-                    <option key={s.id} value={s.id}>{getSourceLabel(s)}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium">I Love Practice Music</label>
-                <select
-                  value={settings.iLoveSoundscapeId}
-                  onChange={(e) => updateSpecificSoundscape('iLoveSoundscapeId', e.target.value)}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm ${inputBg} ${textColor}`}
-                >
-                  <option value="">Use Default</option>
-                  {iLoveTracks.map((s) => (
-                    <option key={s.id} value={s.id}>{getSourceLabel(s)}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium">Meditation Music</label>
-                <select
-                  value={settings.meditationSoundscapeId}
-                  onChange={(e) => updateSpecificSoundscape('meditationSoundscapeId', e.target.value)}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm ${inputBg} ${textColor}`}
-                >
-                  <option value="">Use Default</option>
-                  {meditationTracks.map((s) => (
-                    <option key={s.id} value={s.id}>{getSourceLabel(s)}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Upload Section */}
-            <div className="pt-4 border-t border-slate-700/30">
-               <h4 className="text-xs font-bold uppercase text-slate-500 mb-3">Upload Your Music</h4>
-               
-               <div className="space-y-3">
-                 <div className="flex rounded-lg overflow-hidden border border-slate-600/50">
-                   {['MORNING_IAM', 'EVENING_ILOVE', 'MEDITATION', 'AMBIENCE'].map((cat) => (
-                     <button
-                        key={cat}
-                        onClick={() => {
-                          buttonSoundService.play('click');
-                          setUploadCategory(cat);
-                        }}
-                        className={`flex-1 py-2 text-[8px] sm:text-[10px] font-bold transition-colors ${
-                          uploadCategory === cat 
-                          ? 'bg-emerald-600 text-white' 
-                          : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700'
-                        }`}
-                     >
-                       {cat === 'MORNING_IAM' ? 'I Am' : cat === 'EVENING_ILOVE' ? 'I Love' : cat === 'MEDITATION' ? 'Meditation' : 'Ambience'}
-                     </button>
-                   ))}
-                 </div>
-
-                 <label className={`flex items-center justify-between p-3 rounded-xl border border-dashed cursor-pointer transition-colors ${uploadFile ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-500 hover:border-emerald-400'}`}>
-                    <div className="flex items-center space-x-3">
-                      <Music size={18} className={uploadFile ? 'text-emerald-500' : 'text-slate-400'} />
-                      <span className={`text-sm ${uploadFile ? 'text-emerald-400' : 'text-slate-400'}`}>
-                        {uploadFile ? uploadFile.name : 'Choose Audio File...'}
-                      </span>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className={itemCard}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium">Sound Effects</p>
+                      <p className={`mt-1 text-xs ${subTextColor}`}>
+                        Clicks, confirmations, and transitions
+                      </p>
                     </div>
-                    <input type="file" accept="audio/*" onChange={handleFileSelect} className="hidden" />
-                 </label>
+                    <button
+                      onClick={toggleSoundEffects}
+                      className={`relative h-7 w-12 rounded-full transition-colors ${
+                        settings.soundEffectsOn
+                          ? 'bg-amber-500'
+                          : 'bg-black/40 border border-amber-500/20'
+                      }`}
+                    >
+                      <div
+                        className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${
+                          settings.soundEffectsOn ? 'left-6' : 'left-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
 
-                 {uploadFile && (
-                   <button 
+                <div className={itemCard}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium">Music</p>
+                      <p className={`mt-1 text-xs ${subTextColor}`}>
+                        Background tracks during practice
+                      </p>
+                    </div>
+                    <button
+                      onClick={toggleMusic}
+                      className={`relative h-7 w-12 rounded-full transition-colors ${
+                        settings.musicOn ? 'bg-amber-500' : 'bg-black/40 border border-amber-500/20'
+                      }`}
+                    >
+                      <div
+                        className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${
+                          settings.musicOn ? 'left-6' : 'left-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={`${surfaceCard} p-5`}>
+              <p className={sectionKicker}>Soundscape Assignments</p>
+              <div className="mt-4 space-y-3">
+                <div className={itemCard}>
+                  <label className={sectionKicker}>
+                    App Ambience
+                  </label>
+                  <p className={`mt-2 text-xs leading-relaxed ${subTextColor}`}>
+                    Applies immediately to the background atmosphere when Music
+                    is on.
+                  </p>
+                  <select
+                    value={settings.soundscapeId}
+                    onChange={(e) =>
+                      updateSpecificSoundscape('soundscapeId', e.target.value)
+                    }
+                    className={`mt-2 w-full rounded-full border px-3 py-2 text-sm ${inputBg}`}
+                  >
+                    <option value="">Select Ambience</option>
+                    {ambienceTracks.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {getSourceLabel(s)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={itemCard}>
+                  <label className={sectionKicker}>
+                    I Am Practice
+                  </label>
+                  <select
+                    value={settings.iAmSoundscapeId}
+                    onChange={(e) =>
+                      updateSpecificSoundscape(
+                        'iAmSoundscapeId',
+                        e.target.value,
+                      )
+                    }
+                    className={`mt-2 w-full rounded-full border px-3 py-2 text-sm ${inputBg}`}
+                  >
+                    <option value="">Use Default</option>
+                    {iAmTracks.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {getSourceLabel(s)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={itemCard}>
+                  <label className={sectionKicker}>
+                    I Love Practice
+                  </label>
+                  <select
+                    value={settings.iLoveSoundscapeId}
+                    onChange={(e) =>
+                      updateSpecificSoundscape(
+                        'iLoveSoundscapeId',
+                        e.target.value,
+                      )
+                    }
+                    className={`mt-2 w-full rounded-full border px-3 py-2 text-sm ${inputBg}`}
+                  >
+                    <option value="">Use Default</option>
+                    {iLoveTracks.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {getSourceLabel(s)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={itemCard}>
+                  <label className={sectionKicker}>
+                    Meditation
+                  </label>
+                  <select
+                    value={settings.meditationSoundscapeId}
+                    onChange={(e) =>
+                      updateSpecificSoundscape(
+                        'meditationSoundscapeId',
+                        e.target.value,
+                      )
+                    }
+                    className={`mt-2 w-full rounded-full border px-3 py-2 text-sm ${inputBg}`}
+                  >
+                    <option value="">Use Default</option>
+                    {meditationTracks.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {getSourceLabel(s)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className={`${surfaceCard} p-5`}>
+              <p className={sectionKicker}>Upload Your Music</p>
+              <div className="mt-4 space-y-4">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {[
+                    'MORNING_IAM',
+                    'EVENING_ILOVE',
+                    'MEDITATION',
+                    'AMBIENCE',
+                  ].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => {
+                        buttonSoundService.play('click')
+                        setUploadCategory(cat)
+                      }}
+                      className={`rounded-full border px-2 py-2 text-[10px] font-extrabold uppercase tracking-[0.18em] transition-colors ${
+                        uploadCategory === cat
+                          ? 'border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 text-slate-950'
+                          : `${inputBg} hover:opacity-90`
+                      }`}
+                    >
+                      {cat === 'MORNING_IAM'
+                        ? 'I Am'
+                        : cat === 'EVENING_ILOVE'
+                          ? 'I Love'
+                          : cat === 'MEDITATION'
+                            ? 'Meditation'
+                            : 'Ambience'}
+                    </button>
+                  ))}
+                </div>
+
+                <label
+                  className={`flex cursor-pointer items-center justify-between gap-3 rounded-[20px] border border-dashed px-4 py-4 transition-colors ${
+                    uploadFile
+                      ? 'border-emerald-500 bg-emerald-500/10'
+                        : `${actionRow}`
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Music
+                      size={18}
+                      className={
+                        uploadFile ? 'text-emerald-400' : 'text-amber-500'
+                      }
+                    />
+                    <span className="text-sm font-medium">
+                      {uploadFile ? uploadFile.name : 'Choose audio file'}
+                    </span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <span className={`text-xs ${subTextColor}`}>Browse</span>
+                </label>
+
+                {uploadFile ? (
+                  <button
                     onClick={handleUploadSubmit}
-                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold flex items-center justify-center space-x-2"
-                   >
-                     <Upload size={16} />
-                     <span>Upload to {uploadCategory.replace('_', ' ')}</span>
-                   </button>
-                 )}
-               </div>
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 px-4 py-3 text-xs font-extrabold uppercase tracking-[0.18em] text-slate-950 shadow-[0_2px_10px_rgba(0,0,0,0.22)]"
+                  >
+                    <Upload size={16} />
+                    <span>Upload to {uploadCategory.replace('_', ' ')}</span>
+                  </button>
+                ) : null}
+
+                {userAudioFile ? (
+                  <div className={itemCard}>
+                    <p className="text-sm font-medium">
+                      Current uploaded track
+                    </p>
+                    <p className={`mt-1 text-xs ${subTextColor}`}>
+                      {userAudioFile.name}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Daily Reminders */}
-        <div className={`rounded-2xl p-4 border shadow-lg ${cardBg}`}>
-          <div className="flex items-center justify_between mb-4">
-            <h3 className="text-sm font-bold flex items-center space-x-2">
-              <Clock size={16} className="text-amber-500" />
-              <span>Daily Reminder</span>
-            </h3>
+        <div className={sectionFrame}>
+          <div className="flex items-center justify-between px-1">
+            <h2 className={titlePill}>Practice Reminders</h2>
             <button
               onClick={toggleReminders}
-              className={`w-12 h-6 rounded-full transition-colors ${settings.reminders.enabled ? 'bg-amber-500' : 'bg-slate-600'} relative`}
+              className={`relative h-7 w-12 rounded-full transition-colors ${
+                settings.reminders.enabled ? 'bg-amber-500' : 'bg-black/40 border border-amber-500/20'
+              }`}
             >
-              <div className={`absolute top-1 ${settings.reminders.enabled ? 'right-1' : 'left-1'} w-4 h-4 bg-white rounded-full transition-all`} />
+              <div
+                className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${
+                  settings.reminders.enabled ? 'left-6' : 'left-1'
+                }`}
+              />
             </button>
           </div>
 
-          {settings.reminders.enabled && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-              <div className="flex p-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700">
-                <button
-                  onClick={() => updateReminderMode('INTERVAL')}
-                  className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                    settings.reminders.mode === 'INTERVAL'
-                      ? 'bg-white text-amber-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  Interval
-                </button>
-                <button
-                  onClick={() => updateReminderMode('SPECIFIC_TIMES')}
-                  className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                    settings.reminders.mode === 'SPECIFIC_TIMES'
-                      ? 'bg-white text-amber-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  Specific Time
-                </button>
+          <div className={`mt-3 ${surfaceCard} p-5`}>
+            <div className="flex items-start gap-3">
+              <Clock size={18} className="mt-1 text-amber-500" />
+              <div>
+                <p className={sectionKicker}>Gentle Structure</p>
+                <p className={`mt-2 text-sm leading-relaxed ${subTextColor}`}>
+                    Set times for each practice while the app is open.
+                    Reminders do not currently run after you close the app.
+                </p>
               </div>
+            </div>
 
-              {settings.reminders.mode === 'INTERVAL' ? (
-                <div className="space-y-2">
-                  <p className={`text-xs ${subTextColor}`}>Remind me to practice every:</p>
-                  <div className="flex space-x-2">
-                    {[30, 60, 120].map((min) => (
+            {settings.reminders.enabled ? (
+              <div className="mt-4 space-y-3">
+                <div className={itemCard}>
+                  <p className={sectionKicker}>
+                    Timezone
+                  </p>
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <p className={`text-sm break-all ${subTextColor}`}>
+                      {settings.reminders.timezone}
+                    </p>
+                    <button
+                      onClick={applyDeviceTimezone}
+                      className={`rounded-full border px-3 py-2 text-[11px] font-medium uppercase tracking-[0.18em] ${actionRow}`}
+                    >
+                      Use Device
+                    </button>
+                  </div>
+                </div>
+
+                <div className={itemCard}>
+                  <p className={sectionKicker}>
+                    Practice Times
+                  </p>
+                  <div className="mt-3 space-y-3">
+                    {reminderRows.map((row) => {
+                      const rowSetting =
+                        settings.reminders.practiceTimes[row.id]
+                      return (
+                        <div
+                          key={row.id}
+                          className={`${itemCard} flex items-center gap-3`}
+                        >
+                          <button
+                            onClick={() =>
+                              updatePracticeReminder(row.id, {
+                                enabled: !rowSetting.enabled,
+                              })
+                            }
+                            className={`relative h-6 w-11 rounded-full transition-colors ${
+                              rowSetting.enabled
+                                ? 'bg-amber-500'
+                                : 'bg-black/40 border border-amber-500/20'
+                            }`}
+                          >
+                            <div
+                              className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-all ${
+                                rowSetting.enabled ? 'left-6' : 'left-1'
+                              }`}
+                            />
+                          </button>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium">{row.label}</p>
+                          </div>
+                          <input
+                            type="time"
+                            value={rowSetting.time}
+                            onChange={(e) =>
+                              updatePracticeReminder(row.id, {
+                                time: e.target.value,
+                              })
+                            }
+                            disabled={!rowSetting.enabled}
+                            className={`rounded-full border px-3 py-2 text-xs ${rowSetting.enabled ? inputBg : 'border-amber-500/10 bg-black/20 text-slate-500'}`}
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className={itemCard}>
+                  <p className={sectionKicker}>
+                    Default Snooze
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    {[15, 30, 60].map((minutes) => (
                       <button
-                        key={min}
-                        onClick={() => updateInterval(min)}
-                        className={`flex-1 py-2 px-3 rounded-lg border text-xs font-bold transition-all ${
-                          settings.reminders.intervalMinutes === min
-                            ? 'bg-amber-500 text-white border-amber-600'
-                            : `${theme === 'light' ? 'bg-slate-50 border-slate-300' : 'bg-slate-800 border-slate-600'} ${subTextColor}`
+                        key={minutes}
+                        onClick={() =>
+                          updateSnoozeMinutes(minutes as 15 | 30 | 60)
+                        }
+                        className={`flex-1 rounded-full border px-3 py-2 text-xs font-extrabold uppercase tracking-[0.18em] transition-colors ${
+                          settings.reminders.snoozeMinutes === minutes
+                            ? 'border-amber-300/55 bg-gradient-to-r from-amber-300/95 to-orange-300/92 text-slate-950'
+                            : `${inputBg} hover:opacity-90`
                         }`}
                       >
-                        {min}m
+                        {minutes}m
                       </button>
                     ))}
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  <p className={`text-xs ${subTextColor}`}>Set a specific time (e.g. 08:00):</p>
-                  <input
-                    type="time"
-                    className={`w-full px-3 py-2 rounded-lg border text-sm ${
-                      theme === 'light' 
-                        ? 'bg-slate-50 border-slate-300' 
-                        : 'bg-slate-800 border-slate-600'
-                    }`}
-                    defaultValue={settings.reminders.specificTimes[0]}
-                  />
-                  <p className="text-[10px] text-slate-500 italic">Push notifications require browser permission.</p>
+
+                <div className={itemCard}>
+                  <p className={sectionKicker}>
+                    Notification Permission
+                  </p>
+                  <p className={`mt-2 text-sm ${subTextColor}`}>
+                    {settings.reminders.notificationPermission === 'granted' &&
+                      'Allowed'}
+                    {settings.reminders.notificationPermission === 'default' &&
+                      'Not requested yet'}
+                    {settings.reminders.notificationPermission === 'denied' &&
+                      'Blocked in browser or device settings'}
+                    {settings.reminders.notificationPermission ===
+                      'unsupported' &&
+                      'Not supported on this device or browser'}
+                  </p>
+                  {settings.reminders.notificationPermission !== 'granted' &&
+                  settings.reminders.notificationPermission !==
+                    'unsupported' ? (
+                    <button
+                      onClick={() => {
+                        buttonSoundService.play('click')
+                        onRequestReminderPermission?.()
+                      }}
+                      className={`mt-3 rounded-full border px-3 py-2 text-[11px] font-medium uppercase tracking-[0.18em] ${actionRow}`}
+                    >
+                      Request Permission
+                    </button>
+                  ) : null}
+                  <p className={`mt-3 text-xs ${subTextColor}`}>
+                    Reminders stay aligned with your local timezone and each
+                    practice schedule.
+                  </p>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className={`rounded-2xl p-4 border shadow-lg ${cardBg}`}>
-          <h3 className="text-sm font-bold mb-4">Actions</h3>
-          
-          <div className="space-y-2">
-            <button
-              onClick={() => {
-                buttonSoundService.play('click');
-                onChangeFocus();
-              }}
-              className="w-full flex items-center justify-between p-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-colors"
-            >
-              <span className="text-sm font-medium text-indigo-400">Change Focus Area</span>
-              <RefreshCw size={16} className="text-indigo-400" />
-            </button>
-
-            <button
-              onClick={() => {
-                buttonSoundService.play('click');
-                onReplayTutorial();
-              }}
-              className="w-full flex items-center justify-between p-3 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 transition-colors"
-            >
-              <span className="text-sm font-medium text-purple-400">Replay Tutorial</span>
-              <RefreshCw size={16} className="text-purple-400" />
-            </button>
-
-            <button
-              onClick={() => {
-                buttonSoundService.play('back');
-                onSignOut();
-              }}
-              className="w-full flex items-center justify-between p-3 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-colors"
-            >
-              <span className="text-sm font-medium text-red-400">Sign Out</span>
-              <LogOut size={16} className="text-red-400" />
-            </button>
+              </div>
+            ) : (
+              <div className={`${itemCard} mt-4`}>
+                <p className={`text-sm leading-relaxed ${subTextColor}`}>
+                  Turn reminders on when you want the app to gently call you
+                  back into practice.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className={`rounded-2xl p-4 border shadow-lg ${cardBg}`}>
-          <p className={`text-xs ${subTextColor} text-center leading-relaxed`}>
-            Abundance Alchemy v1.0.0<br />
-            Based on "I Am Practice" by Michael Soaries<br />
-            © 2024 Abundant Thought - Michael Soaries
-          </p>
+        <div className={sectionFrame}>
+          <div className="px-1">
+            <h2 className={titlePill}>Actions</h2>
+          </div>
+          <div
+            className={`mt-3 ${surfaceCard} p-5`}
+          >
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  buttonSoundService.play('click')
+                  onChangeFocus()
+                }}
+                className={`flex w-full items-center justify-between rounded-[20px] px-4 py-3 transition-colors ${actionRow}`}
+              >
+                <span className={`text-sm font-medium ${accentText}`}>
+                  Change Focus Area
+                </span>
+                <RefreshCw size={16} className={accentText} />
+              </button>
+
+              <button
+                onClick={() => {
+                  buttonSoundService.play('click')
+                  onReplayWelcomeInvocation()
+                }}
+                className={`flex w-full items-center justify-between rounded-[20px] px-4 py-3 transition-colors ${actionRow}`}
+              >
+                <span className="text-sm font-medium">
+                  Replay Welcome Invocation
+                </span>
+                <Music size={16} />
+              </button>
+
+              <button
+                onClick={() => {
+                  buttonSoundService.play('click')
+                  onReplayTutorial()
+                }}
+                className={`flex w-full items-center justify-between rounded-[20px] px-4 py-3 transition-colors ${actionRow}`}
+              >
+                <span className="text-sm font-medium">Replay Tutorial</span>
+                <RefreshCw size={16} />
+              </button>
+
+              <button
+                onClick={() => {
+                  buttonSoundService.play('back')
+                  onSignOut()
+                }}
+                className="flex w-full items-center justify-between rounded-[20px] border border-red-500/25 bg-red-500/10 px-4 py-3 transition-colors hover:bg-red-500/18"
+              >
+                <span className="text-sm font-medium text-red-300">
+                  Sign Out
+                </span>
+                <LogOut size={16} className="text-red-300" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className={sectionFrame}>
+          <div
+            className={`${surfaceCard} p-5 text-center`}
+          >
+            <p className={`text-xs leading-relaxed ${subTextColor}`}>
+              Abundance Alchemy v1.0.0
+              <br />
+              Based on "I Am Practice" by Michael Soaries
+              <br />© 2024 Abundant Thought - Michael Soaries
+            </p>
+          </div>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

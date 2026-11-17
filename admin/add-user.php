@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/admin_init.php';
 require_once '../db.php';
 if (!isset($_SESSION['admin_id'])) { header("Location: login.php"); exit; }
 
@@ -9,6 +9,10 @@ $welcome_path = __DIR__ . '/email_templates/welcome.txt';
 if (!is_dir(dirname($welcome_path))) mkdir(dirname($welcome_path), 0777, true);
 // Default template if not exists
 if (!file_exists($welcome_path)) file_put_contents($welcome_path, "Welcome {name}!\n\nThank you for joining Abundance Alchemy.");
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    aa_require_valid_csrf();
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mode']) && $_POST['mode'] === 'add') {
     $name = trim($_POST['name']);
@@ -63,6 +67,7 @@ if (isset($_POST['save_template'])) {
     <h4>Add User</h4>
     <?php if ($msg): ?><div class="alert alert-info"><?=htmlspecialchars($msg)?></div><?php endif; ?>
     <form method="post" enctype="multipart/form-data" class="mb-5 row g-2">
+        <?php aa_csrf_field(); ?>
         <input type="hidden" name="mode" value="add">
         <div class="col-6">
             <input type="text" name="name" required class="form-control" placeholder="Name">
@@ -94,6 +99,7 @@ if (isset($_POST['save_template'])) {
     </form>
     <h5>Edit Welcome Email Template</h5>
     <form method="post">
+        <?php aa_csrf_field(); ?>
         <textarea name="welcome_template" class="form-control mb-2" rows="6"><?=htmlspecialchars(file_get_contents($welcome_path))?></textarea>
         <button class="btn btn-secondary" name="save_template">Save Template</button>
         <div class="text-muted"><small>Use <b>{name}</b> and <b>{email}</b> placeholders.</small></div>

@@ -1,35 +1,65 @@
 <?php
 include_once 'config.php';
-$data = json_decode(file_get_contents("php://input"));
 
-if (!empty($data->email) && !empty($data->text) && !empty($data->type)) {
-    // 1. Get User ID from Email
-    $stmt = $conn->prepare("SELECT id FROM users WHERE email = :email");
-    $stmt->bindParam(":email", $data->email);
-    $stmt->execute();
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($user) {
-        // 2. Insert Affirmation
-        $query = "INSERT INTO user_affirmations (user_id, text, type, created_at) VALUES (:uid, :text, :type, NOW())";
-        $insert = $conn->prepare($query);
-        
-        $insert->bindParam(":uid", $user['id']);
-        $insert->bindParam(":text", $data->text);
-        $insert->bindParam(":type", $data->type);
-        
-        if ($insert->execute()) {
-            echo json_encode(["success" => true, "id" => $conn->lastInsertId()]);
-        } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Database error"]);
-        }
-    } else {
-        http_response_code(404);
-        echo json_encode(["message" => "User not found"]);
-    }
-} else {
-    http_response_code(400);
-    echo json_encode(["message" => "Incomplete data"]);
+aa_require_method('POST');
+$data = aa_read_json_input();
+$identity = aa_require_authenticated_session();
+$ownerBinding = aa_resolve_owner_binding($conn, 'user_affirmations', $identity['userId'], $identity['userEmail']);
+$type = strtoupper(trim((string)($data['type'] ?? '')));
+$allowedTypes = ['MORNING_IAM', 'EVENING_ILOVE'];
+$text = trim((string)($data['text'] ?? ''));
+$category = trim((string)($data['category'] ?? ''));
+
+if ($text === '' || $type === '') {
+    aa_error_response('Incomplete data', 400);
 }
-?>
+
+if (!$ownerBinding) {
+    aa_error_response('Unauthorized', 401);
+}
+
+if (!in_array($type, $allowedTypes, true)) {
+    aa_error_response('Invalid affirmation payload', 400);
+}
+
+if (!aa_has_col($ownerBinding['columns'], 'text') || !aa_has_col($ownerBinding['columns'], 'type')) {
+    aa_error_response('User affirmations table is missing required columns', 500);
+}
+
+api_require_csrf();
+
+$columns = [$ownerBinding['column'], 'text', 'type'];
+$values = [':owner', ':text', ':type'];
+$hasCategory = aa_has_col($ownerBinding['columns'], 'category');
+$hasCreatedAt = aa_has_col($ownerBinding['columns'], 'created_at');
+
+if ($hasCategory) {
+    $columns[] = 'category';
+    $values[] = ':category';
+}
+
+if ($hasCreatedAt) {
+    $columns[] = 'created_at';
+    $values[] = 'NOW()';
+}
+
+try {
+    $query = 'INSERT INTO user_affirmations (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $values) . ')';
+    $insert = $conn->prepare($query);
+    $insert->bindValue(':owner', $ownerBinding['value'], $ownerBinding['pdoType']);
+    $insert->bindValue(':text', $text, PDO::PARAM_STR);
+    $insert->bindValue(':type', $type, PDO::PARAM_STR);
+    if ($hasCategory) {
+        $insert->bindValue(':category', $category !== '' ? $category : 'General', PDO::PARAM_STR);
+    }
+    $insert->execute();
+
+    aa_json_response([
+        'success' => true,
+        'id' => $conn->lastInsertId(),
+        'message' => 'Affirmation added',
+    ]);
+} catch (Throwable $e) {
+    error_log('[api/add-user-affirmation.php] Insert failed: ' . $e->getMessage());
+    aa_error_response('Unable to save affirmation', 500);
+}

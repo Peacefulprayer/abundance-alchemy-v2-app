@@ -1,43 +1,57 @@
 <?php
-// API: request password reset
-// POST JSON: { "email": "user@example.com" }
+include_once 'config.php';
 
-include_once 'config.php';                       // $conn, CORS & JSON headers
-require_once __DIR__ . '/../password-reset-helpers.php'; // $pdo in that file, but helpers accept any PDO
-
-$raw  = file_get_contents("php://input");
-$data = json_decode($raw, true);
-
-$email = isset($data['email']) ? trim($data['email']) : '';
+aa_require_method('POST');
+$data = aa_read_json_input();
+$email = trim((string)($data['email'] ?? ''));
 
 if ($email === '') {
-    http_response_code(400);
-    echo json_encode(["message" => "Email required"]);
-    exit();
+    aa_error_response('Email required', 400);
+}
+
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    aa_error_response('Invalid email address', 400);
+}
+
+$rateLimit = aa_rate_limit_consume('api_password_reset', 5, 60 * 60, $email);
+if (!$rateLimit['allowed']) {
+    aa_log_auth_event($conn, 'password_reset_rate_limited', false, $email, null, 'user');
+    aa_error_response('Too many reset requests. Please try again later.', 429, [
+        'retryAfter' => $rateLimit['retry_after'],
+    ]);
 }
 
 try {
-    $stmt = $conn->prepare("SELECT id, name, email FROM users WHERE email = ?");
+    $stmt = $conn->prepare('SELECT id, name, email FROM users WHERE email = ?');
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user && !empty($user['email'])) {
-        // Use the same helper used by forgot-password.php
-        aa_send_password_reset_email_public(
-            $conn,                    // $conn is also a PDO instance
-            (int)$user['id'],
-            $user['email'],
-            $user['name'] ?? ''
-        );
+        try {
+            aa_issue_password_reset(
+                $conn,
+                (int)($user['id'] ?? 0),
+                (string)$user['email'],
+                (string)($user['name'] ?? '')
+            );
+        } catch (Throwable $inner) {
+            error_log('[api/request-password-reset.php] aa_issue_password_reset failed: ' . $inner->getMessage());
+        }
     }
 
-    // Same message as before, but now actually sends an email if possible.
-    echo json_encode(["message" => "Reset link sent"]);
-} catch (PDOException $e) {
-    http_response_code(500);
-    if (defined('DEBUG_MODE') && DEBUG_MODE) {
-        echo json_encode(["message" => "Error: " . $e->getMessage()]);
-    } else {
-        echo json_encode(["message" => "Error"]);
-    }
+    aa_log_auth_event(
+        $conn,
+        'password_reset_requested',
+        true,
+        $email,
+        $user ? (int)($user['id'] ?? 0) : null,
+        'user',
+        ['matched_user' => (bool)$user]
+    );
+
+    aa_json_response(['message' => 'Reset link sent']);
+} catch (Throwable $e) {
+    error_log('[api/request-password-reset.php] Reset request failed: ' . $e->getMessage());
+    aa_log_auth_event($conn, 'password_reset_request_error', false, $email, null, 'user', ['error' => $e->getMessage()]);
+    aa_error_response('Error', 500);
 }

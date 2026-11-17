@@ -1,0 +1,34 @@
+# Private configuration and runtime data
+config.local.php
+*.local.php
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+private/
+logs/
+error_log
+*.log
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite*
+admin/user_uploads/
+# Dependencies and generated builds
+node_modules/
+dist/
+coverage/
+.cache/
+.vite/
+# Source-only artwork and operating system metadata
+background images/
+._*
+.DS_Store
+*.zip
+# Non-runtime reference/generated files
+/compressed.html
+/Abundance_Alchemy_Project_Brief.docx
+*.psd

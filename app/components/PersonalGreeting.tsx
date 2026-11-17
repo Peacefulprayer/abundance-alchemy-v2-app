@@ -1,8 +1,16 @@
 // components/PersonalGreeting.tsx - RETURN PORTAL
 import React, { useMemo } from 'react';
-import { CycleType, FocusArea, UserProfile } from '../types';
+import { FocusArea, UserProfile } from '../types';
+import { getFocusCycleProgress } from '../services/focusCycle';
 import BreathingOrb from './BreathingOrb';
 import { buttonSoundService } from '../services/buttonSoundService';
+import {
+  SACRED_LAYOUT,
+  SACRED_ORB_WRAPPER,
+  SACRED_TITLE_CARD,
+  SACRED_BODY_CARD,
+  SACRED_CARD_GAP,
+} from '../styles/sacredCards';
 
 interface PersonalGreetingProps {
   user: UserProfile;
@@ -18,34 +26,10 @@ const getFocusLabel = (focus: FocusAreaLike): string => {
   return typeof focus === 'string' ? focus : focus.label || 'General';
 };
 
-const getFocusSwahili = (focus: FocusAreaLike): string => {
-  if (!focus || typeof focus === 'string') return '';
-  return focus.swahili || '';
-};
-
-const cycleDays = (cycle: CycleType): number => {
-  if (cycle === CycleType.WEEKLY) return 7;
-  if (cycle === CycleType.MONTHLY) return 30;
-  return 1;
-};
-
-const readCycleStartISO = (): string | null =>
-  localStorage.getItem('abundance_cycle_start') || null;
-
-const writeCycleStartISO = (iso: string) =>
-  localStorage.setItem('abundance_cycle_start', iso);
-
-const daysBetween = (startISO: string, end: Date): number => {
-  const start = new Date(startISO);
-  const ms = end.getTime() - start.getTime();
-  return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
-};
-
 export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
   user,
   onContinue,
   onChooseNewFocus,
-  theme = 'dark',
 }) => {
   const displayName = useMemo(() => {
     return (user.preferredName || user.name || 'Friend').trim() || 'Friend';
@@ -57,27 +41,9 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
   }, [user]);
 
   const focus = useMemo(() => getFocusLabel(firstFocus), [firstFocus]);
-  const focusSwahili = useMemo(() => getFocusSwahili(firstFocus), [firstFocus]);
-
-  const totalDays = useMemo(() => cycleDays(user.cyclePreference), [user.cyclePreference]);
-
-  const { dayIndex, remainingDays, complete } = useMemo(() => {
-    const now = new Date();
-    let startISO = readCycleStartISO();
-
-    if (!startISO) {
-      // Temporary bridge until backend stores focus_started_at.
-      startISO = user.lastPracticeDate || now.toISOString();
-      writeCycleStartISO(startISO);
-    }
-
-    const elapsed = daysBetween(startISO, now);
-    const day = Math.min(totalDays, elapsed + 1);
-    const remaining = Math.max(0, totalDays - (elapsed + 1));
-    const isComplete = elapsed + 1 >= totalDays;
-
-    return { dayIndex: day, remainingDays: remaining, complete: isComplete };
-  }, [user.lastPracticeDate, totalDays]);
+  const { totalDays, dayIndex, remainingDays, complete } = getFocusCycleProgress(
+    user.cyclePreference, user.cycleStartedAt,
+  );
 
   const handleContinue = () => {
     buttonSoundService.play('click');
@@ -89,59 +55,57 @@ export const PersonalGreeting: React.FC<PersonalGreetingProps> = ({
     onChooseNewFocus();
   };
 
-  const titleCard =
-    'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
-
-  const bodyCard =
-    'backdrop-blur-md rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-xl bg-slate-900/40';
-
-  const subText = theme === 'light' ? 'text-slate-700' : 'text-slate-300';
-  const mainText = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto">
-      <div className="mt-8 md:mt-12 mb-4 md:mb-6">
+    <div className={`${SACRED_LAYOUT} bg-black`}>
+      {/* ORB */}
+      <div className={SACRED_ORB_WRAPPER}>
         <BreathingOrb size={80} breathingSpeed={4000} />
       </div>
 
-      <div className={`${titleCard} mb-4 md:mb-6`}>
+      {/* TITLE CARD */}
+      <div className={`${SACRED_TITLE_CARD} ${SACRED_CARD_GAP}`}>
         <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
-          Welcome Back
+          Abundance Alchemy
         </h1>
       </div>
 
-      <div className={`${bodyCard} mb-6 md:mb-8`}>
+      {/* BODY CARD */}
+      <div className={`${SACRED_BODY_CARD} ${SACRED_CARD_GAP}`}>
         <div className="text-center space-y-2 md:space-y-3">
-          <p className="text-sm md:text-base text-amber-400 font-medium tracking-wide">
-            Karibu tena.
+          <p className="text-sm md:text-base font-normal tracking-wide text-white">
+            Karibu Tena.
           </p>
 
-          <p className={`text-xs md:text-sm italic ${subText}`}>
-            The Ancestors are proud of your devotion.
+          <p className="text-sm md:text-base font-normal tracking-wide text-white">
+            Welcome Back
           </p>
 
-          <p className={`text-sm md:text-base font-light ${mainText}`}>
-            Welcome back, <span className="text-amber-300">{displayName}</span>.
+          <p className="text-[10px] md:text-sm leading-tight whitespace-nowrap text-white">
+            The Ancestors acknowledge your devotion.
           </p>
 
-          <div className={`pt-2 text-xs md:text-sm ${subText} space-y-1`}>
-            <p>
-              Your focus is <span className="text-amber-300 font-medium">{focus}</span>
-              {focusSwahili ? <span className="text-slate-400"> ({focusSwahili})</span> : null}.
-            </p>
+          <p className="text-sm md:text-base font-normal text-white pt-1">
+            {displayName}, your focus is:
+          </p>
 
+          <p className="text-sm md:text-base font-normal text-white">
+            {focus}.
+          </p>
+
+          <div className="pt-2 text-sm md:text-base font-normal text-white space-y-1">
             {!complete ? (
               <p>
-                Day <span className="text-slate-200">{dayIndex}</span> of{' '}
-                <span className="text-slate-200">{totalDays}</span>.{' '}
-                <span className="text-slate-400">
+                Day {dayIndex} of {totalDays}.{' '}
+                <span className="text-white/85">
                   {remainingDays} day{remainingDays === 1 ? '' : 's'} remaining.
                 </span>
               </p>
             ) : (
-              <p className="text-slate-300">
-                Your cycle is complete. Would you like to continue in this focus, or choose a new one?
-              </p>
+              <>
+                <p>You have completed your cycle.</p>
+                <p>Continue with this focus,</p>
+                <p>or choose a new one?</p>
+              </>
             )}
           </div>
 

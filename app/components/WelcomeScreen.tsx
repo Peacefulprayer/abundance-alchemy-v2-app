@@ -1,160 +1,296 @@
-// components/WelcomeScreen.tsx - SACRED INVOCATION (validated-user only; no localStorage trust)
-import React, { useEffect, useRef, useState } from 'react';
-import { AppMode, UserAccount } from '../types';
-import { SacredBackground } from './SacredBackground';
-import { buttonSoundService } from '../services/buttonSoundService';
-import BreathingOrb from './BreathingOrb';
-import { href } from '../services/base';
-import { stopAmbience } from '../services/audioService';
+// components/WelcomeScreen.tsx - SACRED INVOCATION (state-driven; no localStorage trust)
+import React, { useEffect, useRef, useState } from 'react'
+import { AppMode, UserProfile } from '../types'
+import { SacredBackground } from './SacredBackground'
+import { buttonSoundService } from '../services/buttonSoundService'
+import BreathingOrb from './BreathingOrb'
+import { href } from '../services/base'
+import {
+  SACRED_LAYOUT,
+  SACRED_TITLE_CARD,
+  SACRED_BODY_CARD,
+  SACRED_FOOTER_CARD,
+  SACRED_INNER_WIDTH,
+} from '../styles/sacredCards'
 
 interface WelcomeScreenProps {
-  // IMPORTANT: this must be the *validated* user passed from App.tsx
-  user: UserAccount | null;
-  onComplete: (nextMode: AppMode) => void;
-  theme?: 'light' | 'dark';
+  // IMPORTANT: this must be the state user passed from App.tsx
+  user: UserProfile | null
+  isReturningVisitor?: boolean
+  onComplete: (nextMode: AppMode) => void
+  onNarrationChange?: (playing: boolean) => void
+  theme?: 'light' | 'dark'
 }
 
-const WELCOME_URL = href('assets/audio/voices/welcome.mp3');
-const WELCOME_DURATION_MS = 35000;
-const FINISH_DELAY_MS = 1500;
+const WELCOME_URL = href('assets/audio/voices/welcome.mp3')
+const WELCOME_DURATION_MS = 34664
+const FINISH_DELAY_MS = 1500
+const INVOCATION_CAPTIONS = [
+  {
+    startMs: 0,
+    endMs: 4500,
+    text: 'Welcome to Abundance Alchemy, your I am transformation station.',
+  },
+  {
+    startMs: 4500,
+    endMs: 10000,
+    text: 'I am an abundance alchemist. I stand as witness and guide for your practice.',
+  },
+  {
+    startMs: 10000,
+    endMs: 17000,
+    text: 'Your morning I am, your evening I love, and your meditation moments of gratitude sealing the work.',
+  },
+  { startMs: 17000, endMs: 19500, text: 'Remember the Divine One said,' },
+  {
+    startMs: 19500,
+    endMs: 25500,
+    text: 'Where two or more are gathered there shall I be, with the Divine One invoked.',
+  },
+  { startMs: 25500, endMs: 27500, text: 'Ancestors at the ready,' },
+  {
+    startMs: 27500,
+    endMs: WELCOME_DURATION_MS,
+    text: 'Set your focus, speak your word, rest in gratitude, and let divine law do the rest. Ase.',
+  },
+] as const
 
-// UNIVERSAL TITLE CARD CLASSES
-const titleCardClasses =
-  'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
-
-// UNIVERSAL CONTENT CARD CLASSES
-const bodyCardClasses =
-  'backdrop-blur-md rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-xl space-y-3 md:space-y-4 bg-slate-900/30';
-
-const footerCardClasses =
-  'backdrop-blur-md rounded-2xl border border-amber-500/20 p-3 w-full max-w-[280px] shadow-xl bg-slate-900/20';
+const getInvocationCaption = (
+  elapsedMs: number,
+  durationMs: number,
+): string => {
+  const normalizedDuration = durationMs > 0 ? durationMs : WELCOME_DURATION_MS
+  const scaledElapsed = Math.max(
+    0,
+    Math.min(
+      WELCOME_DURATION_MS,
+      (elapsedMs / normalizedDuration) * WELCOME_DURATION_MS,
+    ),
+  )
+  const activeCue =
+    INVOCATION_CAPTIONS.find(
+      (cue) => scaledElapsed >= cue.startMs && scaledElapsed < cue.endMs,
+    ) || INVOCATION_CAPTIONS[INVOCATION_CAPTIONS.length - 1]
+  return activeCue.text
+}
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   user,
+  isReturningVisitor = false,
   onComplete,
+  onNarrationChange,
   theme = 'dark',
 }) => {
-  const [progress, setProgress] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const didFinishRef = useRef(false);
-  const finishTimeoutRef = useRef<number | null>(null);
+  const [progress, setProgress] = useState(0)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [isPlaying, setIsPlaying] = useState(true)
+  const [audioBlocked, setAudioBlocked] = useState(false)
+  const [currentCaption, setCurrentCaption] = useState<string>(
+    INVOCATION_CAPTIONS[0].text,
+  )
+  const [showTranscript, setShowTranscript] = useState(false)
+  const didFinishRef = useRef(false)
+  const finishTimeoutRef = useRef<number | null>(null)
+  const progressTimerRef = useRef<number | null>(null)
+  const playbackStartedAtRef = useRef<number | null>(null)
 
-  // ✅ Returning/new decision is based ONLY on validated user prop (no localStorage)
-  const isReturningUser = !!user;
+  const isReturningUser = !!user
 
   const proceed = React.useCallback(() => {
-    if (didFinishRef.current) return;
-    didFinishRef.current = true;
+    if (didFinishRef.current) return
+    didFinishRef.current = true
+    onNarrationChange?.(false)
 
-    const nextMode = isReturningUser ? AppMode.DASHBOARD : AppMode.NAMING_CEREMONY;
+    const nextMode = isReturningUser
+      ? AppMode.DASHBOARD
+      : isReturningVisitor
+        ? AppMode.AUTH
+        : AppMode.NAMING_CEREMONY
     finishTimeoutRef.current = window.setTimeout(() => {
-      onComplete(nextMode);
-    }, FINISH_DELAY_MS);
-  }, [isReturningUser, onComplete]);
+      onComplete(nextMode)
+    }, FINISH_DELAY_MS)
+  }, [isReturningUser, isReturningVisitor, onComplete, onNarrationChange])
 
   useEffect(() => {
-    void stopAmbience();
-    const audio = new Audio(WELCOME_URL);
-    audioRef.current = audio;
+    const audio = new Audio(WELCOME_URL)
+    audio.preload = 'auto'
+    audioRef.current = audio
 
     const timer = setTimeout(() => {
-      audio.play().catch((err) => {
-        console.log('Welcome audio play failed:', err);
-        setIsPlaying(false);
-      });
-    }, 500);
-
-    const start = performance.now();
-
-    const tick = (now: number) => {
-      if (didFinishRef.current) return;
-      const elapsed = now - start;
-      const pct = Math.min(100, (elapsed / WELCOME_DURATION_MS) * 100);
-      setProgress(pct);
-
-      if (elapsed < WELCOME_DURATION_MS) {
-        requestAnimationFrame(tick);
-      } else {
-        proceed();
+      if (document.hidden || !document.hasFocus()) {
+        setAudioBlocked(true)
+        return
       }
-    };
+      audio
+        .play()
+        .then(() => {
+          playbackStartedAtRef.current = performance.now()
+          setIsPlaying(true)
+          setAudioBlocked(false)
+        })
+        .catch((err) => {
+          console.log('Welcome audio play failed:', err)
+          setIsPlaying(false)
+          setAudioBlocked(true)
+        })
+    }, 500)
 
-    requestAnimationFrame(tick);
-
-    const handleEnded = () => {
-      setIsPlaying(false);
-      proceed();
-    };
-
-    audio.addEventListener('ended', handleEnded);
-
-    return () => {
-      clearTimeout(timer);
-      if (finishTimeoutRef.current) {
-        window.clearTimeout(finishTimeoutRef.current);
-        finishTimeoutRef.current = null;
+    const updateProgress = () => {
+      if (didFinishRef.current) return
+      const hasAudioDuration =
+        Number.isFinite(audio.duration) && audio.duration > 0
+      const hasCurrentTime =
+        Number.isFinite(audio.currentTime) && audio.currentTime > 0
+      if (hasAudioDuration && hasCurrentTime) {
+        const elapsedMs = audio.currentTime * 1000
+        const durationMs = audio.duration * 1000
+        setProgress(Math.min(100, (audio.currentTime / audio.duration) * 100))
+        setCurrentCaption(getInvocationCaption(elapsedMs, durationMs))
+        return
       }
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.removeEventListener('ended', handleEnded);
+      if (playbackStartedAtRef.current) {
+        const elapsed = performance.now() - playbackStartedAtRef.current
+        setProgress(Math.min(100, (elapsed / WELCOME_DURATION_MS) * 100))
+        setCurrentCaption(getInvocationCaption(elapsed, WELCOME_DURATION_MS))
+        if (elapsed >= WELCOME_DURATION_MS) proceed()
       }
-    };
-  }, [proceed]);
-
-  const handleSkip = () => {
-    buttonSoundService.play('click');
-
-    if (audioRef.current && isPlaying) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
     }
 
-    proceed();
-  };
+    const handleEnded = () => {
+      onNarrationChange?.(false)
+      setIsPlaying(false)
+      setProgress(100)
+      setCurrentCaption(
+        INVOCATION_CAPTIONS[INVOCATION_CAPTIONS.length - 1].text,
+      )
+      proceed()
+    }
+    const handlePlay = () => {
+      onNarrationChange?.(true)
+      if (!playbackStartedAtRef.current)
+        playbackStartedAtRef.current = performance.now()
+      setIsPlaying(true)
+    }
+    const handlePause = () => {
+      onNarrationChange?.(false)
+      setIsPlaying(false)
+    }
+    const quietNarration = () => {
+      audio.pause()
+      setAudioBlocked(true)
+    }
+    const onVisibilityChange = () => { if (document.hidden) quietNarration() }
+    window.addEventListener('blur', quietNarration)
+    window.addEventListener('pagehide', quietNarration)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    const handleTimeUpdate = () => updateProgress()
+    const handleLoadedMetadata = () => updateProgress()
+
+    progressTimerRef.current = window.setInterval(updateProgress, 120)
+    audio.addEventListener('ended', handleEnded)
+    audio.addEventListener('play', handlePlay)
+    audio.addEventListener('pause', handlePause)
+    audio.addEventListener('timeupdate', handleTimeUpdate)
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata)
+
+    return () => {
+      onNarrationChange?.(false)
+      window.removeEventListener('blur', quietNarration)
+      window.removeEventListener('pagehide', quietNarration)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      clearTimeout(timer)
+      if (finishTimeoutRef.current) {
+        window.clearTimeout(finishTimeoutRef.current)
+        finishTimeoutRef.current = null
+      }
+      if (progressTimerRef.current) {
+        window.clearInterval(progressTimerRef.current)
+        progressTimerRef.current = null
+      }
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.removeEventListener('ended', handleEnded)
+        audioRef.current.removeEventListener('play', handlePlay)
+        audioRef.current.removeEventListener('pause', handlePause)
+        audioRef.current.removeEventListener('timeupdate', handleTimeUpdate)
+        audioRef.current.removeEventListener(
+          'loadedmetadata',
+          handleLoadedMetadata,
+        )
+      }
+    }
+  }, [proceed, onNarrationChange])
+
+  const handleSkip = () => {
+    buttonSoundService.play('click')
+    if (audioRef.current && isPlaying) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+      setIsPlaying(false)
+    }
+    proceed()
+  }
+
+  const handleManualPlay = async () => {
+    buttonSoundService.play('click')
+    if (!audioRef.current) return
+    try {
+      playbackStartedAtRef.current = performance.now()
+      setCurrentCaption(INVOCATION_CAPTIONS[0].text)
+      await audioRef.current.play()
+      setAudioBlocked(false)
+      setIsPlaying(true)
+    } catch (err) {
+      console.log('Manual welcome audio play failed:', err)
+      setAudioBlocked(true)
+      setIsPlaying(false)
+    }
+  }
 
   return (
     <SacredBackground
       theme={theme}
-      // ✅ Explicit per screen:
       backgroundType="SPLASH_WELCOME"
-      // ✅ Optional, explicit fallback:
       fallbackBackgroundType="SPLASH"
     >
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto">
-        <div className="mt-8 md:mt-12 mb-4 md:mb-6">
-          <BreathingOrb size={80} breathingSpeed={4000} />
-        </div>
+      <div className={SACRED_LAYOUT}>
+        <BreathingOrb size={80} breathingSpeed={4000} />
 
-        <div className={`${titleCardClasses} mb-4 md:mb-6`}>
+        <div className={SACRED_TITLE_CARD}>
           <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
             Abundance Alchemy
           </h1>
         </div>
 
-        <div className={`${bodyCardClasses} mb-6 md:mb-8`}>
+        <div className={SACRED_BODY_CARD}>
           <div className="text-center space-y-2 md:space-y-3">
-            <p className="text-sm md:text-base text-slate-200 font-light">
+            <p className="text-xs md:text-sm font-extrabold uppercase tracking-[0.22em] text-amber-400">
+              Invocation
+            </p>
+            <p className="text-sm md:text-base text-slate-200 font-extralight">
               We Are Honored To Be Here
               <br />
               With You Now
             </p>
-            <div className="space-y-1 md:space-y-1.5 text-slate-300 text-xs md:text-sm">
+            <div className="space-y-1 md:space-y-1.5 text-slate-200 text-xs md:text-sm font-light">
               <p>Pausing A Moment</p>
               <p>Breathing In The Divine</p>
               <p>We Let Go And Allow</p>
               <p>Immersing Ourselves</p>
               <p>In This Sacred Invocation</p>
               <p>Uniting Hearts And Minds</p>
+              <p>ሁሉም ቅዱስ ነው (hulumi k’idusi newi)</p>
+              <p className="text-[10px] md:text-xs text-slate-300">
+                All Is Sacred
+              </p>
               <p className="pt-1 text-amber-500 text-xs md:text-sm">Ase.</p>
             </div>
           </div>
         </div>
 
-        <div className="w-full max-w-[280px] space-y-3 md:space-y-4">
+        <div className={`${SACRED_INNER_WIDTH} space-y-3`}>
           <div className="text-center">
-            <div className="text-[11px] md:text-[12px] tracking-[0.15em] md:tracking-[0.2em] uppercase text-amber-500 mb-1 md:mb-2">
+            <div className="inline-flex animate-breath items-center justify-center px-3 py-1 rounded-full bg-black/60 border border-white/25 text-[11px] tracking-[0.15em] uppercase text-white mb-2 shadow-[0_0_14px_rgba(0,0,0,0.45)]">
               WE ARE PRAYING NOW
             </div>
             <div className="w-full h-1 md:h-1.5 rounded-full bg-slate-800 overflow-hidden">
@@ -164,36 +300,75 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               />
             </div>
           </div>
-
-          <div className="flex justify-center">
+          <div className="rounded-lg border border-white/20 bg-black px-3 py-2 text-center shadow-lg">
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.22em] text-amber-400">
+              Closed Captions
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-white md:text-sm">
+              {currentCaption}
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowTranscript((prev) => !prev)}
+              className="mt-3 inline-flex items-center justify-center rounded-full border border-white/14 bg-white/8 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:bg-white/12"
+            >
+              {showTranscript
+                ? 'Hide Full Invocation Text'
+                : 'Show Full Invocation Text'}
+            </button>
+            {showTranscript ? (
+              <div className="mt-3 space-y-2 border-t border-white/10 pt-3 text-left">
+                {INVOCATION_CAPTIONS.map((cue, index) => (
+                  <p
+                    key={`${cue.startMs}-${index}`}
+                    className="text-xs leading-relaxed text-slate-200"
+                  >
+                    {cue.text}
+                  </p>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          {audioBlocked ? (
+            <p className="text-center text-[11px] text-amber-200">
+              Audio did not begin automatically. You can play the invocation or
+              continue in silence.
+            </p>
+          ) : null}
+          <div className="flex flex-wrap justify-center gap-2">
+            {audioBlocked ? (
+              <button
+                type="button"
+                onClick={handleManualPlay}
+                className="px-4 py-1.5 rounded-lg border border-amber-400/40 text-amber-200 font-medium text-xs md:text-sm tracking-wide hover:bg-amber-500/10 transition-colors"
+              >
+                Play Invocation
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={handleSkip}
-              className="mt-4 md:mt-6 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-xs md:text-sm tracking-wide hover:opacity-90 transition-opacity shadow-lg"
+              className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-xs md:text-sm tracking-wide hover:opacity-90 transition-opacity shadow-lg"
             >
-              Skip Intro
+              Skip Invocation
             </button>
           </div>
         </div>
 
-        <div className="mt-6 md:mt-8 w-full flex justify-center">
-          <div className={footerCardClasses}>
-            <div className="text-center space-y-2">
-              <p className="text-xs text-amber-500/80 leading-relaxed">
-                Collectively affirming
-                <br />
-                what in our hearts we know is true.
-              </p>
-              <div className="text-[10px] md:text-[11px] text-slate-500 space-y-0.5">
-                <p>All images and Music: Pixabay.com free use license</p>
-                <p>(unless otherwise noted)</p>
-              </div>
+        <div className={SACRED_FOOTER_CARD}>
+          <div className="text-center space-y-2">
+            <p className="text-xs text-white leading-relaxed">
+              Collectively affirming
+              <br />
+              what in our hearts we know is true.
+            </p>
+            <div className="text-[10px] md:text-[11px] text-white space-y-0.5">
+              <p>All images and Music: Pixabay.com free use license</p>
+              <p>(unless otherwise noted)</p>
             </div>
           </div>
         </div>
-
-        <div className="h-6 md:h-4"></div>
       </div>
     </SacredBackground>
-  );
-};
+  )
+}

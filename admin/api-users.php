@@ -14,6 +14,9 @@ if (empty($_SESSION['admin_id'])) {
 // Optional: basic search & limit
 $q     = isset($_GET['q']) ? trim($_GET['q']) : '';
 $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
+$sessionsSelect = aa_table_has_column($pdo, 'users', 'sessions_completed')
+    ? 'sessions_completed'
+    : 'NULL AS sessions_completed';
 if ($limit < 1)   $limit = 50;
 if ($limit > 200) $limit = 200;
 
@@ -28,7 +31,7 @@ try {
                 level,
                 streak,
                 focus_area,
-                sessions_completed,
+                {$sessionsSelect},
                 created_at,
                 last_login
             FROM users
@@ -48,7 +51,7 @@ try {
                 level,
                 streak,
                 focus_area,
-                sessions_completed,
+                {$sessionsSelect},
                 created_at,
                 last_login
             FROM users

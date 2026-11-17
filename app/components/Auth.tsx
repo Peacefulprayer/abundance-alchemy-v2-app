@@ -1,12 +1,17 @@
-// components/Auth.tsx - UPDATED: signup autofill suppression (best-effort) + initialName support preserved
-import React, { useState, useEffect, useMemo } from 'react';
+// components/Auth.tsx - controlled sacred auth flow with explicit login/register intent
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { UserAccount } from '../types';
 import { Lock, Mail, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { apiService } from '../services/apiService';
+import { api, ApiError } from '../services/api';
 import { SacredBackground } from './SacredBackground';
 import BreathingOrb from './BreathingOrb';
+import { SACRED_LAYOUT, SACRED_TITLE_CARD, SACRED_BODY_CARD } from '../styles/sacredCards';
+
+type AuthMode = 'login' | 'register';
 
 interface AuthProps {
+  mode: AuthMode;
+  onModeChange: (mode: AuthMode) => void;
   onRegister: (account: UserAccount) => void;
   onLogin: (account: UserAccount) => void;
   onBack?: () => void;
@@ -14,43 +19,46 @@ interface AuthProps {
   initialName?: string;
 }
 
-// UNIVERSAL TITLE CARD CLASSES (exact match WelcomeScreen)
-const titleCardClasses =
-  'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
-
-// UNIVERSAL CONTENT CARD CLASSES
-const contentCardClasses =
-  'backdrop-blur-lg rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-2xl space-y-4 md:space-y-6 bg-slate-900/40';
+// Auth uses the shared sacred design system for consistency with S1-S4 entry flow.
+// S1–S4 always dark — single card style regardless of user theme
+const getContentCardClasses = (_theme: 'light' | 'dark') =>
+  `${SACRED_BODY_CARD} space-y-3 md:space-y-4 max-w-[300px] md:max-w-[360px] px-4 py-4 md:px-5 md:py-5`;
 
 export const Auth: React.FC<AuthProps> = ({
+  mode,
+  onModeChange,
   onRegister,
   onLogin,
   onBack,
   theme,
   initialName = '',
 }) => {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState(initialName);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [resetStatus, setResetStatus] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const previousModeRef = useRef<AuthMode>(mode);
 
-  // ========== Default mode ==========
-  // NOTE: This is "device-local" heuristic and may be refined later.
   useEffect(() => {
-    const storedAuth = localStorage.getItem('abundance_auth');
-    if (!storedAuth) setMode('register');
-    else setMode('login');
-  }, []);
+    if (previousModeRef.current !== mode) {
+      previousModeRef.current = mode;
+      setError('');
+      setResetStatus('');
+      setShowPassword(false);
+      setEmail('');
+      setPassword('');
+      setName(mode === 'register' ? initialName : '');
+      return;
+    }
 
-  // Keep naming ceremony name if it changes upstream
-  useEffect(() => {
-    setName((prev) => (prev ? prev : initialName));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialName]);
+    if (mode === 'register') {
+      setName((prev) => (prev ? prev : initialName));
+    }
+  }, [initialName, mode]);
 
   // Autofill controls (best-effort across browsers)
   const formAutoComplete = useMemo(() => {
@@ -95,84 +103,126 @@ export const Auth: React.FC<AuthProps> = ({
 
     try {
       if (mode === 'register') {
-        const existingAuth = localStorage.getItem('abundance_auth');
-        if (existingAuth) {
-          const existing = JSON.parse(existingAuth);
-          if (existing.email === email) {
-            setError('Email already registered locally. Please login.');
-            setLoading(false);
-            return;
-          }
-        }
-
-        await apiService.register(name, email, password);
+        const data = await api.register(name, email, password);
 
         const newAccount: UserAccount = {
-          email,
-          name,
-          password: btoa(password),
+          id: data?.id,
+          email: data?.email ?? email,
+          name: data?.name ?? name,
+          streak: data?.streak,
+          level: data?.level,
+          focusAreas: data?.focusAreas,
+          affirmationsCompleted: data?.affirmationsCompleted,
         };
 
-        localStorage.setItem('abundance_auth', JSON.stringify(newAccount));
+        sessionStorage.setItem('abundance_auth', JSON.stringify(newAccount));
+        localStorage.removeItem('abundance_auth');
         setLoading(false);
         onRegister(newAccount);
       } else {
-        const storedAuth = localStorage.getItem('abundance_auth');
-
-        if (!storedAuth) {
-          setError('No account found on this device. Please register.');
-          setLoading(false);
-          return;
-        }
-
-        const authData = JSON.parse(storedAuth);
-
-        const storedPwd = authData.password || authData.passwordHash;
-        const isPasswordMatch = storedPwd === btoa(password) || storedPwd === password;
-
-        if (authData.email !== email) {
-          setError('Email not found.');
-          setLoading(false);
-          return;
-        }
-
-        if (!isPasswordMatch) {
-          setError('Incorrect password.');
-          setLoading(false);
-          return;
-        }
-
-        await apiService.login(email, password);
+        const data = await api.login(email, password);
 
         setLoading(false);
-        onLogin(authData);
+        const account: UserAccount = {
+          id: data?.id,
+          email: data?.email ?? email,
+          name: data?.name,
+          streak: data?.streak,
+          level: data?.level,
+          focusAreas: data?.focusAreas,
+          affirmationsCompleted: data?.affirmationsCompleted,
+          cyclePreference: data?.cyclePreference,
+          cycleStartedAt: data?.cycleStartedAt,
+          lastPracticeDate: data?.lastPracticeDate,
+          gratitudeLogs: data?.gratitudeLogs,
+        };
+        sessionStorage.setItem('abundance_auth', JSON.stringify(account));
+        localStorage.removeItem('abundance_auth');
+        onLogin(account);
       }
     } catch (err: any) {
       console.error(err);
-      setError('Authentication failed. Please check your connection.');
+      if ((err instanceof ApiError || typeof err?.status === 'number') && err?.status === 401) {
+        setError(
+          mode === 'login'
+            ? 'We could not find an active account with those credentials. Choose Sign Up if you are beginning again.'
+            : 'Those details could not be used to create an account.'
+        );
+      } else {
+        setError(err?.message || 'Authentication failed. Please check your connection.');
+      }
       setLoading(false);
     }
   };
 
-  // Theme colors
-  const textColor = theme === 'light' ? 'text-slate-900' : 'text-slate-100';
-  const subTextColor = theme === 'light' ? 'text-slate-600' : 'text-slate-400';
-  const inputBg = theme === 'light' ? 'bg-white border-slate-300' : 'bg-slate-900/50 border-slate-700';
+  const handlePasswordReset = async () => {
+    const nextEmail = email.trim();
+    if (!nextEmail) {
+      setError('Enter your email above, then choose Forgot Password.');
+      return;
+    }
+
+    setError('');
+    setResetStatus('');
+    setResetLoading(true);
+    try {
+      const response = await api.requestPasswordReset(nextEmail);
+      setResetStatus(
+        response?.message || 'If an account exists for that email, a reset link has been sent.'
+      );
+    } catch (err: any) {
+      setError(err?.message || 'We could not start password recovery. Please try again.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  // S1–S4 always dark ceremonial path
+  const textColor = 'text-white';
+  const subTextColor = 'text-white';
+  const inputBg = 'bg-black/40 border-amber-500/20 text-slate-100 placeholder-slate-500';
 
   return (
-    <SacredBackground theme={theme} backgroundType="default">
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 space-y-4 md:space-y-5 overflow-y-auto">
-        <div className="mt-8 md:mt-12 mb-4 md:mb-6">
-          <BreathingOrb size={80} breathingSpeed={4000} />
-        </div>
+    <SacredBackground
+      theme="dark"
+      backgroundType="AUTH"
+      fallbackBackgroundType="SPLASH"
+    >
+      <div className={SACRED_LAYOUT}>
+        <BreathingOrb size={80} breathingSpeed={4000} />
 
-        <div className={`${titleCardClasses} mb-4 md:mb-6`}>
+        <div className={SACRED_TITLE_CARD}>
           <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
             Abundance Alchemy
           </h1>
         </div>
 
-        <div className={`${contentCardClasses} mb-6 md:mb-8 relative`}>
+        <div className={`${getContentCardClasses(theme)} relative`}>
+          <div className="grid grid-cols-2 gap-2 rounded-2xl border border-amber-500/20 bg-black/30 p-1 shadow-[0_6px_12px_rgba(0,0,0,0.5)] backdrop-blur-sm">
+            <button
+              type="button"
+              onClick={() => onModeChange('register')}
+              className={`rounded-xl px-3 py-2 text-xs font-bold tracking-[0.16em] uppercase transition-all ${
+                mode === 'register'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg'
+                  : 'text-amber-200/75 hover:bg-amber-500/10'
+              }`}
+            >
+              Sign Up
+            </button>
+            <button
+              type="button"
+              onClick={() => onModeChange('login')}
+              className={`rounded-xl px-3 py-2 text-xs font-bold tracking-[0.16em] uppercase transition-all ${
+                mode === 'login'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg'
+                  : 'text-amber-200/75 hover:bg-amber-500/10'
+              }`}
+            >
+              Sign In
+            </button>
+          </div>
+
           {mode === 'register' && (
             <div className="flex justify-center -mt-1 mb-3 md:mb-4">
               <img
@@ -187,16 +237,29 @@ export const Auth: React.FC<AuthProps> = ({
           )}
 
           <div className="text-center space-y-2">
-            <h2 className={`text-base md:text-lg font-bold ${textColor}`}>
-              {mode === 'login' ? 'Welcome Back' : 'Namaste Initiate'}
+            <h2 className={`text-base md:text-lg ${mode === 'login' ? 'font-bold' : 'font-normal'} ${textColor}`}>
+              {mode === 'login' ? 'Welcome Back' : 'Greetings and Namaste!'}
             </h2>
 
             {mode === 'login' ? (
               <p className={`text-xs md:text-sm ${subTextColor}`}>Continue your transformation</p>
             ) : (
               <div className="space-y-1">
-                <p className={`text-sm md:text-sm font-medium ${textColor}`}>Create Your Account Now</p>
-                <p className={`text-xs ${subTextColor}`}>Your Practice Awaits</p>
+                <p className={`text-[11px] md:text-xs tracking-[0.08em] uppercase text-amber-300`}>
+                  Naming Ceremony Complete
+                </p>
+                <p className={`text-sm md:text-sm ${textColor}`}>
+                  To complete account creation process,
+                  <br />
+                  set password now
+                  <br />
+                  and provide your email.
+                </p>
+                <p className={`text-xs ${subTextColor}`}>
+                  So Let It Be Written.
+                  <br />
+                  So Let It Be Down.
+                </p>
               </div>
             )}
           </div>
@@ -237,7 +300,7 @@ export const Auth: React.FC<AuthProps> = ({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
-                    className={`w-full pl-9 pr-3 py-2 md:py-2.5 text-sm rounded-xl border focus:ring-2 focus:ring-amber-500 outline-none transition-all ${inputBg} ${textColor}`}
+                    className={`w-full pl-9 pr-3 py-2 md:py-2.5 text-sm rounded-xl border focus:ring-2 focus:ring-amber-500 outline-none transition-all ${inputBg}`}
                   />
                 </div>
               </div>
@@ -255,7 +318,7 @@ export const Auth: React.FC<AuthProps> = ({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
-                  className={`w-full pl-9 pr-3 py-2 md:py-2.5 text-sm rounded-xl border focus:ring-2 focus:ring-amber-500 outline-none transition-all ${inputBg} ${textColor}`}
+                  className={`w-full pl-9 pr-3 py-2 md:py-2.5 text-sm rounded-xl border focus:ring-2 focus:ring-amber-500 outline-none transition-all ${inputBg}`}
                 />
               </div>
             </div>
@@ -271,7 +334,7 @@ export const Auth: React.FC<AuthProps> = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full pl-9 pr-10 py-2 md:py-2.5 text-sm rounded-xl border focus:ring-2 focus:ring-amber-500 outline-none transition-all ${inputBg} ${textColor}`}
+                  className={`w-full pl-9 pr-10 py-2 md:py-2.5 text-sm rounded-xl border focus:ring-2 focus:ring-amber-500 outline-none transition-all ${inputBg}`}
                 />
                 <button
                   type="button"
@@ -283,12 +346,32 @@ export const Auth: React.FC<AuthProps> = ({
               </div>
             </div>
 
+            {mode === 'login' && (
+              <div className="flex items-center justify-between gap-3 text-[11px]">
+                <button
+                  type="button"
+                  onClick={handlePasswordReset}
+                  disabled={resetLoading}
+                  className="text-amber-300 hover:text-amber-200 underline disabled:opacity-60"
+                >
+                  {resetLoading ? 'Sending Reset Link...' : 'Forgot Password?'}
+                </button>
+                <span className="text-slate-300">Need help getting back in?</span>
+              </div>
+            )}
+
             {error && (
               <div className="backdrop-blur-sm rounded-xl border border-amber-500/30 p-3 text-xs text-amber-400 bg-gradient-to-r from-amber-500/5 to-orange-500/5">
                 <div className="flex items-center space-x-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></div>
                   <span className="font-medium">{error}</span>
                 </div>
+              </div>
+            )}
+
+            {resetStatus && (
+              <div className="backdrop-blur-sm rounded-xl border border-emerald-400/30 p-3 text-xs text-emerald-200 bg-gradient-to-r from-emerald-500/10 to-emerald-400/5">
+                <span className="font-medium">{resetStatus}</span>
               </div>
             )}
 
@@ -302,19 +385,14 @@ export const Auth: React.FC<AuthProps> = ({
           </form>
 
           <div
-            className={`text-center text-xs ${subTextColor} pt-2 md:pt-3 border-t border-slate-700/30 mt-3 md:mt-4`}
+            className={`text-center text-xs ${subTextColor} pt-2 md:pt-3 border-t border-amber-500/15 mt-3 md:mt-4`}
           >
             {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
             <button
               type="button"
               onClick={() => {
                 const next = mode === 'login' ? 'register' : 'login';
-                setMode(next);
-                setError('');
-                setShowPassword(false);
-                setName(next === 'register' ? initialName : '');
-                setEmail('');
-                setPassword('');
+                onModeChange(next);
               }}
               className="text-amber-400 hover:text-amber-300 font-bold underline ml-1"
             >

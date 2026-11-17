@@ -1,169 +1,174 @@
 // components/SplashScreen/SplashScreen.tsx - NORMALIZED TO UNIVERSAL DESIGN SYSTEM
-import React, { useEffect, useRef, useState } from 'react';
-import BreathingOrb from '../BreathingOrb';
-import { buttonSoundService } from '../../services/buttonSoundService';
-import { startAmbience } from '../../services/audioService';
-import { SacredBackground } from '../SacredBackground';
-import { href } from '../../services/base';
+import React, { useEffect, useRef, useState } from 'react'
+import BreathingOrb from '../BreathingOrb'
+import { buttonSoundService } from '../../services/buttonSoundService'
+import { startAmbience } from '../../services/audioService'
+import { SacredBackground } from '../SacredBackground'
+import { href } from '../../services/base'
+import {
+  normalizeBackgroundConfig,
+  resolveBackground,
+  type BackgroundSlot,
+} from '../../services/backgrounds'
+import {
+  SACRED_LAYOUT,
+  SACRED_ORB_WRAPPER,
+  SACRED_TITLE_CARD,
+  SACRED_BODY_CARD,
+  SACRED_FOOTER_CARD,
+  SACRED_CARD_GAP,
+  SACRED_INNER_WIDTH,
+} from '../../styles/sacredCards'
 
 interface SplashScreenProps {
-  onComplete: () => void;
-  theme?: 'light' | 'dark';
+  onComplete: () => void
+  theme?: 'light' | 'dark'
 }
 
-type BackgroundMap = Record<string, { imageUrl?: string }>;
-
-const API_BACKGROUND_ENDPOINT = '/abundance-alchemy/api/get-backgrounds.php';
+const API_BACKGROUND_ENDPOINT = '/abundance-alchemy/api/get-backgrounds.php'
 
 // Best-effort list (covers both new + returning paths) — capped for mobile safety
-const PRELOAD_SLOTS: string[] = [
+const PRELOAD_SLOTS: BackgroundSlot[] = [
   'WELCOME',
   'SPLASH_WELCOME',
   'AUTH',
   'RETURN_PORTAL',
-  'HOME', // Dashboard background slot in admin
+  'HOME',
   'SETTINGS',
-];
+]
+
+const PREPARATION_MESSAGES = [
+  'Opening The Space...',
+  'Settling The Atmosphere...',
+  'Gathering The Presence...',
+  'Welcoming You In...',
+  'We Are Ready For You',
+] as const
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({
   onComplete,
   theme = 'dark',
 }) => {
-  const [progress, setProgress] = useState(0);
-  const [isPreparing, setIsPreparing] = useState(false);
-  const [currentMessage, setCurrentMessage] = useState('');
-  const [isReady, setIsReady] = useState(false);
+  const [progress, setProgress] = useState(0)
+  const [isPreparing, setIsPreparing] = useState(false)
+  const [currentMessage, setCurrentMessage] = useState('')
+  const [isReady, setIsReady] = useState(false)
+  const [showSwahili, setShowSwahili] = useState(false)
 
-  // keep image objects alive so the browser actually completes downloads
-  const preloadImagesRef = useRef<HTMLImageElement[]>([]);
-  const didPreloadRef = useRef(false);
-
-  const preparationMessages = [
-    'Burning Sage...',
-    'Anchoring Sacred Space...',
-    'Orishas present...',
-    'Ancestors Seated...',
-    'We Are Ready For You',
-  ];
+  const preloadImagesRef = useRef<HTMLImageElement[]>([])
+  const didPreloadRef = useRef(false)
 
   // Start background music when SplashScreen loads
   useEffect(() => {
-    startAmbience(href('assets/audio/ambient/default.mp3'), 50);
-  }, []);
+    startAmbience(href('assets/audio/ambient/default.mp3'), 50)
+  }, [])
 
   // Best-effort background preloading during preparation
   useEffect(() => {
-    if (!isPreparing) return;
-    if (didPreloadRef.current) return; // only once per mount
-    didPreloadRef.current = true;
+    if (!isPreparing) return
+    if (didPreloadRef.current) return
+    didPreloadRef.current = true
 
     const preload = async () => {
       try {
-        const res = await fetch(API_BACKGROUND_ENDPOINT, { credentials: 'include' });
-        if (!res.ok) return;
+        const res = await fetch(API_BACKGROUND_ENDPOINT, {
+          credentials: 'include',
+        })
+        if (!res.ok) return
 
-        const data = (await res.json()) as BackgroundMap;
+        const backgrounds = normalizeBackgroundConfig(await res.json())
 
-        const urls: string[] = PRELOAD_SLOTS
-          .map((slot) => data?.[slot]?.imageUrl)
-          .filter((u): u is string => typeof u === 'string' && u.trim().length > 0)
-          // cap to avoid memory pressure on iOS Safari
+        const urls = PRELOAD_SLOTS.map((slot) =>
+          resolveBackground([slot], backgrounds),
+        )
+          .filter((background) => background.mode === 'image' && !!background.imageUrl)
+          .map((background) => background.imageUrl as string)
           .slice(0, 6)
           .map((u) => {
-            // normalize to absolute to avoid edge cases
             try {
-              return new URL(u, window.location.origin).toString();
+              return new URL(u, window.location.origin).toString()
             } catch {
-              return u;
+              return u
             }
-          });
+          })
 
-        // fire-and-forget preloads (best effort)
         urls.forEach((src) => {
-          const img = new Image();
-          img.decoding = 'async';
-          img.loading = 'eager';
-          img.src = src;
-          preloadImagesRef.current.push(img);
-        });
-
-        // Optional (debug): console.log('[Splash preload] queued', urls.length, urls);
+          const img = new Image()
+          img.decoding = 'async'
+          img.loading = 'eager'
+          img.src = src
+          preloadImagesRef.current.push(img)
+        })
       } catch {
         // best effort: ignore preload errors
       }
-    };
+    }
 
-    void preload();
-  }, [isPreparing]);
+    void preload()
+  }, [isPreparing])
 
-  // Handle preparation animation - SLOWER LOADING
+  // Preparation progress animation
   useEffect(() => {
-    if (!isPreparing) return;
+    if (!isPreparing) return
 
     const interval = setInterval(() => {
       setProgress((prev) => {
-        const newProgress = prev + 1.5; // 1.5% every 100ms = ~6.7 seconds total
+        const newProgress = prev + 1.5
 
-        // Update message based on progress
-        if (newProgress < 20) setCurrentMessage(preparationMessages[0]);
-        else if (newProgress < 40) setCurrentMessage(preparationMessages[1]);
-        else if (newProgress < 55) setCurrentMessage(preparationMessages[2]);
-        else if (newProgress < 85) setCurrentMessage(preparationMessages[3]);
+        if (newProgress < 20) setCurrentMessage(PREPARATION_MESSAGES[0])
+        else if (newProgress < 40) setCurrentMessage(PREPARATION_MESSAGES[1])
+        else if (newProgress < 55) setCurrentMessage(PREPARATION_MESSAGES[2])
+        else if (newProgress < 85) setCurrentMessage(PREPARATION_MESSAGES[3])
         else {
-          setCurrentMessage(preparationMessages[4]);
+          setCurrentMessage(PREPARATION_MESSAGES[4])
           if (newProgress >= 100) {
-            clearInterval(interval);
-            setIsReady(true);
-            return 100;
+            clearInterval(interval)
+            setIsReady(true)
+            return 100
           }
         }
-        return newProgress;
-      });
-    }, 100); // Slowed interval from 60ms to 100ms
+        return newProgress
+      })
+    }, 100)
 
-    return () => clearInterval(interval);
-  }, [isPreparing]);
+    return () => clearInterval(interval)
+  }, [isPreparing])
+
+  useEffect(() => {
+    if (!isReady) return
+    const interval = setInterval(() => setShowSwahili((s) => !s), 3500)
+    return () => clearInterval(interval)
+  }, [isReady])
 
   const handleStartPreparation = () => {
-    console.log('Start preparation button clicked');
-    buttonSoundService.play('click');
-    setIsPreparing(true);
-  };
+    buttonSoundService.play('click')
+    setIsPreparing(true)
+  }
 
   const handleReadyClick = () => {
-    console.log('Ready button clicked');
-    buttonSoundService.play('click');
+    buttonSoundService.play('click')
     setTimeout(() => {
-      onComplete();
-    }, 200);
-  };
-
-  // UNIVERSAL TITLE CARD CLASSES
-  const titleCardClasses =
-    'backdrop-blur-lg rounded-2xl border p-4 md:p-5 w-full max-w-[280px] shadow-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-white/10';
-
-  // UNIVERSAL CONTENT CARD CLASSES
-  const contentCardClasses =
-    'backdrop-blur-lg rounded-2xl border border-amber-500/20 p-4 md:p-6 w-full max-w-[280px] shadow-2xl bg-slate-900/40';
+      onComplete()
+    }, 200)
+  }
 
   return (
     <SacredBackground theme={theme} backgroundType="splash">
-      {/* UNIVERSAL CONTAINER: justify-start on mobile, center on medium+ */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-start md:justify-center p-4 md:p-6 overflow-y-auto">
-        {/* UNIVERSAL ORB - 80PX SIZE (LAW OF THE LAND) */}
-        <div className="mt-8 md:mt-12 mb-4 md:mb-6">
+      <div className={SACRED_LAYOUT}>
+        {/* ORB */}
+        <div className={SACRED_ORB_WRAPPER}>
           <BreathingOrb size={80} breathingSpeed={4000} />
         </div>
 
-        {/* UNIVERSAL TITLE CARD - "Abundance Alchemy" */}
-        <div className={`${titleCardClasses} mb-4 md:mb-6`}>
+        {/* TITLE CARD */}
+        <div className={`${SACRED_TITLE_CARD} ${SACRED_CARD_GAP}`}>
           <h1 className="text-base md:text-lg font-light tracking-[0.15em] md:tracking-[0.2em] text-amber-500 text-center">
             Abundance Alchemy
           </h1>
         </div>
 
-        {/* CHIPS WITH CULTURALLY RELEVANT ICONS & SACRED HOVER */}
-        <div className="flex justify-center gap-2 mb-6">
+        {/* FEATURE CHIPS */}
+        <div className={`flex justify-center gap-2 ${SACRED_CARD_GAP}`}>
           <div className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center gap-1 group transition-all duration-500 hover:bg-amber-500/15 hover:border-amber-400/30 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]">
             <span
               className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125"
@@ -175,7 +180,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
               Affirmations
             </span>
           </div>
-
           <div className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center gap-1 group transition-all duration-500 hover:bg-amber-500/15 hover:border-amber-400/30 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]">
             <span
               className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125"
@@ -187,7 +191,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
               Meditation
             </span>
           </div>
-
           <div className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center gap-1 group transition-all duration-500 hover:bg-amber-500/15 hover:border-amber-400/30 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]">
             <span
               className="text-sm transition-all duration-500 group-hover:rotate-12 group-hover:scale-125"
@@ -201,13 +204,21 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           </div>
         </div>
 
-        {/* BODY CARD - USING UNIVERSAL CLASSES */}
-        <div className={`${contentCardClasses} mb-6 md:mb-8`}>
+        {/* BODY CARD */}
+        <div className={`${SACRED_BODY_CARD} ${SACRED_CARD_GAP}`}>
           <div className="text-center space-y-2">
-            <p className="text-slate-300 text-sm">Transformational Change</p>
-            <p className="text-slate-300 text-sm">Always Begins with Us</p>
-            <p className="text-slate-300 text-sm">Conscious Reality Shifting</p>
-            <p className="text-slate-300 text-sm">The Power Of Your I Am</p>
+            <p className="text-slate-300 text-sm font-extralight">
+              Transformational Change
+            </p>
+            <p className="text-slate-300 text-sm font-extralight">
+              Always Begins with Us
+            </p>
+            <p className="text-slate-300 text-sm font-extralight">
+              Conscious Reality Shifting
+            </p>
+            <p className="text-slate-300 text-sm font-extralight">
+              The Power Of Your I Am
+            </p>
           </div>
         </div>
 
@@ -215,73 +226,100 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         {!isPreparing ? (
           <button
             onClick={handleStartPreparation}
-            className="mt-4 md:mt-6 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-sm tracking-wider hover:opacity-90 transition-opacity shadow-lg"
+            className="mt-2 md:mt-3 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-sm tracking-wider hover:opacity-90 transition-opacity shadow-lg"
           >
             Enter The Sacred Space
           </button>
         ) : (
-          <div className="w-full max-w-xs space-y-4">
-            {/* LOADER */}
+          <div className={`${SACRED_INNER_WIDTH} space-y-4`}>
             <div className="space-y-3">
-              <p className="text-slate-300 text-sm text-center min-h-[40px] flex items-center justify-center">
+              <p className="text-white text-sm text-center min-h-[40px] flex items-center justify-center">
                 {currentMessage}
               </p>
-
-              {/* PLAIN ORANGE LINE - SIMPLE & WORKING */}
               <div className="w-full h-2 bg-slate-700/50 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-300"
                   style={{ width: `${progress}%` }}
                 />
               </div>
-
-              <p className="text-xs text-slate-400 text-center">{progress}% Prepared</p>
+              <p className="text-xs text-white text-center">
+                {progress >= 100
+                  ? '100% Are You Ready?'
+                  : `${progress}% Opened`}
+              </p>
             </div>
 
-            {/* "I AM READY" - UNIVERSAL BUTTON STYLE */}
             {isReady && (
               <div className="flex justify-center w-full">
                 <button
                   onClick={handleReadyClick}
-                  className="mt-4 md:mt-6 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-sm tracking-wider hover:opacity-90 transition-opacity shadow-lg animate-[pulse_2s_ease-in-out_infinite] hover:animate-none"
+                  className="mt-4 md:mt-6 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black font-medium text-sm tracking-wider transition-all duration-300 hover:opacity-95 shadow-[0_0_18px_rgba(245,158,11,0.45)] animate-[aaReadyPulse_1700ms_ease-in-out_infinite] hover:animate-none"
                 >
-                  I Am Ready For Transformation
+                  <span className="relative inline-block min-w-[220px]">
+                    <span
+                      className="absolute inset-0 flex items-center justify-center transition-opacity duration-700"
+                      style={{ opacity: showSwahili ? 0 : 1 }}
+                    >
+                      I Am Ready For Transformation
+                    </span>
+                    <span
+                      className="flex items-center justify-center transition-opacity duration-700"
+                      style={{ opacity: showSwahili ? 1 : 0 }}
+                    >
+                      Niko Tayari Kubadilika
+                    </span>
+                  </span>
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* FOOTER WITH PROPER SPACING & LIGHTER TEXT */}
-        <div className="mt-8 text-center max-w-xs space-y-4">
-          <p className="text-xs text-slate-400">Based on the book "I Am Practice" by Michael Soaries.</p>
-
-          <div className="space-y-2">
-            <p className="text-xs text-slate-400 leading-relaxed">
-              By continuing you agree to be a part of
-              <br />
-              the{' '}
-              <a href="/community-standards" className="text-amber-400 hover:text-amber-300 underline">
-                Abundant Thought Community
-              </a>{' '}
-              and abide by{' '}
-              <a href="/community-standards" className="text-amber-400 hover:text-amber-300 underline">
-                community standards
-              </a>
-              .
+        {/* FOOTER CARD */}
+        <div className={`${SACRED_FOOTER_CARD} mt-3 md:mt-4`}>
+          <div className="text-center space-y-3">
+            <p className="text-[10px] md:text-xs text-slate-300 whitespace-nowrap">
+              © 2024 Abundant Thought - Michael Soaries
             </p>
-
-            {/* SPACER */}
-            <div className="h-4"></div>
-
-            <p className="text-xs text-slate-400">
-              <a href="/privacy-policy" className="text-amber-400 hover:text-amber-300 underline">
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Unless otherwise indicated
+              <br />
+              all images and music clips
+              <br />
+              used under Pexels.com Free Use License.
+            </p>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Based on the book "I Am Practice"
+              <br />
+              by Michael Soaries.
+            </p>
+            <p className="text-xs text-slate-300">
+              <a
+                href={href('companion-pages/privacy-policy.html')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-amber-400 hover:text-amber-300 underline"
+              >
                 View our privacy policy here.
               </a>
             </p>
           </div>
         </div>
       </div>
+      <style>{`
+        @keyframes aaReadyPulse {
+          0%, 100% {
+            transform: scale(1);
+            filter: brightness(1);
+            box-shadow: 0 0 18px rgba(245, 158, 11, 0.45);
+          }
+          50% {
+            transform: scale(1.045);
+            filter: brightness(1.08);
+            box-shadow: 0 0 28px rgba(245, 158, 11, 0.72);
+          }
+        }
+      `}</style>
     </SacredBackground>
-  );
-};
+  )
+}

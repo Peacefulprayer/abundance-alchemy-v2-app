@@ -1,33 +1,55 @@
-import { Affirmation, Soundscape, PracticeType } from '../types';
-
-export type BackgroundMap = Record<string, { imageUrl: string }>;
-
-export type MeUser = {
-  id: number;
-  name: string;
-  email: string;
-  streak: number;
-  level: number;
-  focusAreas: string[];
-  affirmationsCompleted: number;
-};
-
-export type MeditationTrack = Record<string, any>;
+import { PrayerContent, PracticeType } from '../types';
+import type {
+  AddAffirmationResponse,
+  AddPrayerResponse,
+  Affirmation,
+  AiCopyResponse,
+  BackgroundMap,
+  DeleteAffirmationResponse,
+  DeletePrayerResponse,
+  LoginResponse,
+  MeUser,
+  RandomAffirmationResponse,
+  RegisterResponse,
+  RequestPasswordResetResponse,
+  Soundscape,
+  UpdateProgressResponse,
+  UploadUserAudioResponse,
+  UserAffirmationRow,
+  UserPrayer,
+  UserPrayerRow,
+  LogoutResponse,
+} from '../types/api';
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy-api';
+  import.meta.env.VITE_API_BASE_URL || '/abundance-alchemy/api';
+const CSRF_EXEMPT_ENDPOINTS = new Set([
+  'login.php',
+  'register.php',
+  'request-password-reset.php',
+  'csrf-token.php',
+]);
+const NON_LOGOUT_401_ENDPOINTS = new Set([
+  'me.php',
+  'login.php',
+  'register.php',
+  'request-password-reset.php',
+  'csrf-token.php',
+]);
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+let csrfTokenCache: string | null = null;
 
 const STORAGE_KEYS = {
-  TOKEN: 'abundance_token',
+  AUTH: 'abundance_auth',
+  USER: 'abundance_user',
 } as const;
 
-export const setToken = (token: string) =>
-  localStorage.setItem(STORAGE_KEYS.TOKEN, token);
-
-export const getToken = () => localStorage.getItem(STORAGE_KEYS.TOKEN);
-
-export const logout = () => {
-  localStorage.removeItem(STORAGE_KEYS.TOKEN);
+export const clearAuth = () => {
+  localStorage.removeItem(STORAGE_KEYS.AUTH);
+  localStorage.removeItem(STORAGE_KEYS.USER);
+  sessionStorage.removeItem(STORAGE_KEYS.AUTH);
+  sessionStorage.removeItem(STORAGE_KEYS.USER);
+  csrfTokenCache = null;
   window.dispatchEvent(new Event('auth:logout'));
 };
 
@@ -46,10 +68,33 @@ type ClientConfig = Omit<RequestInit, 'body' | 'method' | 'headers'> & {
   headers?: HeadersInit;
 };
 
+const getEndpointName = (endpoint: string): string =>
+  endpoint.split('?')[0].split('/').pop() || endpoint;
+
+const fetchCsrfToken = async (force = false): Promise<string> => {
+  if (!force && csrfTokenCache) return csrfTokenCache;
+
+  const response = await fetch(`${API_BASE_URL}/csrf-token.php`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await response.json().catch(() => ({}));
+  const token = typeof data?.token === 'string' ? data.token : '';
+  if (!response.ok || !token) {
+    throw new ApiError('Failed to initialize CSRF token', response.status || 500);
+  }
+
+  csrfTokenCache = token;
+  return token;
+};
+
 async function client<T>(endpoint: string, config: ClientConfig = {}): Promise<T> {
   const { body, method, headers: customHeaders, ...rest } = config;
-  const token = getToken();
-  const headers: HeadersInit = { ...(customHeaders || {}) };
+  const headers = new Headers(customHeaders || {});
+  const resolvedMethod = method ?? (body !== undefined ? 'POST' : 'GET');
+  const upperMethod = resolvedMethod.toUpperCase();
+  const endpointName = getEndpointName(endpoint);
+  const needsCsrf = MUTATING_METHODS.has(upperMethod) && !CSRF_EXEMPT_ENDPOINTS.has(endpointName);
 
   let finalBody: BodyInit | undefined = undefined;
   if (body !== undefined) {
@@ -57,32 +102,59 @@ async function client<T>(endpoint: string, config: ClientConfig = {}): Promise<T
       finalBody = body;
     } else {
       finalBody = JSON.stringify(body);
-      if (!('Content-Type' in (headers as any))) {
-        (headers as any)['Content-Type'] = 'application/json';
+      if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
       }
     }
   }
 
-  if (token) {
-    (headers as any).Authorization = `Bearer ${token}`;
+  if (needsCsrf && !headers.has('X-CSRF-Token')) {
+    const csrfToken = await fetchCsrfToken();
+    headers.set('X-CSRF-Token', csrfToken);
   }
 
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
   const url = `${API_BASE_URL}/${cleanEndpoint}`;
 
-  const response = await fetch(url, {
-    method: method ?? (body !== undefined ? 'POST' : 'GET'),
+  let response = await fetch(url, {
+    method: resolvedMethod,
     headers,
     body: finalBody,
+    credentials: 'include',
     ...rest,
   });
+
+  // Session may rotate; refresh token and retry once on CSRF failure.
+  if (response.status === 403 && needsCsrf) {
+    const raw403 = await response.clone().text();
+    let parsed403: any = null;
+    try {
+      parsed403 = raw403 ? JSON.parse(raw403) : null;
+    } catch {
+      parsed403 = null;
+    }
+
+    if ((parsed403?.message || '') === 'Invalid CSRF token') {
+      const refreshed = await fetchCsrfToken(true);
+      headers.set('X-CSRF-Token', refreshed);
+      response = await fetch(url, {
+        method: resolvedMethod,
+        headers,
+        body: finalBody,
+        credentials: 'include',
+        ...rest,
+      });
+    }
+  }
 
   const raw = await response.text();
   let data: any = null;
   try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
 
   if (response.status === 401) {
-    logout();
+    if (!NON_LOGOUT_401_ENDPOINTS.has(endpointName)) {
+      clearAuth();
+    }
     throw new ApiError('Unauthorized', 401);
   }
 
@@ -98,36 +170,109 @@ export const api = {
 
   // Maps to your ACTUAL PHP files
   login: (email: string, password?: string) => 
-    client<{ token: string; user: MeUser }>('login.php', { body: { email, password } }),
+    client<LoginResponse>('login.php', { body: { email, password } }),
 
   // CHANGED: signup.php -> register.php to match your file
   register: (name: string, email: string, password?: string) => 
-    client<{ token: string; user: MeUser }>('register.php', { body: { name, email, password } }),
+    client<RegisterResponse>('register.php', { body: { name, email, password } }),
+
+  requestPasswordReset: (email: string) =>
+    client<RequestPasswordResetResponse>('request-password-reset.php', {
+      body: { email },
+      method: 'POST',
+    }),
 
   updateProgress: (payload: { userId: string | number; type: string; duration?: number; itemId?: string }) => 
-    client<{ ok: boolean }>('sync-progress.php', { body: payload }),
+    client<UpdateProgressResponse>('sync-progress.php', { body: payload }),
 
   getSoundscapes: (email?: string) => client<Soundscape[]>('get-soundscapes.php' + (email ? `?email=${encodeURIComponent(email)}` : '')),
+
+  getPrayerContent: (pathId: string) =>
+    client<PrayerContent>(`get-prayer-content.php?path=${encodeURIComponent(pathId)}`),
+
+  getUserPrayers: async (pathId: string): Promise<UserPrayer[]> => {
+    const rows = await client<UserPrayerRow[]>(`get-user-prayers.php?path=${encodeURIComponent(pathId)}`);
+    return (rows || []).map((item: UserPrayerRow) => ({
+      id: String(item.id),
+      path_key: String(item.path_key ?? pathId),
+      title: String(item.title ?? ''),
+      body: String(item.body ?? ''),
+      created_at: item.created_at ?? null,
+      updated_at: item.updated_at ?? null,
+    }));
+  },
+
+  addUserPrayer: (pathId: string, text: string, title?: string) =>
+    client<AddPrayerResponse>('add-user-prayer.php', {
+      body: { pathId, text, title },
+      method: 'POST',
+    }),
+
+  removeUserPrayer: (id: string) =>
+    client<DeletePrayerResponse>('delete-user-prayer.php', {
+      body: { id },
+      method: 'POST',
+    }),
 
   getBackgrounds: () => client<BackgroundMap>('get-backgrounds.php'),
 
   getAffirmations: () => client<Affirmation[]>('get-system-affirmations.php'),
 
-  addUserAffirmation: (email: string, text: string, type: PracticeType) =>
-    client<Affirmation>('add-user-affirmation.php', { body: { email, text, type } }),
+  getSystemAffirmations: (type: PracticeType) =>
+    client<Affirmation[]>(`get-system-affirmations.php?type=${encodeURIComponent(type)}`),
 
-  removeUserAffirmation: (id: string) => client<{ ok: boolean }>(`delete-affirmation.php`, { body: { id }, method: 'POST' }),
+  getRandomAffirmation: async (type: PracticeType, category?: string): Promise<string | null> => {
+    const query = new URLSearchParams();
+    query.set('type', type);
+    if (category?.trim()) {
+      query.set('category', category.trim());
+    }
+    const data = await client<RandomAffirmationResponse>(`get-affirmation.php?${query.toString()}`);
+    return typeof data?.text === 'string' && data.text.trim() ? data.text.trim() : null;
+  },
+
+  generateAiCopy: (
+    payload:
+      | { type: 'alchemist_wisdom' }
+      | { type: 'meditation_wisdom'; focusArea?: string }
+      | { type: 'personalized_affirmation'; focusArea?: string; practiceType: 'MORNING_IAM' | 'EVENING_ILOVE' }
+  ) =>
+    client<AiCopyResponse>('generate-ai-copy.php', {
+      body: payload,
+      method: 'POST',
+    }),
+
+  getUserAffirmations: async (): Promise<Affirmation[]> => {
+    const rows = await client<UserAffirmationRow[]>('get-user-affirmations.php');
+    return (rows || []).map((item: UserAffirmationRow) => ({
+      id: String(item.id),
+      text: String(item.text ?? ''),
+      type: item.type as PracticeType,
+      category: String(item.category ?? 'Personal'),
+      isFavorite: true,
+      dateAdded: item.created_at ?? new Date().toISOString(),
+    }));
+  },
+
+  addUserAffirmation: (_email: string, text: string, type: PracticeType, category?: string) =>
+    client<AddAffirmationResponse>('add-user-affirmation.php', {
+      body: { text, type, category },
+    }),
+
+  removeUserAffirmation: (id: string) =>
+    client<DeleteAffirmationResponse>('delete-user-affirmation.php', { body: { id }, method: 'POST' }),
 
   // CHANGED: upload-audio.php -> user-upload-audio.php to match your user-facing script
-  uploadUserAudio: (file: File, category: string, email: string) => {
+  uploadUserAudio: (file: File, category: string, _email: string) => {
     const formData = new FormData();
     formData.append('audio_file', file);
     formData.append('category', category);
-    formData.append('email', email);
-    return client<{ url: string }>('user-upload-audio.php', { body: formData });
+    return client<UploadUserAudioResponse>('user-upload-audio.php', { body: formData });
   },
 
-  syncProgress: (data: any) => client('sync-progress.php', { body: data }),
+  syncProgress: (data: any, signal?: AbortSignal) => client<{ success: boolean }>('sync-progress.php', { body: data, signal }),
+
+  logout: (signal?: AbortSignal) => client<LogoutResponse>('logout.php', { method: 'POST', signal }),
 };
 
 // ALIAS for backward compatibility with your App.tsx

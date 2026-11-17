@@ -1,7 +1,14 @@
-// App.tsx - PHASE 1: All screens wired with complete flow
+// App.tsx - PHASE 1.5: Sacred entry restored with audio orchestration extracted
 // New User: PreSplash → Splash → Welcome → Naming → Auth → Onboarding → Tutorial → Dashboard
-// Returning User: PreSplash → Splash → Welcome → Return Portal → Dashboard
-import React, { useState, useEffect } from 'react';
+// Returning User: PreSplash → Splash → Welcome → Auth/Return Portal → Dashboard
+import React, {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import {
   AppMode,
   UserAccount,
@@ -9,35 +16,551 @@ import {
   Soundscape,
   AppSettings,
   PracticeSessionConfig,
+  PracticeAudioPhase,
   PracticeType,
-  Affirmation,
   GratitudeLog,
   CycleType,
-} from './types';
-import UniversalLayout from './components/UniversalLayout';
-import { SplashScreen } from './components/SplashScreen/SplashScreen';
-import PreSplash from './components/PreSplash';
-import { WelcomeScreen } from './components/WelcomeScreen';
-import { PersonalGreeting } from './components/PersonalGreeting';
-import { SacredNamingCeremony } from './components/SacredNamingCeremony';
-import { Auth } from './components/Auth';
-import { Dashboard } from './components/Dashboard';
-import { Onboarding } from './components/Onboarding';
-import { TutorialOverlay } from './components/TutorialOverlay';
-import { PracticeSession } from './components/PracticeSession';
-import { Settings } from './components/Settings';
-import { Library } from './components/Library';
-import { MeditationSetup } from './components/MeditationSetup';
-import { Stats } from './components/Stats';
-import { Layout } from './components/Layout';
-import { playAmbience, stopAmbience } from './services/audioService';
-import { href } from './services/base';
+  ReminderPractice,
+  PrayerProfile,
+} from './types'
+// KEPT for Preview functionality only
+import { playAmbience, previewAmbience, setInteractionSoundsEnabled } from './services/audioService'
+import { buttonSoundService } from './services/buttonSoundService'
+import { href } from './services/base'
+import type { PrayerPathId } from './components/prayerContent'
+import { api, ApiError } from './services/api'
+// NEW IMPORT: Audio Orchestration Hook
+import { useAudioOrchestration } from './hooks/useAudioOrchestration'
+import { useProgressPersistence } from './hooks/useProgressPersistence'
+import { useConfirmedSignOut } from './hooks/useConfirmedSignOut'
+import { mergeOnboardingProfile, readPendingProgress } from './services/progressPersistence'
+import { getFocusCycleProgress } from './services/focusCycle'
 
-// UPDATED IMPORT: Use 'api' from the unified service
-import { api } from './services/api';
+const UniversalLayout = lazy(() => import('./components/UniversalLayout'))
+const PreSplash = lazy(() => import('./components/PreSplash'))
+const SplashScreen = lazy(async () => ({
+  default: (await import('./components/SplashScreen/SplashScreen'))
+    .SplashScreen,
+}))
+const WelcomeScreen = lazy(async () => ({
+  default: (await import('./components/WelcomeScreen')).WelcomeScreen,
+}))
+const PersonalGreeting = lazy(async () => ({
+  default: (await import('./components/PersonalGreeting')).PersonalGreeting,
+}))
+const SacredNamingCeremony = lazy(async () => ({
+  default: (await import('./components/SacredNamingCeremony'))
+    .SacredNamingCeremony,
+}))
+const Auth = lazy(async () => ({
+  default: (await import('./components/Auth')).Auth,
+}))
+const Dashboard = lazy(async () => ({
+  default: (await import('./components/Dashboard')).Dashboard,
+}))
+const Onboarding = lazy(async () => ({
+  default: (await import('./components/Onboarding')).Onboarding,
+}))
+const TutorialOverlay = lazy(async () => ({
+  default: (await import('./components/TutorialOverlay')).TutorialOverlay,
+}))
+const PracticeSession = lazy(async () => ({
+  default: (await import('./components/PracticeSession')).PracticeSession,
+}))
+const PrePracticeInvocation = lazy(async () => ({
+  default: (await import('./components/PrePracticeInvocation')).default,
+}))
+const Settings = lazy(async () => ({
+  default: (await import('./components/Settings')).Settings,
+}))
+const Library = lazy(async () => ({
+  default: (await import('./components/Library')).Library,
+}))
+const MeditationSetup = lazy(async () => ({
+  default: (await import('./components/MeditationSetup')).MeditationSetup,
+}))
+const PrayerSetup = lazy(async () => ({
+  default: (await import('./components/PrayerSetup')).PrayerSetup,
+}))
+const PrayerGuide = lazy(async () => ({
+  default: (await import('./components/PrayerGuide')).PrayerGuide,
+}))
+const PrayerSession = lazy(async () => ({
+  default: (await import('./components/PrayerSession')).PrayerSession,
+}))
+const Stats = lazy(async () => ({
+  default: (await import('./components/Stats')).Stats,
+}))
+const Profile = lazy(async () => ({
+  default: (await import('./components/Profile')).Profile,
+}))
+const Layout = lazy(async () => ({
+  default: (await import('./components/Layout')).Layout,
+}))
+const BottomNav = lazy(async () => ({
+  default: (await import('./components/BottomNav')).BottomNav,
+}))
 
-// Default app settings
-const DEFAULT_SETTINGS: AppSettings = {
+// ✅ MODULE-LEVEL CONSTANT (stable reference for useMemo)
+const DEFAULT_SOUNDSCAPE: Soundscape = {
+  id: 'default',
+  label: 'Default Ambience',
+  url: href('assets/audio/ambient/default.mp3'),
+}
+
+const REMINDER_LAST_FIRED_KEY = 'abundance_reminder_last_fired'
+const REMINDER_SNOOZE_KEY = 'abundance_reminder_snooze'
+const PRAYER_PROFILE_STORAGE_KEY = 'abundance_prayer_profile'
+const APP_RESUME_MODE_KEY = 'abundance_resume_mode'
+const APP_RESUME_PRACTICE_KEY = 'abundance_resume_practice'
+const APP_PREAUTH_NAME_KEY = 'abundance_preauth_name'
+const RETURNING_VISITOR_KEY = 'abundance_returning_visitor'
+const AUTH_FLOW_MODE_KEY = 'abundance_auth_flow_mode'
+const MIN_VOLUME = 0
+const MAX_VOLUME = 100
+const DEFAULT_AMBIENCE_VOLUME = 50
+const DEFAULT_REMINDER_INTERVAL_MINUTES = 60
+const DEFAULT_REMINDER_SNOOZE_MINUTES = 15
+const EXTENDED_REMINDER_SNOOZE_MINUTES = 30
+const MAX_REMINDER_SNOOZE_MINUTES = 60
+const REMINDER_CHECK_INTERVAL_MS = 20000
+const DEFAULT_PRAYER_VOLUME = 45
+const QUICK_PRACTICE_DURATION_MINUTES = 5
+const MILLISECONDS_PER_SECOND = 1000
+const SECONDS_PER_MINUTE = 60
+const MINUTES_PER_HOUR = 60
+const HOURS_PER_DAY = 24
+const MILLISECONDS_PER_MINUTE = MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE
+const MILLISECONDS_PER_DAY =
+  MILLISECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY
+const REMINDER_SNOOZE_OPTIONS_MINUTES = [
+  DEFAULT_REMINDER_SNOOZE_MINUTES,
+  EXTENDED_REMINDER_SNOOZE_MINUTES,
+  MAX_REMINDER_SNOOZE_MINUTES,
+] as const
+type ReminderSnoozeMinutes = (typeof REMINDER_SNOOZE_OPTIONS_MINUTES)[number]
+const REMINDER_ORDER: ReminderPractice[] = [
+  'MORNING_IAM',
+  'EVENING_ILOVE',
+  'MEDITATION',
+  'PRAYER',
+]
+const REMINDER_META: Record<ReminderPractice, { title: string; body: string }> =
+  {
+    MORNING_IAM: {
+      title: 'I Am Practice',
+      body: 'Center yourself and begin your I Am practice now.',
+    },
+    EVENING_ILOVE: {
+      title: 'I Love Practice',
+      body: 'Close your day with your I Love practice.',
+    },
+    MEDITATION: {
+      title: 'Meditation',
+      body: 'Take a quiet moment and begin meditation.',
+    },
+    PRAYER: {
+      title: 'Omba (Prayer)',
+      body: 'Pause and enter your prayer practice.',
+    },
+  }
+
+const AppScreenFallback = () => (
+  <div className="flex min-h-screen items-center justify-center px-6 py-10">
+    <div className="rounded-2xl border border-white/10 bg-slate-950/80 px-5 py-4 text-center shadow-xl backdrop-blur">
+      <p className="text-[11px] uppercase tracking-[0.28em] text-amber-300/80">
+        Loading
+      </p>
+      <p className="mt-2 text-sm text-slate-200">
+        Preparing your sacred space...
+      </p>
+      <p className="mt-3 text-center text-[10px] leading-relaxed text-slate-400 space-y-0.5">
+        <span className="block">רוח אלוהים מרחפת מעל המים.</span>
+        <span className="block">የእግዚአብሔር መንፈስ በውሃ ላይ ይንሳፈፋል።</span>
+        <span className="block italic">
+          The Spirit of God hovers over the waters.
+        </span>
+      </p>
+    </div>
+  </div>
+)
+type StoredRecordValue = string | number | boolean | null | undefined
+
+interface StoredRecord {
+  [key: string]: StoredRecordValue
+}
+
+interface MeEndpointResponse {
+  id: number
+  name: string
+  email: string
+  streak: number
+  level: number
+  focusAreas: string[]
+  affirmationsCompleted: number
+  lastPracticeDate: string | null
+}
+
+type StoredPracticeSettings = Partial<{
+  enabled: boolean
+  time: string
+}>
+
+interface StoredReminderSettings extends Partial<
+  Omit<
+    AppSettings['reminders'],
+    'specificTimes' | 'practiceTimes' | 'snoozeMinutes'
+  >
+> {
+  specificTimes?: unknown[]
+  snoozeMinutes?: number | string
+  practiceTimes?: Partial<Record<ReminderPractice, StoredPracticeSettings>>
+}
+
+interface StoredAppSettings extends Partial<Omit<AppSettings, 'reminders'>> {
+  reminders?: StoredReminderSettings
+}
+
+interface PrayerProfileInput {
+  intent?: unknown
+  tone?: unknown
+  language?: unknown
+  style?: unknown
+}
+
+interface UserProfileSource extends Partial<UserProfile> {
+  id?: string | number
+  user_id?: string | number
+  username?: string
+  displayName?: string
+  profile_img?: string
+  createdAt?: string
+  last_practice_date?: string | null
+  updatedAt?: string
+  lastActiveAt?: string
+  settings?: AppSettings
+  created_at?: string
+  updated_at?: string
+  last_active_at?: string
+}
+
+type HydratedUserProfile = UserProfile & {
+  id: string | number
+  createdAt?: string
+  updatedAt?: string
+  lastActiveAt?: string
+  settings?: AppSettings
+}
+
+interface SoundscapeApiRow extends Partial<Soundscape> {
+  soundscape_id?: string | number
+  name?: string
+  title?: string
+  audio_url?: string
+  usage_purpose?: string
+}
+
+interface SoundscapeApiResponse {
+  data?: SoundscapeApiRow[]
+}
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+const detectTimezone = (): string => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  } catch {
+    return 'UTC'
+  }
+}
+const getNotificationPermissionSnapshot = ():
+  | NotificationPermission
+  | 'unsupported' => {
+  if (typeof window === 'undefined' || typeof Notification === 'undefined') {
+    return 'unsupported'
+  }
+  return Notification.permission
+}
+const requestNotificationPermission = async (): Promise<
+  NotificationPermission | 'unsupported'
+> => {
+  if (typeof window === 'undefined' || typeof Notification === 'undefined') {
+    return 'unsupported'
+  }
+  if (
+    Notification.permission === 'granted' ||
+    Notification.permission === 'denied'
+  ) {
+    return Notification.permission
+  }
+  try {
+    return await Notification.requestPermission()
+  } catch {
+    return Notification.permission
+  }
+}
+const parseStoredRecord = (key: string): StoredRecord => {
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    if (!isObjectRecord(parsed)) return {}
+    return parsed as StoredRecord
+  } catch {
+    return {}
+  }
+}
+const writeStoredRecord = (key: string, value: StoredRecord) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    // ignore storage errors
+  }
+}
+const readSessionJsonRecord = <T,>(key: string): T | null => {
+  try {
+    const sessionRaw = sessionStorage.getItem(key)
+    if (sessionRaw) {
+      return JSON.parse(sessionRaw) as T
+    }
+    const legacyRaw = localStorage.getItem(key)
+    if (!legacyRaw) return null
+    sessionStorage.setItem(key, legacyRaw)
+    localStorage.removeItem(key)
+    return JSON.parse(legacyRaw) as T
+  } catch {
+    return null
+  }
+}
+const writeSessionJsonRecord = (key: string, value: unknown) => {
+  try {
+    const serialized = JSON.stringify(value)
+    sessionStorage.setItem(key, serialized)
+    localStorage.removeItem(key)
+  } catch {
+    // ignore storage errors
+  }
+}
+const removeSessionJsonRecord = (key: string) => {
+  try {
+    sessionStorage.removeItem(key)
+    localStorage.removeItem(key)
+  } catch {
+    // ignore storage errors
+  }
+}
+const RESUMABLE_PREAUTH_MODES = new Set([
+  AppMode.SPLASH,
+  AppMode.WELCOME,
+  AppMode.NAMING_CEREMONY,
+  AppMode.AUTH,
+])
+const RESUMABLE_AUTH_MODES = new Set([
+  AppMode.RETURN_PORTAL,
+  AppMode.ONBOARDING,
+  AppMode.TUTORIAL,
+  AppMode.DASHBOARD,
+  AppMode.PRACTICE_PREP,
+  AppMode.PRACTICE,
+  AppMode.LIBRARY,
+  AppMode.SETTINGS,
+  AppMode.STATS,
+  AppMode.PROFILE,
+  AppMode.MEDITATION_SETUP,
+  AppMode.PRAYER_SETUP,
+  AppMode.PRAYER_GUIDE,
+  AppMode.PRAYER_SESSION,
+])
+const HISTORY_NAVIGABLE_MODES = new Set([
+  AppMode.PRE_SPLASH,
+  AppMode.SPLASH,
+  AppMode.WELCOME,
+  AppMode.NAMING_CEREMONY,
+  AppMode.AUTH,
+  AppMode.RETURN_PORTAL,
+  AppMode.ONBOARDING,
+  AppMode.TUTORIAL,
+  AppMode.DASHBOARD,
+  AppMode.PRACTICE_PREP,
+  AppMode.LIBRARY,
+  AppMode.SETTINGS,
+  AppMode.STATS,
+  AppMode.PROFILE,
+  AppMode.MEDITATION_SETUP,
+  AppMode.PRAYER_SETUP,
+  AppMode.PRAYER_GUIDE,
+])
+const ALL_RESUMABLE_MODES = new Set([
+  ...Array.from(RESUMABLE_PREAUTH_MODES),
+  ...Array.from(RESUMABLE_AUTH_MODES),
+])
+const readResumeMode = (): AppMode | null => {
+  try {
+    const value = sessionStorage.getItem(APP_RESUME_MODE_KEY)
+    if (!value) return null
+    return ALL_RESUMABLE_MODES.has(value as AppMode) ? (value as AppMode) : null
+  } catch {
+    return null
+  }
+}
+const writeResumeMode = (mode: AppMode) => {
+  if (!ALL_RESUMABLE_MODES.has(mode)) return
+  try {
+    sessionStorage.setItem(APP_RESUME_MODE_KEY, mode)
+  } catch {
+    // ignore storage errors
+  }
+}
+const clearResumeMode = () => {
+  try {
+    sessionStorage.removeItem(APP_RESUME_MODE_KEY)
+  } catch {
+    // ignore storage errors
+  }
+}
+type AuthFlowMode = 'login' | 'register'
+const readAuthFlowMode = (): AuthFlowMode => {
+  try {
+    const value = sessionStorage.getItem(AUTH_FLOW_MODE_KEY)
+    return value === 'register' ? 'register' : 'login'
+  } catch {
+    return 'login'
+  }
+}
+const writeAuthFlowMode = (mode: AuthFlowMode) => {
+  try {
+    sessionStorage.setItem(AUTH_FLOW_MODE_KEY, mode)
+  } catch {
+    // ignore storage errors
+  }
+}
+const clearAuthFlowMode = () => {
+  try {
+    sessionStorage.removeItem(AUTH_FLOW_MODE_KEY)
+  } catch {
+    // ignore storage errors
+  }
+}
+const readPreAuthName = (): string => {
+  try {
+    return sessionStorage.getItem(APP_PREAUTH_NAME_KEY) || ''
+  } catch {
+    return ''
+  }
+}
+const writePreAuthName = (name: string) => {
+  try {
+    if (name.trim()) {
+      sessionStorage.setItem(APP_PREAUTH_NAME_KEY, name.trim())
+    } else {
+      sessionStorage.removeItem(APP_PREAUTH_NAME_KEY)
+    }
+  } catch {
+    // ignore storage errors
+  }
+}
+const clearPreAuthName = () => {
+  try {
+    sessionStorage.removeItem(APP_PREAUTH_NAME_KEY)
+  } catch {
+    // ignore storage errors
+  }
+}
+const readPracticeSnapshot = (): PracticeSessionConfig | null => {
+  try {
+    const raw = sessionStorage.getItem(APP_RESUME_PRACTICE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    const validType = Object.values(PracticeType).includes(parsed?.type)
+    const validDuration =
+      typeof parsed?.duration === 'number' &&
+      Number.isFinite(parsed.duration) &&
+      parsed.duration > 0
+    if (!validType || !validDuration) return null
+    return {
+      type: parsed.type,
+      duration: parsed.duration,
+      focusAreas: Array.isArray(parsed?.focusAreas) ? parsed.focusAreas : [],
+      soundscape:
+        typeof parsed?.soundscapeId === 'string' && parsed.soundscapeId
+          ? parsed.soundscapeId
+          : undefined,
+    }
+  } catch {
+    return null
+  }
+}
+const writePracticeSnapshot = (config: PracticeSessionConfig) => {
+  try {
+    const soundscapeId =
+      typeof config.soundscape === 'string'
+        ? config.soundscape
+        : config.soundscape?.id
+    sessionStorage.setItem(
+      APP_RESUME_PRACTICE_KEY,
+      JSON.stringify({
+        type: config.type,
+        duration: config.duration,
+        focusAreas: Array.isArray(config.focusAreas) ? config.focusAreas : [],
+        soundscapeId: soundscapeId || null,
+      }),
+    )
+  } catch {
+    // ignore storage errors
+  }
+}
+const clearPracticeSnapshot = () => {
+  try {
+    sessionStorage.removeItem(APP_RESUME_PRACTICE_KEY)
+  } catch {
+    // ignore storage errors
+  }
+}
+const getClockInTimezone = (
+  timezone: string,
+): { dateKey: string; hhmm: string } => {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+    const parts = formatter.formatToParts(new Date())
+    const map: Record<string, string> = {}
+    for (const part of parts) {
+      if (part.type !== 'literal') {
+        map[part.type] = part.value
+      }
+    }
+    const year = map.year || '0000'
+    const month = map.month || '00'
+    const day = map.day || '00'
+    const hour = map.hour || '00'
+    const minute = map.minute || '00'
+
+    return {
+      dateKey: `${year}-${month}-${day}`,
+      hhmm: `${hour}:${minute}`,
+    }
+  } catch {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const hour = String(now.getHours()).padStart(2, '0')
+    const minute = String(now.getMinutes()).padStart(2, '0')
+    return {
+      dateKey: `${year}-${month}-${day}`,
+      hhmm: `${hour}:${minute}`,
+    }
+  }
+}
+const createDefaultSettings = (): AppSettings => ({
   theme: 'dark',
   soundEffectsOn: true,
   musicOn: true,
@@ -45,522 +568,1397 @@ const DEFAULT_SETTINGS: AppSettings = {
   iAmSoundscapeId: 'default',
   iLoveSoundscapeId: 'default',
   meditationSoundscapeId: 'default',
-  ambienceVolume: 50,
+  ambienceVolume: DEFAULT_AMBIENCE_VOLUME,
   voiceId: 'default',
   reminders: {
     enabled: false,
-    mode: 'INTERVAL',
-    intervalMinutes: 60,
+    mode: 'SPECIFIC_TIMES',
+    intervalMinutes: DEFAULT_REMINDER_INTERVAL_MINUTES,
     specificTimes: ['08:00', '20:00'],
+    timezone: detectTimezone(),
+    snoozeMinutes: DEFAULT_REMINDER_SNOOZE_MINUTES,
+    notificationPermission: getNotificationPermissionSnapshot(),
+    practiceTimes: {
+      MORNING_IAM: { enabled: true, time: '07:00' },
+      EVENING_ILOVE: { enabled: true, time: '20:30' },
+      MEDITATION: { enabled: false, time: '12:30' },
+      PRAYER: { enabled: false, time: '06:30' },
+    },
   },
-};
-
-
+})
+const sanitizeTime = (value: unknown, fallback: string): string => {
+  if (typeof value !== 'string') return fallback
+  return /^\d{2}:\d{2}$/.test(value) ? value : fallback
+}
+const normalizeSettings = (raw: StoredAppSettings | unknown): AppSettings => {
+  const base = createDefaultSettings()
+  if (!isObjectRecord(raw)) return base
+  const settingsRaw = raw as StoredAppSettings
+  const reminderRaw: StoredReminderSettings =
+    settingsRaw.reminders && isObjectRecord(settingsRaw.reminders)
+      ? settingsRaw.reminders
+      : {}
+  const practiceRaw: Partial<Record<ReminderPractice, StoredPracticeSettings>> =
+    reminderRaw.practiceTimes && isObjectRecord(reminderRaw.practiceTimes)
+      ? reminderRaw.practiceTimes
+      : {}
+  const basePractice = base.reminders.practiceTimes
+  const mergedPractice = {
+    MORNING_IAM: {
+      enabled:
+        typeof practiceRaw.MORNING_IAM?.enabled === 'boolean'
+          ? practiceRaw.MORNING_IAM.enabled
+          : basePractice.MORNING_IAM.enabled,
+      time: sanitizeTime(
+        practiceRaw.MORNING_IAM?.time,
+        basePractice.MORNING_IAM.time,
+      ),
+    },
+    EVENING_ILOVE: {
+      enabled:
+        typeof practiceRaw.EVENING_ILOVE?.enabled === 'boolean'
+          ? practiceRaw.EVENING_ILOVE.enabled
+          : basePractice.EVENING_ILOVE.enabled,
+      time: sanitizeTime(
+        practiceRaw.EVENING_ILOVE?.time,
+        basePractice.EVENING_ILOVE.time,
+      ),
+    },
+    MEDITATION: {
+      enabled:
+        typeof practiceRaw.MEDITATION?.enabled === 'boolean'
+          ? practiceRaw.MEDITATION.enabled
+          : basePractice.MEDITATION.enabled,
+      time: sanitizeTime(
+        practiceRaw.MEDITATION?.time,
+        basePractice.MEDITATION.time,
+      ),
+    },
+    PRAYER: {
+      enabled:
+        typeof practiceRaw.PRAYER?.enabled === 'boolean'
+          ? practiceRaw.PRAYER.enabled
+          : basePractice.PRAYER.enabled,
+      time: sanitizeTime(practiceRaw.PRAYER?.time, basePractice.PRAYER.time),
+    },
+  }
+  const snoozeRaw = Number(reminderRaw.snoozeMinutes)
+  const snoozeMinutes = REMINDER_SNOOZE_OPTIONS_MINUTES.includes(
+    snoozeRaw as ReminderSnoozeMinutes,
+  )
+    ? (snoozeRaw as ReminderSnoozeMinutes)
+    : DEFAULT_REMINDER_SNOOZE_MINUTES
+  const permissionNow = getNotificationPermissionSnapshot()
+  const storedPermission = reminderRaw.notificationPermission
+  const normalizedPermission =
+    permissionNow === 'unsupported'
+      ? 'unsupported'
+      : storedPermission === 'granted' ||
+          storedPermission === 'denied' ||
+          storedPermission === 'default'
+        ? storedPermission
+        : permissionNow
+  return {
+    ...base,
+    ...settingsRaw,
+    theme: 'dark',
+    reminders: {
+      ...base.reminders,
+      ...reminderRaw,
+      mode:
+        reminderRaw.mode === 'INTERVAL' || reminderRaw.mode === 'SPECIFIC_TIMES'
+          ? reminderRaw.mode
+          : base.reminders.mode,
+      intervalMinutes: Number.isFinite(Number(reminderRaw.intervalMinutes))
+        ? Number(reminderRaw.intervalMinutes)
+        : base.reminders.intervalMinutes,
+      specificTimes: Array.isArray(reminderRaw.specificTimes)
+        ? reminderRaw.specificTimes.filter(
+            (v: unknown): v is string => typeof v === 'string',
+          )
+        : base.reminders.specificTimes,
+      timezone:
+        typeof reminderRaw.timezone === 'string' && reminderRaw.timezone.trim()
+          ? reminderRaw.timezone
+          : detectTimezone(),
+      snoozeMinutes,
+      notificationPermission: normalizedPermission,
+      practiceTimes: mergedPractice,
+    },
+  }
+}
+const loadStoredSettings = (): AppSettings => {
+  try {
+    const raw = localStorage.getItem('abundance_settings')
+    if (!raw) return createDefaultSettings()
+    return normalizeSettings(JSON.parse(raw))
+  } catch {
+    return createDefaultSettings()
+  }
+}
+const DEFAULT_PRAYER_PROFILE: PrayerProfile = {
+  intent: 'guidance',
+  tone: 'gentle',
+  language: 'english',
+  style: 'standard',
+}
+const normalizePrayerProfile = (
+  raw: PrayerProfileInput | unknown,
+): PrayerProfile => {
+  const next = { ...DEFAULT_PRAYER_PROFILE }
+  if (!isObjectRecord(raw)) return next
+  const profileRaw = raw as PrayerProfileInput
+  if (
+    profileRaw.intent === 'gratitude' ||
+    profileRaw.intent === 'guidance' ||
+    profileRaw.intent === 'healing' ||
+    profileRaw.intent === 'protection' ||
+    profileRaw.intent === 'provision' ||
+    profileRaw.intent === 'forgiveness'
+  ) {
+    next.intent = profileRaw.intent
+  }
+  if (
+    profileRaw.tone === 'gentle' ||
+    profileRaw.tone === 'bold' ||
+    profileRaw.tone === 'contemplative' ||
+    profileRaw.tone === 'joyful'
+  ) {
+    next.tone = profileRaw.tone
+  }
+  if (
+    profileRaw.language === 'english' ||
+    profileRaw.language === 'swahili' ||
+    profileRaw.language === 'bilingual'
+  ) {
+    next.language = profileRaw.language
+  }
+  if (
+    profileRaw.style === 'short' ||
+    profileRaw.style === 'standard' ||
+    profileRaw.style === 'extended'
+  ) {
+    next.style = profileRaw.style
+  }
+  return next
+}
+const loadStoredPrayerProfile = (): PrayerProfile => {
+  try {
+    const raw = localStorage.getItem(PRAYER_PROFILE_STORAGE_KEY)
+    if (!raw) return { ...DEFAULT_PRAYER_PROFILE }
+    return normalizePrayerProfile(JSON.parse(raw))
+  } catch {
+    return { ...DEFAULT_PRAYER_PROFILE }
+  }
+}
 function App() {
-  // START WITH PRE_SPLASH (not SPLASH)
-  const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.PRE_SPLASH);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-
-
-  // Dashboard expects UserProfile
-  const [user, setUser] = useState<UserProfile | null>(null);
-
-
-  const [sacredName, setSacredName] = useState<string>('');
-
-
-  // ✅ Backend-validated session check
-  const [authChecked, setAuthChecked] = useState(false);
-
-
-  // ✅ Phase 1: Additional state for missing screens
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
-  const [practiceConfig, setPracticeConfig] = useState<PracticeSessionConfig | null>(null);
-  const [soundscapes, setSoundscapes] = useState<Soundscape[]>([]);
-  const [userAudioFile, setUserAudioFile] = useState<File | null>(null);
-
-
-  const API_BASE =
-    (import.meta as any)?.env?.VITE_API_BASE_URL ?? '/abundance-alchemy-api';
-
-
-  // Convert what Auth returns (UserAccount) into what Dashboard expects (UserProfile).
-  const toUserProfile = (account: any): UserProfile => {
-    const anyAcc = (account ?? {}) as Record<string, any>;
-
-
-    const profile: UserProfile = {
-      ...(anyAcc as any),
-
-
-      // Identity fields
-      id: anyAcc.id ?? anyAcc.user_id ?? anyAcc.email ?? 'local',
-      email: anyAcc.email ?? '',
-      name: anyAcc.name ?? anyAcc.username ?? anyAcc.displayName ?? '',
-
-
-      // Required fields (safe defaults)
-      focusAreas: anyAcc.focusAreas ?? [],
-      cyclePreference: anyAcc.cyclePreference ?? CycleType.DAILY,
-      streak: anyAcc.streak ?? 0,
-      level: anyAcc.level ?? 1,
-      affirmationsCompleted: anyAcc.affirmationsCompleted ?? 0,
-      lastPracticeDate: anyAcc.lastPracticeDate ?? null,
-      customAffirmations: anyAcc.customAffirmations ?? [],
-      gratitudeLogs: anyAcc.gratitudeLogs ?? [],
-
-
-      createdAt: anyAcc.createdAt ?? anyAcc.created_at ?? undefined,
-      updatedAt: anyAcc.updatedAt ?? anyAcc.updated_at ?? undefined,
-      lastActiveAt: anyAcc.lastActiveAt ?? anyAcc.last_active_at ?? undefined,
-      settings: anyAcc.settings ?? undefined,
-    } as UserProfile;
-
-
-    return profile;
-  };
-
-
-  // ✅ Boot validation: localStorage is a hint, backend is truth.
-  useEffect(() => {
-    const raw = localStorage.getItem('abundance_auth');
-
-
-    // No stored session → treat as new
-    if (!raw) {
-      setUser(null);
-      setAuthChecked(true);
-      return;
-    }
-
-
-    let parsed: any = null;
+  // ✅ SACRED FLOW: Always start at PRE_SPLASH
+  const [currentMode, setCurrentMode] = useState(AppMode.PRE_SPLASH)
+  // ✅ Boot destination is set AFTER Welcome completes (not before)
+  const [bootDestination, setBootDestination] = useState<AppMode>(
+    AppMode.SPLASH,
+  )
+  const theme: 'dark' = 'dark'
+  const [user, setUser] = useState<UserProfile | null>(null)
+  const accountId = user ? String((user as HydratedUserProfile).id || '') : null
+  const progressSave = useProgressPersistence(accountId || null)
+  const practiceCompletedRef = React.useRef(false)
+  const [sacredName, setSacredName] = useState('')
+  const [authChecked, setAuthChecked] = useState(false)
+  const [settings, setSettings] = useState<AppSettings>(() =>
+    loadStoredSettings(),
+  )
+  const [sessionAmbienceUnlocked, setSessionAmbienceUnlocked] = useState(false)
+  const [welcomeNarrationPlaying, setWelcomeNarrationPlaying] = useState(false)
+  const [practiceAudioPhase, setPracticeAudioPhase] = useState<PracticeAudioPhase>('ready')
+  const [practiceMusicVolume, setPracticeMusicVolume] = useState(settings.ambienceVolume)
+  const [practiceConfig, setPracticeConfig] =
+    useState<PracticeSessionConfig | null>(null)
+  const [soundscapes, setSoundscapes] = useState<Soundscape[]>([])
+  const [userAudioFile, setUserAudioFile] = useState<File | null>(null)
+  const [activeReminder, setActiveReminder] = useState<ReminderPractice | null>(
+    null,
+  )
+  const [prayerSoundscapeId, setPrayerSoundscapeId] = useState(() => {
     try {
-      parsed = JSON.parse(raw);
-    } catch (error) {
-      console.error('Failed to parse stored auth:', error);
-      localStorage.removeItem('abundance_auth');
-      setUser(null);
-      setAuthChecked(true);
-      return;
+      return localStorage.getItem('abundance_prayer_soundscape_id') || 'default'
+    } catch {
+      return 'default'
+    }
+  })
+  const [prayerVolume, setPrayerVolume] = useState(() => {
+    try {
+      const raw = localStorage.getItem('abundance_prayer_volume')
+      const parsed = raw ? Number(raw) : NaN
+      return Number.isFinite(parsed)
+        ? Math.max(MIN_VOLUME, Math.min(MAX_VOLUME, parsed))
+        : DEFAULT_PRAYER_VOLUME
+    } catch {
+      return DEFAULT_PRAYER_VOLUME
+    }
+  })
+  const [prayerPathId, setPrayerPathId] = useState<PrayerPathId | null>(() => {
+    try {
+      const value = localStorage.getItem('abundance_prayer_path')
+      if (
+        value === 'christian' ||
+        value === 'muslim' ||
+        value === 'buddhist' ||
+        value === 'traditional' ||
+        value === 'science_of_mind' ||
+        value === 'universal'
+      ) {
+        return value
+      }
+      return null
+    } catch {
+      return null
+    }
+  })
+  const [prayerProfile, setPrayerProfile] = useState(() =>
+    loadStoredPrayerProfile(),
+  )
+  const [isReturningVisitor, setIsReturningVisitor] = useState(false)
+  const [welcomeReturnMode, setWelcomeReturnMode] = useState<AppMode | null>(
+    null,
+  )
+  const [authFlowMode, setAuthFlowMode] = useState<AuthFlowMode>(() =>
+    readAuthFlowMode(),
+  )
+  const historyNavigationRef = React.useRef(false)
+  const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/abundance-alchemy/api'
+
+  // Global button sound - plays sacred bell on all interactive elements
+  useEffect(() => { setInteractionSoundsEnabled(settings.soundEffectsOn) }, [settings.soundEffectsOn])
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.closest('[data-no-sound="true"]')) return
+      if (target.closest('button, a, [role="button"]')) {
+        buttonSoundService.play('click')
+      }
+    }
+    document.addEventListener('click', handleGlobalClick, { passive: true })
+    return () => document.removeEventListener('click', handleGlobalClick)
+  }, [])
+
+  const routeReturningVisitorToSacredEntry = () => {
+    setWelcomeReturnMode(null)
+    setIsReturningVisitor(true)
+    clearPreAuthName()
+    setAuthFlowMode('login')
+    writeAuthFlowMode('login')
+    setBootDestination(AppMode.SPLASH)
+    clearResumeMode()
+    clearPracticeSnapshot()
+    setPracticeConfig(null)
+    try {
+      localStorage.setItem(RETURNING_VISITOR_KEY, '1')
+    } catch {
+      // ignore storage errors
+    }
+    setCurrentMode(AppMode.PRE_SPLASH)
+  }
+
+  const toUserProfile = (
+    account:
+      | UserProfileSource
+      | MeEndpointResponse
+      | UserAccount
+      | null
+      | undefined,
+  ): HydratedUserProfile => {
+    const source: UserProfileSource = account ?? {}
+    let storedProfile: Partial<UserProfile> = {}
+    const parsed = readSessionJsonRecord<Partial<UserProfile>>('abundance_user')
+    if (parsed && isObjectRecord(parsed)) {
+      storedProfile = parsed as Partial<UserProfile>
     }
 
-
-    const email = parsed?.email;
-    if (!email || typeof email !== 'string') {
-      localStorage.removeItem('abundance_auth');
-      setUser(null);
-      setAuthChecked(true);
-      return;
+    const profile: HydratedUserProfile = {
+      ...storedProfile,
+      ...source,
+      id: source.id ?? source.user_id ?? source.email ?? 'local',
+      email: source.email ?? '',
+      name: source.name ?? source.username ?? source.displayName ?? '',
+      profileImage:
+        source.profileImage ??
+        source.profile_img ??
+        storedProfile.profileImage ??
+        '',
+      focusAreas: source.focusAreas ?? storedProfile.focusAreas ?? [],
+      cyclePreference:
+        source.cyclePreference ??
+        storedProfile.cyclePreference ??
+        CycleType.DAILY,
+      cycleStartedAt: source.cycleStartedAt ?? null,
+      streak: source.streak ?? storedProfile.streak ?? 0,
+      level: source.level ?? storedProfile.level ?? 1,
+      affirmationsCompleted:
+        source.affirmationsCompleted ??
+        storedProfile.affirmationsCompleted ??
+        0,
+      lastPracticeDate:
+        source.lastPracticeDate ??
+        source.last_practice_date ??
+        storedProfile.lastPracticeDate ??
+        null,
+      customAffirmations:
+        source.customAffirmations ?? storedProfile.customAffirmations ?? [],
+      gratitudeLogs: source.gratitudeLogs ?? storedProfile.gratitudeLogs ?? [],
+      createdAt: source.createdAt ?? source.created_at ?? undefined,
+      updatedAt: source.updatedAt ?? source.updated_at ?? undefined,
+      lastActiveAt: source.lastActiveAt ?? source.last_active_at ?? undefined,
+      settings: source.settings ?? undefined,
     }
 
+    const pending = readPendingProgress(String(profile.id))
+    return pending ? {
+      ...profile, ...pending,
+      gratitudeLogs: [...new Map([
+        ...profile.gratitudeLogs, ...(pending.gratitudeLogs ?? []),
+      ].map(log => [log.id, log])).values()],
+    } : profile
+  }
 
-    (async () => {
+  // ✅ Boot validation: server session is the source of truth.
+  useEffect(() => {
+    let isMounted = true
+    let hasKnownVisitor = false
+    let hasStoredAuth = false
+    let storedAuthFlowMode: AuthFlowMode = 'login'
+    try {
+      hasKnownVisitor = localStorage.getItem(RETURNING_VISITOR_KEY) === '1'
+      hasStoredAuth = !!readSessionJsonRecord<Record<string, unknown>>('abundance_auth')
+    } catch {
+      hasKnownVisitor = false
+      hasStoredAuth = false
+    }
+    storedAuthFlowMode = readAuthFlowMode()
+
+    const resumeMode = readResumeMode()
+    const preAuthResumeMode =
+      resumeMode && RESUMABLE_PREAUTH_MODES.has(resumeMode) ? resumeMode : null
+    const resumedSacredName = readPreAuthName()
+    const shouldValidateServerSession = hasKnownVisitor || hasStoredAuth
+
+    if (!shouldValidateServerSession) {
+      clearPracticeSnapshot()
+      setPracticeConfig(null)
+      setIsReturningVisitor(false)
+      setAuthFlowMode('register')
+      writeAuthFlowMode('register')
+      setSacredName(resumedSacredName)
+      setBootDestination(AppMode.SPLASH)
+      setUser(null)
+      setCurrentMode(preAuthResumeMode || AppMode.PRE_SPLASH)
+      setAuthChecked(true)
+      return () => {
+        isMounted = false
+      }
+    }
+
+    ;(async () => {
       try {
-        // Use the new API service for consistency
-        const res = await api.me();
+        const res: MeEndpointResponse = await api.me()
+        if (!isMounted) return
+        const profile = toUserProfile(res)
+        const resumeMode = readResumeMode()
+        const authenticatedResumeMode =
+          resumeMode && RESUMABLE_AUTH_MODES.has(resumeMode) ? resumeMode : null
+        const shouldRestorePractice =
+          authenticatedResumeMode === AppMode.PRACTICE_PREP ||
+          authenticatedResumeMode === AppMode.PRACTICE
+        const resumePractice = shouldRestorePractice
+          ? readPracticeSnapshot()
+          : null
+        const hasFocusSelection =
+          Array.isArray(profile.focusAreas) && profile.focusAreas.length > 0
+        const defaultAuthenticatedMode = hasFocusSelection
+          ? AppMode.RETURN_PORTAL
+          : AppMode.ONBOARDING
 
-        // Hydrate from backend-validated profile
-        setUser(toUserProfile(res));
+        setUser(profile)
+        setIsReturningVisitor(true)
+        clearPreAuthName()
+        setAuthFlowMode('login')
+        writeAuthFlowMode('login')
+        if (shouldRestorePractice) {
+          if (resumePractice) {
+            setPracticeConfig(resumePractice)
+            setBootDestination(authenticatedResumeMode)
+          } else {
+            clearPracticeSnapshot()
+            setPracticeConfig(null)
+            setBootDestination(AppMode.DASHBOARD)
+          }
+        } else {
+          setPracticeConfig(null)
+          setBootDestination(
+            authenticatedResumeMode || defaultAuthenticatedMode,
+          )
+        }
 
-
-        // Optional: refresh stored auth with validated data (keeps email/name in sync)
         try {
-          localStorage.setItem('abundance_auth', JSON.stringify(res));
+          localStorage.setItem(RETURNING_VISITOR_KEY, '1')
+          writeSessionJsonRecord('abundance_auth', {
+            id: res.id,
+            email: res.email,
+            name: res.name,
+          })
         } catch {
           // ignore storage errors
         }
-
-
-        setAuthChecked(true);
       } catch (e) {
-        // Network error → safest: do not assume returning
-        console.error('me.php validation failed:', e);
-        // Don't auto-logout on network error, but don't validate either
-        // If 401/403, api.ts handles logout automatically
-        setAuthChecked(true); 
+        if (!isMounted) return
+        if (!(e instanceof ApiError && e.status === 401)) {
+          console.error('me.php validation failed:', e)
+        }
+        removeSessionJsonRecord('abundance_auth')
+        clearPracticeSnapshot()
+        setPracticeConfig(null)
+        const shouldRouteToLogin =
+          hasKnownVisitor && storedAuthFlowMode === 'login'
+        setIsReturningVisitor(shouldRouteToLogin)
+        setAuthFlowMode(shouldRouteToLogin ? 'login' : 'register')
+        writeAuthFlowMode(shouldRouteToLogin ? 'login' : 'register')
+        setSacredName(resumedSacredName)
+        setBootDestination(AppMode.SPLASH)
+        setUser(null)
+        setCurrentMode(preAuthResumeMode || AppMode.PRE_SPLASH)
+      } finally {
+        if (isMounted) setAuthChecked(true)
       }
-    })();
-  }, [API_BASE]);
+    })()
 
+    return () => {
+      isMounted = false
+    }
+  }, [API_BASE])
 
-  // ✅ Load soundscapes from backend
+  useEffect(() => {
+    const handleAuthLogout = () => {
+      setUser(null)
+      setSacredName('')
+      routeReturningVisitorToSacredEntry()
+    }
+    window.addEventListener('auth:logout', handleAuthLogout)
+    return () => {
+      window.removeEventListener('auth:logout', handleAuthLogout)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!authChecked || !user) return
+    if (RESUMABLE_AUTH_MODES.has(currentMode)) {
+      writeResumeMode(currentMode)
+    }
+    clearPreAuthName()
+    if (
+      (currentMode === AppMode.PRACTICE_PREP ||
+        currentMode === AppMode.PRACTICE) &&
+      practiceConfig
+    ) {
+      writePracticeSnapshot(practiceConfig)
+    } else {
+      clearPracticeSnapshot()
+    }
+  }, [authChecked, currentMode, practiceConfig, user])
+
+  useEffect(() => {
+    if (!authChecked || user) return
+
+    if (RESUMABLE_PREAUTH_MODES.has(currentMode)) {
+      writeResumeMode(currentMode)
+      writePreAuthName(sacredName)
+      return
+    }
+
+    if (currentMode === AppMode.PRE_SPLASH) {
+      clearResumeMode()
+      clearPreAuthName()
+      return
+    }
+
+    clearPreAuthName()
+  }, [authChecked, currentMode, sacredName, user])
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const nextMode = event.state?.appMode as AppMode | undefined
+      if (!nextMode || !HISTORY_NAVIGABLE_MODES.has(nextMode)) return
+      historyNavigationRef.current = true
+      setCurrentMode(nextMode)
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!authChecked || !HISTORY_NAVIGABLE_MODES.has(currentMode)) return
+
+    if (historyNavigationRef.current) {
+      historyNavigationRef.current = false
+      window.history.replaceState({ appMode: currentMode }, '')
+      return
+    }
+
+    const currentHistoryMode = window.history.state?.appMode as
+      | AppMode
+      | undefined
+    if (!currentHistoryMode) {
+      window.history.replaceState({ appMode: currentMode }, '')
+      return
+    }
+
+    if (currentHistoryMode !== currentMode) {
+      window.history.pushState({ appMode: currentMode }, '')
+    }
+  }, [authChecked, currentMode])
+
+  useEffect(() => {
+    if (!user?.email) return
+    let isMounted = true
+    ;(async () => {
+      try {
+        const dbAffirmations = await api.getUserAffirmations()
+        if (!isMounted) return
+        setUser((prev) =>
+          prev ? { ...prev, customAffirmations: dbAffirmations } : prev,
+        )
+      } catch (e) {
+        console.error('Failed to load user affirmations:', e)
+      }
+    })()
+
+    return () => {
+      isMounted = false
+    }
+  }, [user?.email])
+
+  const normalizeSoundscapes = (
+    raw: Soundscape[] | SoundscapeApiResponse | null | undefined,
+  ): Soundscape[] => {
+    const rows = Array.isArray(raw)
+      ? raw
+      : Array.isArray(raw?.data)
+        ? raw.data
+        : []
+    return rows.map((row: SoundscapeApiRow, index: number) => ({
+      id: String(row?.id ?? row?.soundscape_id ?? row?.name ?? index),
+      label: row?.label ?? row?.name ?? row?.title ?? 'Soundscape',
+      url: row?.audio_url ?? row?.url,
+      category: row?.category ?? row?.usage_purpose,
+    }))
+  }
+
   useEffect(() => {
     const loadSoundscapes = async () => {
       try {
-        const data = await api.getSoundscapes(user?.email);
-        if (data && data.length > 0) {
-          setSoundscapes(data);
+        const raw = await api.getSoundscapes(user?.email)
+        const normalized = normalizeSoundscapes(raw)
+        if (normalized.length > 0) {
+          setSoundscapes(normalized)
         } else {
-          // Fallback default soundscape
-          setSoundscapes([defaultSoundscape]);
+          setSoundscapes([DEFAULT_SOUNDSCAPE])
         }
       } catch (e) {
-        console.error('Failed to load soundscapes:', e);
-        setSoundscapes([defaultSoundscape]);
+        console.error('Failed to load soundscapes:', e)
+        setSoundscapes([DEFAULT_SOUNDSCAPE])
       }
-    };
-    loadSoundscapes();
-  }, [user?.email]);
+    }
+    loadSoundscapes()
+  }, [user?.email])
 
 
-  // ✅ Sync theme from settings
   useEffect(() => {
-    setTheme(settings.theme);
-  }, [settings.theme]);
+    const permission = getNotificationPermissionSnapshot()
+    setSettings((prev) => {
+      if (prev.reminders.notificationPermission === permission) return prev
+      const next = {
+        ...prev,
+        reminders: {
+          ...prev.reminders,
+          notificationPermission: permission,
+        },
+      }
+      try {
+        localStorage.setItem('abundance_settings', JSON.stringify(next))
+      } catch {
+        // ignore storage errors
+      }
+      return next
+    })
+  }, [])
 
+  const handleRequestReminderPermission = async () => {
+    const permission = await requestNotificationPermission()
+    setSettings((prev) => {
+      if (prev.reminders.notificationPermission === permission) return prev
+      const next = {
+        ...prev,
+        reminders: {
+          ...prev.reminders,
+          notificationPermission: permission,
+        },
+      }
+      try {
+        localStorage.setItem('abundance_settings', JSON.stringify(next))
+      } catch {
+        // ignore storage errors
+      }
+      return next
+    })
+  }
 
-  // PreSplash → SplashScreen
+  const triggerReminder = useCallback((practice: ReminderPractice) => {
+    const reminderMeta = REMINDER_META[practice]
+    setActiveReminder((current) => current ?? practice)
+    if (settings.reminders.notificationPermission !== 'granted') return
+    if (typeof Notification === 'undefined') return
+
+    try {
+      const notification = new Notification(
+        `Abundance Alchemy: ${reminderMeta.title}`,
+        {
+          body: reminderMeta.body,
+          tag: `aa-reminder-${practice}`,
+        },
+      )
+      notification.onclick = () => {
+        window.focus()
+        setActiveReminder(practice)
+        notification.close()
+      }
+    } catch {
+      // silently fail and rely on in-app reminder card
+    }
+  }, [settings.reminders.notificationPermission])
+
+  // ✅ REMINDER EFFECT - OPTIMIZED (Mutable Interval Handle)
+  useEffect(() => {
+    if (!settings.reminders.enabled || !user?.email) return
+
+    let intervalId: number | null = null
+
+    const runReminderCheck = () => {
+      const nowMs = Date.now()
+      const snoozeMap = parseStoredRecord(REMINDER_SNOOZE_KEY)
+      let changedSnooze = false
+
+      for (const practice of REMINDER_ORDER) {
+        const snoozeUntil = Number(snoozeMap[practice] ?? 0)
+        if (!Number.isFinite(snoozeUntil) || snoozeUntil <= 0) continue
+        if (snoozeUntil > nowMs) continue
+
+        delete snoozeMap[practice]
+        changedSnooze = true
+        triggerReminder(practice)
+        break
+      }
+
+      if (changedSnooze) {
+        writeStoredRecord(REMINDER_SNOOZE_KEY, snoozeMap)
+        return
+      }
+
+      const { dateKey, hhmm } = getClockInTimezone(settings.reminders.timezone)
+      const lastFired = parseStoredRecord(REMINDER_LAST_FIRED_KEY)
+      let changedLastFired = false
+
+      for (const practice of REMINDER_ORDER) {
+        const schedule = settings.reminders.practiceTimes[practice]
+        if (!schedule?.enabled) continue
+        if (schedule.time !== hhmm) continue
+
+        const snoozeUntil = Number(snoozeMap[practice] ?? 0)
+        if (Number.isFinite(snoozeUntil) && snoozeUntil > nowMs) continue
+
+        const fireKey = `${dateKey}|${schedule.time}`
+        if (lastFired[practice] === fireKey) continue
+
+        lastFired[practice] = fireKey
+        changedLastFired = true
+        triggerReminder(practice)
+      }
+
+      if (changedLastFired) {
+        writeStoredRecord(REMINDER_LAST_FIRED_KEY, lastFired)
+      }
+    }
+
+    const startInterval = () => {
+      if (intervalId !== null) return
+      runReminderCheck()
+      intervalId = window.setInterval(
+        runReminderCheck,
+        REMINDER_CHECK_INTERVAL_MS,
+      )
+    }
+
+    const stopInterval = () => {
+      if (intervalId !== null) {
+        window.clearInterval(intervalId)
+        intervalId = null
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopInterval()
+      } else {
+        startInterval()
+      }
+    }
+
+    startInterval()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      stopInterval()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [
+    settings.reminders.enabled,
+    settings.reminders.practiceTimes,
+    settings.reminders.timezone,
+    settings.reminders.notificationPermission,
+    triggerReminder,
+    user?.email,
+  ])
+
+  // ✅ SACRED FLOW: PreSplash → Splash (always)
   const handlePreSplashComplete = () => {
-    console.log('PreSplash complete → going to SplashScreen');
-    setCurrentMode(AppMode.SPLASH);
-  };
+    if (!authChecked) {
+      console.log('PreSplash continue requested before boot finished')
+      return
+    }
+    console.log('PreSplash complete → going to SPLASH')
+    setCurrentMode(AppMode.SPLASH)
+  }
 
-
-  // SplashScreen → WelcomeScreen
+  // ✅ SACRED FLOW: Splash → Welcome (always)
   const handleSplashComplete = () => {
-    console.log('SplashScreen complete → going to WelcomeScreen');
-    setCurrentMode(AppMode.WELCOME);
-  };
-
+    console.log('SplashScreen complete → going to WELCOME')
+    setCurrentMode(AppMode.WELCOME)
+  }
 
   // ✅ WelcomeScreen → next step
-  // WelcomeScreen stays sacred/unchanged; it may return DASHBOARD for returning users.
-  // We only route to RETURN_PORTAL if the user has been backend-validated.
-  const handleWelcomeComplete = (nextMode: AppMode) => {
-    console.log('WelcomeScreen complete → going to:', nextMode);
+  const handleWelcomeComplete = useCallback((nextMode: AppMode) => {
+    console.log('WelcomeScreen complete → going to:', nextMode)
+    if (welcomeReturnMode) {
+      const returnMode = welcomeReturnMode
+      setWelcomeReturnMode(null)
+      setCurrentMode(returnMode)
+      return
+    }
 
-
-    if (nextMode === AppMode.DASHBOARD) {
+    if (nextMode === AppMode.DASHBOARD && user) {
       if (user) {
-        setCurrentMode(AppMode.RETURN_PORTAL);
-        return;
+        setCurrentMode(bootDestination)
+        return
       }
-      // If somehow unvalidated, route to AUTH (safe)
-      setCurrentMode(AppMode.AUTH);
-      return;
     }
 
+    if (nextMode === AppMode.AUTH) {
+      setAuthFlowMode('login')
+      writeAuthFlowMode('login')
+    }
 
-    setCurrentMode(nextMode);
-  };
+    setCurrentMode(nextMode)
+  }, [welcomeReturnMode, user, bootDestination])
 
-
-  // SacredNamingCeremony → Auth
   const handleSacredNamingComplete = (userData: { name: string }) => {
-    console.log('SacredNamingCeremony complete → going to Auth');
-    setSacredName(userData.name);
-    setCurrentMode(AppMode.AUTH);
-  };
+    const nextName = userData.name.trim()
 
-
-  // ✅ FIXED: Auth register → Onboarding (not Dashboard)
-  const handleAuthRegister = (account: UserAccount) => {
-    console.log('Auth register → going to Onboarding');
-    const profile = toUserProfile(account);
-    setUser(profile);
-    localStorage.setItem('abundance_auth', JSON.stringify(account));
-    setAuthChecked(true);
-    // NEW USER FLOW: Auth → Onboarding → Tutorial → Dashboard
-    setCurrentMode(AppMode.ONBOARDING);
-  };
-
-
-  // ✅ After login, go to Return Portal (not Dashboard)
-  const handleAuthLogin = (account: UserAccount) => {
-    console.log('Auth login → going to Return Portal');
-    const profile = toUserProfile(account);
-    setUser(profile);
-
-
-    // IMPORTANT: store session so refresh survives
-    localStorage.setItem('abundance_auth', JSON.stringify(account));
-
-
-    // We consider this a validated session because backend already authenticated it
-    setAuthChecked(true);
-
-
-    setCurrentMode(AppMode.RETURN_PORTAL);
-  };
-
-
-  // ✅ Onboarding complete → Tutorial
-  const handleOnboardingComplete = (profile: UserProfile) => {
-    console.log('Onboarding complete → going to Tutorial');
-    setUser(profile);
-    // Save updated profile to localStorage
-    localStorage.setItem('abundance_user', JSON.stringify(profile));
-    // Sync focus to backend
-    if (user?.email) {
-      api.syncProgress({ ...profile, email: user.email });
+    if (user) {
+      console.log('SacredNamingCeremony complete → going to Onboarding')
+      setSacredName(nextName)
+      const updatedUser = { ...user, name: nextName }
+      setUser(updatedUser)
+      writeSessionJsonRecord('abundance_user', updatedUser)
+      progressSave.save(updatedUser, true)
+      setCurrentMode(AppMode.ONBOARDING)
+      return
     }
-    setCurrentMode(AppMode.TUTORIAL);
-  };
 
+    console.log('SacredNamingCeremony complete → going to Auth')
+    setSacredName(nextName)
+    setAuthFlowMode('register')
+    writeAuthFlowMode('register')
+    setCurrentMode(AppMode.AUTH)
+  }
 
-  // ✅ Tutorial complete → Dashboard
+  const handleAuthRegister = (account: UserAccount) => {
+    const existingSacredName = sacredName.trim()
+    const nextSacredName = existingSacredName || (account.name || '').trim()
+    console.log(
+      existingSacredName
+        ? 'Auth register → going to Onboarding'
+        : 'Auth register → going to Naming Ceremony',
+    )
+    const profile = toUserProfile(account)
+    setSacredName(nextSacredName)
+    setIsReturningVisitor(true)
+    setWelcomeReturnMode(null)
+    setUser({ ...profile, name: nextSacredName || profile.name })
+    localStorage.setItem(RETURNING_VISITOR_KEY, '1')
+    writeSessionJsonRecord('abundance_auth', account)
+    setAuthFlowMode('login')
+    writeAuthFlowMode('login')
+    setAuthChecked(true)
+    setCurrentMode(
+      existingSacredName ? AppMode.ONBOARDING : AppMode.NAMING_CEREMONY,
+    )
+  }
+
+  const handleAuthLogin = (account: UserAccount) => {
+    console.log('Auth login → going to Return Portal')
+    const profile = toUserProfile(account)
+    setSacredName('')
+    setIsReturningVisitor(true)
+    setWelcomeReturnMode(null)
+    setUser(profile)
+    localStorage.setItem(RETURNING_VISITOR_KEY, '1')
+    writeSessionJsonRecord('abundance_auth', account)
+    setAuthFlowMode('login')
+    writeAuthFlowMode('login')
+    setAuthChecked(true)
+    setCurrentMode(AppMode.RETURN_PORTAL)
+  }
+
+  const handleOnboardingComplete = (profile: UserProfile) => {
+    console.log('Onboarding complete → going to Tutorial')
+    const mergedProfile = mergeOnboardingProfile(user, profile)
+    setUser(mergedProfile)
+    writeSessionJsonRecord('abundance_user', mergedProfile)
+    progressSave.save(mergedProfile, true)
+    setCurrentMode(AppMode.TUTORIAL)
+  }
+
   const handleTutorialComplete = () => {
-    console.log('Tutorial complete → going to Dashboard');
-    setCurrentMode(AppMode.DASHBOARD);
-  };
+    console.log('Tutorial complete → going to Dashboard')
+    setCurrentMode(AppMode.DASHBOARD)
+  }
 
+  const calculateNextStreak = (
+    previousPracticeDate: string | null | undefined,
+    currentStreak: number | null | undefined,
+  ): number => {
+    const priorStreak = Number.isFinite(currentStreak)
+      ? Number(currentStreak)
+      : 0
+    if (!previousPracticeDate) return Math.max(priorStreak, 1)
+    const previousDate = new Date(previousPracticeDate)
+    if (Number.isNaN(previousDate.getTime())) return 1
 
-  // ✅ Practice session complete
+    const now = new Date()
+    const currentDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    )
+    const priorDay = new Date(
+      previousDate.getFullYear(),
+      previousDate.getMonth(),
+      previousDate.getDate(),
+    )
+    const dayDifference = Math.round(
+      (currentDay.getTime() - priorDay.getTime()) / MILLISECONDS_PER_DAY,
+    )
+
+    if (dayDifference <= 0) return Math.max(priorStreak, 1)
+    if (dayDifference === 1) return Math.max(priorStreak, 0) + 1
+    return 1
+  }
+
   const handlePracticeComplete = (log?: GratitudeLog) => {
-    console.log('Practice complete → returning to Dashboard');
-    stopAmbience();
-
-
-    if (log && user) {
-      // Add gratitude log to user profile
+    if (practiceCompletedRef.current) return
+    practiceCompletedRef.current = true
+    console.log('Practice complete → returning to Dashboard')
+    if (user) {
+      const completedAt = new Date().toISOString()
+      const nextStreak = calculateNextStreak(user.lastPracticeDate, user.streak)
       const updatedUser = {
         ...user,
-        gratitudeLogs: [...(user.gratitudeLogs || []), log],
+        practiceCompletions: [...(user.practiceCompletions || []), {
+          id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `practice_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          date: completedAt,
+        }],
+        gratitudeLogs: log
+          ? [...(user.gratitudeLogs || []), log]
+          : user.gratitudeLogs || [],
+        streak: nextStreak,
         affirmationsCompleted: (user.affirmationsCompleted || 0) + 1,
-      };
-      setUser(updatedUser);
-      localStorage.setItem('abundance_user', JSON.stringify(updatedUser));
+        lastPracticeDate: completedAt,
+      }
+      setUser(updatedUser)
+      writeSessionJsonRecord('abundance_user', updatedUser)
+
+      progressSave.save(updatedUser)
     }
 
+    setPracticeConfig(null)
+    setCurrentMode(AppMode.DASHBOARD)
+  }
 
-    setPracticeConfig(null);
-    setCurrentMode(AppMode.DASHBOARD);
-  };
-
-
-  // ✅ Practice session exit (without completing)
   const handlePracticeExit = () => {
-    console.log('Practice exit → returning to Dashboard');
-    stopAmbience();
-    setPracticeConfig(null);
-    setCurrentMode(AppMode.DASHBOARD);
-  };
+    console.log('Practice exit → returning to Dashboard')
+    setPracticeConfig(null)
+    setCurrentMode(AppMode.DASHBOARD)
+  }
 
-
-  // ✅ Settings handlers
   const handleSettingsChange = (newSettings: AppSettings) => {
-    setSettings(newSettings);
-    localStorage.setItem('abundance_settings', JSON.stringify(newSettings));
-  };
+    const normalized = normalizeSettings(newSettings)
+    const becameEnabled =
+      !settings.reminders.enabled && normalized.reminders.enabled
+    const baseAmbienceChanged =
+      normalized.soundscapeId !== settings.soundscapeId
+    if (baseAmbienceChanged) {
+      setSessionAmbienceUnlocked(true)
+      if (normalized.musicOn) {
+        const nextAmbience =
+          soundscapes.find((s) => s.id === normalized.soundscapeId) ||
+          DEFAULT_SOUNDSCAPE
+        playAmbience(nextAmbience, normalized.ambienceVolume)
+      }
+    }
 
+    setSettings(normalized)
+    localStorage.setItem('abundance_settings', JSON.stringify(normalized))
+
+    if (becameEnabled) {
+      handleRequestReminderPermission()
+    }
+  }
 
   const handleSettingsBack = () => {
-    console.log('Settings back → returning to Dashboard');
-    setCurrentMode(AppMode.DASHBOARD);
-  };
-
+    console.log('Settings back → returning to Dashboard')
+    setCurrentMode(AppMode.DASHBOARD)
+  }
 
   const handleReplayTutorial = () => {
-    console.log('Replay tutorial');
-    setCurrentMode(AppMode.TUTORIAL);
-  };
-
+    console.log('Replay tutorial')
+    setCurrentMode(AppMode.TUTORIAL)
+  }
 
   const handleAudioUpload = async (file: File, category: string) => {
-    setUserAudioFile(file);
+    setUserAudioFile(file)
     if (user?.email) {
-      await api.uploadUserAudio(file, category, user.email);
-      // Refresh soundscapes
-      const data = await api.getSoundscapes(user.email);
-      if (data) setSoundscapes(data);
+      await api.uploadUserAudio(file, category, user.email)
+      const raw = await api.getSoundscapes(user.email)
+      const normalized = normalizeSoundscapes(raw)
+      if (normalized.length > 0) {
+        setSoundscapes(normalized)
+      }
     }
-  };
+  }
 
-
-  // ✅ Library handlers
-  const handleAddAffirmation = async (text: string, type: PracticeType) => {
-    if (!user?.email) return;
-    const id = await api.addUserAffirmation(user.email, text, type);
-    if (id && user) {
-      // Create a temporary Affirmation object for UI (assuming API returned just ID or partial)
-      // In a real app, 'id' from api.addUserAffirmation should be the full object or ID
-      // If api returns object, cast it:
-      const newAffirmation: Affirmation = {
-        id: (id as any).id || String(id), 
+  const handleAddAffirmation = async (
+    text: string,
+    type: PracticeType,
+    category?: string,
+  ): Promise<{ ok: boolean; message?: string }> => {
+    if (!user?.email) {
+      return { ok: false, message: 'Please sign in again before saving.' }
+    }
+    try {
+      const result = await api.addUserAffirmation(
+        user.email,
         text,
         type,
-        category: 'Personal',
-        isFavorite: true,
-        dateAdded: new Date().toISOString(),
-      };
+        category,
+      )
+      if (!result?.success || !user) {
+        return {
+          ok: false,
+          message: result?.message || 'Unable to save affirmation right now.',
+        }
+      }
+
+      const dbAffirmations = await api.getUserAffirmations().catch(() => [])
+      const nextAffirmations = dbAffirmations.length
+        ? dbAffirmations
+        : [
+            ...(user.customAffirmations || []),
+            {
+              id: String(result.id),
+              text,
+              type,
+              category: category || 'Personal',
+              isFavorite: true,
+              dateAdded: new Date().toISOString(),
+            },
+          ]
+
       const updatedUser = {
         ...user,
-        customAffirmations: [...(user.customAffirmations || []), newAffirmation],
-      };
-      setUser(updatedUser);
+        customAffirmations: nextAffirmations,
+      }
+      setUser(updatedUser)
+      return { ok: true }
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.status === 401) {
+          setUser(null)
+          routeReturningVisitorToSacredEntry()
+          return {
+            ok: false,
+            message: 'Your session expired. Please sign in again.',
+          }
+        }
+        return {
+          ok: false,
+          message: error.message || 'Unable to save affirmation right now.',
+        }
+      }
+      if (error instanceof Error) {
+        return {
+          ok: false,
+          message: error.message || 'Unable to save affirmation right now.',
+        }
+      }
+      return { ok: false, message: 'Unable to save affirmation right now.' }
     }
-  };
-
+  }
 
   const handleRemoveAffirmation = async (id: string) => {
-    await api.removeUserAffirmation(id);
+    await api.removeUserAffirmation(id)
     if (user) {
+      const dbAffirmations = await api.getUserAffirmations().catch(() => [])
       const updatedUser = {
         ...user,
-        customAffirmations: (user.customAffirmations || []).filter(a => a.id !== id),
-      };
-      setUser(updatedUser);
+        customAffirmations: dbAffirmations.length
+          ? dbAffirmations
+          : (user.customAffirmations || []).filter((a) => a.id !== id),
+      }
+      setUser(updatedUser)
     }
-  };
+  }
 
-
-  // ✅ Meditation setup handler
   const handleMeditationBegin = (config: PracticeSessionConfig) => {
-    console.log('Meditation begin → starting practice');
-    setPracticeConfig(config);
-    setCurrentMode(AppMode.PRACTICE);
-  };
+    practiceCompletedRef.current = false
+    setPracticeAudioPhase('ready')
+    setPracticeMusicVolume(settings.ambienceVolume)
+    console.log('Meditation begin → starting practice')
+    setPracticeConfig(config)
+    setCurrentMode(AppMode.PRACTICE)
+  }
 
-
-  // ✅ Change focus handler
   const handleChangeFocus = () => {
-    console.log('Change focus → Onboarding');
-    setCurrentMode(AppMode.ONBOARDING);
-  };
+    console.log('Change focus → Onboarding')
+    setCurrentMode(AppMode.ONBOARDING)
+  }
 
+  const handleContinueFocus = () => {
+    if (user && getFocusCycleProgress(user.cyclePreference, user.cycleStartedAt).complete) {
+      const updated = { ...user, cycleStartedAt: new Date().toISOString() }
+      setUser(updated)
+      writeSessionJsonRecord('abundance_user', updated)
+      progressSave.save(updated)
+    }
+    setCurrentMode(AppMode.DASHBOARD)
+  }
 
-  // ✅ Open Library handler
-  const handleOpenLibrary = () => {
-    console.log('Dashboard: open library → LIBRARY');
-    setCurrentMode(AppMode.LIBRARY);
-  };
-
-
-  // Keep your reset "backdoor" available
   const handleResetAndStartOver = () => {
-    localStorage.clear();
-    setUser(null);
-    setAuthChecked(true);
-    setPracticeConfig(null);
-    setCurrentMode(AppMode.PRE_SPLASH);
-  };
+    localStorage.clear()
+    sessionStorage.clear()
+    clearResumeMode()
+    clearPracticeSnapshot()
+    clearAuthFlowMode()
+    setAuthFlowMode('register')
+    setSacredName('')
+    setIsReturningVisitor(false)
+    setWelcomeReturnMode(null)
+    setBootDestination(AppMode.SPLASH)
+    setUser(null)
+    setActiveReminder(null)
+    setSessionAmbienceUnlocked(false)
+    setPrayerProfile({ ...DEFAULT_PRAYER_PROFILE })
+    setAuthChecked(true)
+    setPracticeConfig(null)
+    setCurrentMode(AppMode.PRE_SPLASH)
+  }
 
-
-  // Dashboard-required handlers
   const handleStartPractice = (type: PracticeType, duration: number) => {
-    console.log('Dashboard: start practice →', type, duration);
+    practiceCompletedRef.current = false
+    setPracticeAudioPhase('ready')
+    setPracticeMusicVolume(settings.ambienceVolume)
+    console.log('Dashboard: start practice →', type, duration)
     const config: PracticeSessionConfig = {
       type,
       duration,
       focusAreas: user?.focusAreas || [],
-      soundscape: type === PracticeType.MORNING_IAM 
-        ? soundscapes.find(s => s.id === settings.iAmSoundscapeId) || defaultSoundscape
-        : type === PracticeType.EVENING_ILOVE
-        ? soundscapes.find(s => s.id === settings.iLoveSoundscapeId) || defaultSoundscape
-        : soundscapes.find(s => s.id === settings.meditationSoundscapeId) || defaultSoundscape,
-    };
-    setPracticeConfig(config);
-    setCurrentMode(AppMode.PRACTICE);
-  };
+      soundscape:
+        type === PracticeType.MORNING_IAM
+          ? soundscapes.find((s) => s.id === settings.iAmSoundscapeId) ||
+            DEFAULT_SOUNDSCAPE
+          : type === PracticeType.EVENING_ILOVE
+            ? soundscapes.find((s) => s.id === settings.iLoveSoundscapeId) ||
+              DEFAULT_SOUNDSCAPE
+            : soundscapes.find(
+                (s) => s.id === settings.meditationSoundscapeId,
+              ) || DEFAULT_SOUNDSCAPE,
+    }
 
+    const storageKey =
+      type === PracticeType.MORNING_IAM
+        ? 'hidePrep_iam'
+        : type === PracticeType.EVENING_ILOVE
+          ? 'hidePrep_ilove'
+          : type === PracticeType.MEDITATION
+            ? 'hidePrep_meditation'
+            : null
+
+    const shouldShowPrep = storageKey
+      ? localStorage.getItem(storageKey) !== 'true'
+      : true
+
+    setPracticeConfig(config)
+
+    if (shouldShowPrep) {
+      setCurrentMode(AppMode.PRACTICE_PREP)
+    } else {
+      setCurrentMode(AppMode.PRACTICE)
+    }
+  }
+
+  const handlePracticePrepBegin = () => {
+    setCurrentMode(AppMode.PRACTICE)
+  }
+
+  const handlePracticePrepSkip = () => {
+    setCurrentMode(AppMode.DASHBOARD)
+  }
+
+  const handleReminderSnooze = (
+    practice: ReminderPractice,
+    minutes: ReminderSnoozeMinutes,
+  ) => {
+    const snoozeMap = parseStoredRecord(REMINDER_SNOOZE_KEY)
+    snoozeMap[practice] = Date.now() + minutes * MILLISECONDS_PER_MINUTE
+    writeStoredRecord(REMINDER_SNOOZE_KEY, snoozeMap)
+    setActiveReminder(null)
+  }
+
+  const handleReminderStart = (practice: ReminderPractice) => {
+    setActiveReminder(null)
+    if (!user) {
+      routeReturningVisitorToSacredEntry()
+      return
+    }
+    if (practice === 'MORNING_IAM') {
+      handleStartPractice(
+        PracticeType.MORNING_IAM,
+        QUICK_PRACTICE_DURATION_MINUTES,
+      )
+      return
+    }
+    if (practice === 'EVENING_ILOVE') {
+      handleStartPractice(
+        PracticeType.EVENING_ILOVE,
+        QUICK_PRACTICE_DURATION_MINUTES,
+      )
+      return
+    }
+    if (practice === 'MEDITATION') {
+      setCurrentMode(AppMode.MEDITATION_SETUP)
+      return
+    }
+    setCurrentMode(AppMode.PRAYER_SETUP)
+  }
+
+  const activeReminderMeta = activeReminder
+    ? REMINDER_META[activeReminder]
+    : null
 
   const handleOpenMeditation = () => {
-    console.log('Dashboard: open meditation setup');
-    setCurrentMode(AppMode.MEDITATION_SETUP);
-  };
+    console.log('Dashboard: open meditation setup')
+    setCurrentMode(AppMode.MEDITATION_SETUP)
+  }
 
+  const handlePrayerPathContinue = (
+    pathId: PrayerPathId,
+    profile: PrayerProfile,
+  ) => {
+    setPrayerPathId(pathId)
+    setPrayerProfile(profile)
+    try {
+      localStorage.setItem(PRAYER_PROFILE_STORAGE_KEY, JSON.stringify(profile))
+    } catch {
+      // ignore storage errors
+    }
+    setCurrentMode(AppMode.PRAYER_GUIDE)
+  }
+
+  const handlePrayerStart = () => {
+    setCurrentMode(AppMode.PRAYER_SESSION)
+  }
+
+  const handlePrayerComplete = () => {
+    setCurrentMode(AppMode.DASHBOARD)
+  }
+
+  const handlePrayerSoundscapeChange = (id: string) => {
+    const nextId = id || 'default'
+    setPrayerSoundscapeId(nextId)
+    try {
+      localStorage.setItem('abundance_prayer_soundscape_id', nextId)
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  const handlePrayerVolumeChange = (volume: number) => {
+    const nextVolume = Math.max(MIN_VOLUME, Math.min(MAX_VOLUME, volume))
+    setPrayerVolume(nextVolume)
+    try {
+      localStorage.setItem('abundance_prayer_volume', String(nextVolume))
+    } catch {
+      // ignore storage errors
+    }
+  }
 
   const handleOpenSettings = () => {
-    console.log('Dashboard: open settings → SETTINGS');
-    setCurrentMode(AppMode.SETTINGS);
-  };
+    console.log('Dashboard: open settings → SETTINGS')
+    setCurrentMode(AppMode.SETTINGS)
+  }
 
+  const handleReplayWelcomeInvocation = () => {
+    console.log('Replay welcome invocation → WELCOME')
+    setWelcomeReturnMode(currentMode)
+    setCurrentMode(AppMode.WELCOME)
+  }
 
-  const handleSignOut = () => {
-    console.log('Dashboard: sign out');
-    localStorage.removeItem('abundance_auth');
-    setUser(null);
-    setAuthChecked(true);
-    setCurrentMode(AppMode.AUTH);
-  };
+  const handleUpdateProfile = (patch: Partial<UserProfile>) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      const next = { ...prev, ...patch }
+      writeSessionJsonRecord('abundance_user', next)
+      return next
+    })
+  }
 
+  const handlePreviewSoundscape = (id: string) => {
+    const track = soundscapes.find((s) => s.id === id)
+    if (!track) return
+    void previewAmbience(track, settings.ambienceVolume)
+  }
 
-  const defaultSoundscape: Soundscape = {
-    id: 'default',
-    label: 'Default Ambience',
-    url: href('assets/audio/ambient/default.mp3'),
-  };
+  const completeSignOut = () => {
+    console.log('Dashboard: sign out')
+    removeSessionJsonRecord('abundance_auth')
+    removeSessionJsonRecord('abundance_user')
+    localStorage.removeItem(REMINDER_LAST_FIRED_KEY)
+    localStorage.removeItem(REMINDER_SNOOZE_KEY)
+    setSacredName('')
+    setUser(null)
+    setActiveReminder(null)
+    setSessionAmbienceUnlocked(false)
+    setAuthChecked(true)
+    routeReturningVisitorToSacredEntry()
+  }
 
+  const { status: signOutStatus, signOut: handleSignOut } = useConfirmedSignOut(api.logout, completeSignOut)
 
-  // Get active soundscape based on current practice type or default
-  const getActiveSoundscape = (): Soundscape => {
-    if (practiceConfig?.soundscape) {
-      if (typeof practiceConfig.soundscape === 'string') {
-        return soundscapes.find(s => s.id === practiceConfig.soundscape) || defaultSoundscape;
+  const isPrayerMode =
+    currentMode === AppMode.PRAYER_GUIDE ||
+    currentMode === AppMode.PRAYER_SESSION
+
+  const getActiveSoundscape = useCallback(
+    (): Soundscape => {
+      if (currentMode === AppMode.PRACTICE &&
+          ['running', 'paused', 'ending'].includes(practiceAudioPhase) && practiceConfig?.soundscape) {
+        if (typeof practiceConfig.soundscape === 'string') {
+          return (
+            soundscapes.find((s) => s.id === practiceConfig.soundscape) ||
+            DEFAULT_SOUNDSCAPE
+          )
+        }
+        return practiceConfig.soundscape
       }
-      return practiceConfig.soundscape;
-    }
-    return soundscapes.find(s => s.id === settings.soundscapeId) || defaultSoundscape;
-  };
+      if (isPrayerMode) {
+        return (
+          soundscapes.find((s) => s.id === prayerSoundscapeId) ||
+          soundscapes.find((s) => s.id === settings.meditationSoundscapeId) ||
+          DEFAULT_SOUNDSCAPE
+        )
+      }
+      return (
+        soundscapes.find((s) => s.id === settings.soundscapeId) ||
+        DEFAULT_SOUNDSCAPE
+      )
+    },
+    [
+      practiceConfig,
+      currentMode,
+      practiceAudioPhase,
+      soundscapes,
+      isPrayerMode,
+      prayerSoundscapeId,
+      settings.meditationSoundscapeId,
+      sessionAmbienceUnlocked,
+      settings.soundscapeId,
+    ],
+  )
 
-  // Keep ambient music synced with app-level settings.
-  useEffect(() => {
-    if (currentMode === AppMode.PRACTICE) return;
-    if (currentMode === AppMode.SPLASH) return;
-    if (currentMode === AppMode.WELCOME) return;
+  const activeSoundscape = useMemo(
+    () => getActiveSoundscape(),
+    [getActiveSoundscape],
+  )
 
-    const ambienceModes = new Set<AppMode>([
-      AppMode.NAMING_CEREMONY,
-      AppMode.AUTH,
-      AppMode.ONBOARDING,
-      AppMode.TUTORIAL,
-      AppMode.DASHBOARD,
-      AppMode.LIBRARY,
-      AppMode.SETTINGS,
-      AppMode.STATS,
-      AppMode.PROFILE,
-      AppMode.RETURN_PORTAL,
-      AppMode.MEDITATION_SETUP,
-    ]);
-
-    if (settings.musicOn && ambienceModes.has(currentMode)) {
-      playAmbience(getActiveSoundscape(), settings.ambienceVolume);
-    } else {
-      stopAmbience();
-    }
-  }, [
+  // ✅ Hook Call (Replaces old useEffect)
+  useAudioOrchestration({
     currentMode,
-    settings.musicOn,
-    settings.ambienceVolume,
-    settings.soundscapeId,
-    soundscapes,
-  ]);
+    settings,
+    activeSoundscape,
+    prayerVolume,
+    isPrayerMode,
+    narrationPlaying: welcomeNarrationPlaying,
+    practicePhase: practiceAudioPhase,
+    practiceVolume: practiceMusicVolume,
+  })
 
-
-  // Render current screen based on mode
   const renderScreen = () => {
     switch (currentMode) {
       case AppMode.PRE_SPLASH:
         return (
           <UniversalLayout showBottomMenu={false}>
-            <PreSplash onContinue={handlePreSplashComplete} theme={theme} />
+            <PreSplash
+              onContinue={handlePreSplashComplete}
+              onSignIn={() => {
+                if (!authChecked) return
+                if (user) { setCurrentMode(AppMode.RETURN_PORTAL); return }
+                setAuthFlowMode('login')
+                writeAuthFlowMode('login')
+                setCurrentMode(AppMode.AUTH)
+              }}
+              theme="dark"
+              isReady={authChecked}
+            />
           </UniversalLayout>
-        );
-
-
+        )
       case AppMode.SPLASH:
         return (
           <UniversalLayout showBottomMenu={false}>
             <SplashScreen onComplete={handleSplashComplete} theme={theme} />
           </UniversalLayout>
-        );
-
-
+        )
       case AppMode.WELCOME:
         return (
           <UniversalLayout showBottomMenu={false}>
             <WelcomeScreen
-              // IMPORTANT: WelcomeScreen should not use localStorage.
-              // It should only see a user when validated by backend (this state).
-              user={user as any}
+              user={user}
+              isReturningVisitor={isReturningVisitor}
               onComplete={handleWelcomeComplete}
+              onNarrationChange={setWelcomeNarrationPlaying}
               theme={theme}
             />
           </UniversalLayout>
-        );
-
-
+        )
       case AppMode.NAMING_CEREMONY:
         return (
           <UniversalLayout showBottomMenu={false}>
@@ -569,37 +1967,37 @@ function App() {
               theme={theme}
             />
           </UniversalLayout>
-        );
-
-
+        )
       case AppMode.AUTH:
         return (
           <UniversalLayout showBottomMenu={false}>
             <Auth
+              mode={authFlowMode}
+              onModeChange={(mode) => {
+                setAuthFlowMode(mode)
+                writeAuthFlowMode(mode)
+              }}
               onRegister={handleAuthRegister}
               onLogin={handleAuthLogin}
               initialName={sacredName}
               theme={theme}
             />
           </UniversalLayout>
-        );
-
-
-      // ✅ Return Portal (PersonalGreeting repurposed)
+        )
       case AppMode.RETURN_PORTAL:
         return (
           <UniversalLayout showBottomMenu={false}>
             {user ? (
               <PersonalGreeting
                 user={user}
-                onContinue={() => setCurrentMode(AppMode.DASHBOARD)}
+                onContinue={handleContinueFocus}
                 onChooseNewFocus={() => setCurrentMode(AppMode.ONBOARDING)}
                 theme={theme}
               />
             ) : (
               <div className="min-h-screen flex items-center justify-center">
                 <button
-                  onClick={() => setCurrentMode(AppMode.AUTH)}
+                  onClick={routeReturningVisitorToSacredEntry}
                   className="px-4 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90"
                 >
                   Continue to Sign In
@@ -607,10 +2005,7 @@ function App() {
               </div>
             )}
           </UniversalLayout>
-        );
-
-
-      // ✅ ONBOARDING - Focus selection flow
+        )
       case AppMode.ONBOARDING:
         return (
           <UniversalLayout showBottomMenu={false}>
@@ -619,10 +2014,7 @@ function App() {
               initialName={user?.name || sacredName}
             />
           </UniversalLayout>
-        );
-
-
-      // ✅ TUTORIAL - App introduction screens
+        )
       case AppMode.TUTORIAL:
         return (
           <UniversalLayout showBottomMenu={false}>
@@ -632,22 +2024,23 @@ function App() {
               theme={theme}
             />
           </UniversalLayout>
-        );
-
-
-      // ✅ PRACTICE - I Am / I Love / Meditation session
-      case AppMode.PRACTICE:
+        )
+      case AppMode.PRACTICE_PREP:
         return (
           <UniversalLayout showBottomMenu={false}>
             {practiceConfig ? (
-              <PracticeSession
-                config={practiceConfig}
-                customAffirmations={user?.customAffirmations || []}
-                onComplete={handlePracticeComplete}
-                onExit={handlePracticeExit}
-                userAudioFile={userAudioFile}
+              <PrePracticeInvocation
+                variant={
+                  practiceConfig.type === PracticeType.MORNING_IAM
+                    ? 'iam'
+                    : practiceConfig.type === PracticeType.EVENING_ILOVE
+                      ? 'ilove'
+                      : 'meditation'
+                }
                 theme={theme}
-                soundscape={getActiveSoundscape()}
+                onBegin={handlePracticePrepBegin}
+                onSkip={handlePracticePrepSkip}
+                showSkip={true}
               />
             ) : (
               <div className="min-h-screen flex items-center justify-center">
@@ -661,30 +2054,57 @@ function App() {
               </div>
             )}
           </UniversalLayout>
-        );
-
-
-      // ✅ SETTINGS - App settings panel
-      case AppMode.SETTINGS:
+        )
+      case AppMode.PRACTICE:
         return (
           <UniversalLayout showBottomMenu={false}>
+            {practiceConfig ? (
+              <PracticeSession
+                config={practiceConfig}
+                customAffirmations={user?.customAffirmations || []}
+                onComplete={handlePracticeComplete}
+                onExit={handlePracticeExit}
+                soundscape={typeof practiceConfig.soundscape === 'object'
+                  ? practiceConfig.soundscape
+                  : soundscapes.find(s => s.id === practiceConfig.soundscape) || DEFAULT_SOUNDSCAPE}
+                musicVolume={practiceMusicVolume}
+                onMusicVolumeChange={setPracticeMusicVolume}
+                onAudioPhaseChange={setPracticeAudioPhase}
+              />
+            ) : (
+              <div className="min-h-screen flex items-center justify-center">
+                <p className="text-slate-400">No practice configured</p>
+                <button
+                  onClick={() => setCurrentMode(AppMode.DASHBOARD)}
+                  className="ml-4 px-4 py-2 bg-amber-500 text-black rounded-lg"
+                >
+                  Return to Dashboard
+                </button>
+              </div>
+            )}
+          </UniversalLayout>
+        )
+      case AppMode.SETTINGS:
+        return (
+          <UniversalLayout showBottomMenu={true}>
             <Settings
               settings={settings}
               onChangeSettings={handleSettingsChange}
+              onRequestReminderPermission={handleRequestReminderPermission}
+              onPreviewSoundscape={handlePreviewSoundscape}
               onChangeFocus={handleChangeFocus}
               onBack={handleSettingsBack}
               onSignOut={handleSignOut}
               onReplayTutorial={handleReplayTutorial}
+              onReplayWelcomeInvocation={handleReplayWelcomeInvocation}
               onAudioUpload={handleAudioUpload}
               theme={theme}
               userAudioFile={userAudioFile}
               availableSoundscapes={soundscapes}
             />
+            <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
-        );
-
-
-      // ✅ LIBRARY (Maktaba) - Affirmations and gratitude logs
+        )
       case AppMode.LIBRARY:
         return (
           <UniversalLayout showBottomMenu={true}>
@@ -698,70 +2118,109 @@ function App() {
               theme={theme}
               soundscapes={soundscapes}
             />
+            <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
-        );
-
+        )
       case AppMode.STATS:
         return (
           <UniversalLayout showBottomMenu={true}>
             {user ? (
-              <div className="min-h-screen">
-                <Stats user={user} />
-                <div className="mt-4 flex justify-center">
-                  <button
-                    onClick={() => setCurrentMode(AppMode.DASHBOARD)}
-                    className="px-4 py-2 rounded-lg bg-amber-500 text-black hover:opacity-90"
-                  >
-                    Back to Dashboard
-                  </button>
-                </div>
-              </div>
+              <Stats
+                user={user}
+                theme={theme}
+                onBack={() => setCurrentMode(AppMode.DASHBOARD)}
+              />
             ) : (
               <div className="min-h-screen flex items-center justify-center">
                 <button
-                  onClick={() => setCurrentMode(AppMode.AUTH)}
+                  onClick={routeReturningVisitorToSacredEntry}
                   className="px-4 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90"
                 >
                   Continue to Sign In
                 </button>
               </div>
             )}
+            <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
-        );
-
+        )
       case AppMode.PROFILE:
         return (
           <UniversalLayout showBottomMenu={true}>
-            <div className="min-h-screen flex flex-col items-center justify-center text-center">
-              <h2 className="text-xl font-bold mb-2">Profile</h2>
-              <p className="text-sm text-slate-300 mb-4">
-                Profile details will live here.
-              </p>
-              <button
-                onClick={() => setCurrentMode(AppMode.DASHBOARD)}
-                className="px-4 py-2 rounded-lg bg-amber-500 text-black hover:opacity-90"
-              >
-                Back to Dashboard
-              </button>
-            </div>
+            {user ? (
+              <Profile
+                user={user}
+                theme={theme}
+                onBack={() => setCurrentMode(AppMode.DASHBOARD)}
+                onUpdateProfile={handleUpdateProfile}
+              />
+            ) : (
+              <div className="min-h-screen flex items-center justify-center">
+                <button
+                  onClick={routeReturningVisitorToSacredEntry}
+                  className="px-4 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90"
+                >
+                  Continue to Sign In
+                </button>
+              </div>
+            )}
+            <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
-        );
-
-
-      // ✅ MEDITATION_SETUP - Duration and soundscape selection
+        )
       case AppMode.MEDITATION_SETUP:
         return (
           <UniversalLayout showBottomMenu={false}>
             <MeditationSetup
               onBack={() => setCurrentMode(AppMode.DASHBOARD)}
               onBegin={handleMeditationBegin}
-              theme={theme}
               availableSoundscapes={soundscapes}
+              preferredSoundscapeId={settings.meditationSoundscapeId}
             />
           </UniversalLayout>
-        );
-
-
+        )
+      case AppMode.PRAYER_SETUP:
+        return (
+          <UniversalLayout showBottomMenu={false}>
+            <PrayerSetup
+              onBack={() => setCurrentMode(AppMode.DASHBOARD)}
+              onContinue={handlePrayerPathContinue}
+              initialProfile={prayerProfile}
+              availableSoundscapes={soundscapes}
+              selectedSoundscapeId={prayerSoundscapeId}
+              prayerVolume={prayerVolume}
+              onChangeSoundscape={handlePrayerSoundscapeChange}
+              onChangePrayerVolume={handlePrayerVolumeChange}
+              theme={theme}
+            />
+          </UniversalLayout>
+        )
+      case AppMode.PRAYER_GUIDE:
+        return (
+          <UniversalLayout showBottomMenu={false}>
+            <PrayerGuide
+              prayerPathId={prayerPathId}
+              prayerProfile={prayerProfile}
+              onBack={() => setCurrentMode(AppMode.PRAYER_SETUP)}
+              onStartPrayer={handlePrayerStart}
+              onChangePath={() => setCurrentMode(AppMode.PRAYER_SETUP)}
+              theme={theme}
+            />
+          </UniversalLayout>
+        )
+      case AppMode.PRAYER_SESSION:
+        return (
+          <UniversalLayout showBottomMenu={false}>
+            <PrayerSession
+              key={accountId || 'signed-out'}
+              accountId={accountId}
+              prayerPathId={prayerPathId}
+              prayerProfile={prayerProfile}
+              onBack={() => setCurrentMode(AppMode.PRAYER_GUIDE)}
+              onComplete={handlePrayerComplete}
+              onChangePath={() => setCurrentMode(AppMode.PRAYER_SETUP)}
+              theme={theme}
+            />
+          </UniversalLayout>
+        )
       case AppMode.DASHBOARD:
         return (
           <UniversalLayout showBottomMenu={true}>
@@ -770,43 +2229,52 @@ function App() {
                 user={user}
                 theme={theme}
                 onStartPractice={handleStartPractice}
+                onOpenMeditation={handleOpenMeditation}
                 onOpenSettings={handleOpenSettings}
                 onOpenProfile={() => setCurrentMode(AppMode.PROFILE)}
+                onSaveReflection={(log) => {
+                  const updatedUser = {...user, gratitudeLogs: [...(user.gratitudeLogs || []), log]}
+                  setUser(updatedUser)
+                  writeSessionJsonRecord('abundance_user', updatedUser)
+                  progressSave.save(updatedUser)
+                }}
                 musicOn={settings.musicOn}
                 ambienceVolume={settings.ambienceVolume}
                 onToggleMusic={() =>
-                  handleSettingsChange({ ...settings, musicOn: !settings.musicOn })
+                  handleSettingsChange({
+                    ...settings,
+                    musicOn: !settings.musicOn,
+                  })
                 }
                 onVolumeChange={(volume) =>
                   handleSettingsChange({ ...settings, ambienceVolume: volume })
                 }
                 onSignOut={handleSignOut}
-                activeSoundscape={getActiveSoundscape()}
+                activeSoundscape={activeSoundscape}
               />
             ) : (
               <div className="min-h-screen flex items-center justify-center">
                 <button
-                  onClick={() => setCurrentMode(AppMode.AUTH)}
+                  onClick={routeReturningVisitorToSacredEntry}
                   className="px-4 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90"
                 >
                   Continue to Sign In
                 </button>
               </div>
             )}
-
-
-            <button
-              onClick={handleResetAndStartOver}
-              className="fixed bottom-4 right-4 px-3 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90 shadow-lg text-xs"
-              aria-label="Reset and start over"
-              title="Reset & Start Over"
-            >
-              Reset
-            </button>
+            <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
+            {import.meta.env.DEV && (
+              <button
+                onClick={handleResetAndStartOver}
+                className="fixed bottom-24 right-4 px-3 py-2 bg-amber-500 text-black rounded-lg hover:opacity-90 shadow-lg text-xs"
+                aria-label="Reset and start over"
+                title="Reset & Start Over"
+              >
+                Reset
+              </button>
+            )}
           </UniversalLayout>
-        );
-
-
+        )
       default:
         return (
           <div className="min-h-screen flex items-center justify-center">
@@ -818,23 +2286,101 @@ function App() {
               Restart from PreSplash
             </button>
           </div>
-        );
+        )
     }
-  };
-
+  }
 
   return (
-    <div className="App">
+    <Suspense fallback={<AppScreenFallback />}>
       <Layout
         mode={currentMode}
         practiceType={practiceConfig?.type}
         theme={theme}
       >
-        {renderScreen()}
+        <Suspense fallback={<AppScreenFallback />}>{renderScreen()}</Suspense>
+        {signOutStatus !== 'idle' && (
+          <div role="status" aria-live="polite" className="fixed inset-x-4 bottom-4 z-[140] mx-auto max-w-md rounded-xl border border-amber-400/40 bg-slate-950 p-3 text-sm text-white shadow-xl">
+            <p>{signOutStatus === 'pending' ? 'Signing you out…' : 'Sign-out could not be confirmed. Please retry.'}</p>
+            {signOutStatus === 'failed' && (
+              <button onClick={() => { buttonSoundService.play('click'); void handleSignOut() }} className="mt-2 rounded-lg bg-amber-500 px-3 py-2 text-black">Retry Sign Out</button>
+            )}
+          </div>
+        )}
+        {user && progressSave.status !== 'saved' && (
+          <div role="status" aria-live="polite" className="fixed inset-x-4 top-4 z-[130] mx-auto max-w-md rounded-xl border border-amber-400/40 bg-slate-950 p-3 text-sm text-white shadow-xl">
+            <p>{progressSave.status === 'saving'
+              ? 'Saving your journey…'
+              : progressSave.status === 'storage-error'
+                ? 'Your journey could not be kept on this device. Please retry before leaving.'
+                : 'Your journey is kept on this device and is waiting to be saved to your account.'}</p>
+            {progressSave.status !== 'saving' && (
+              <button onClick={() => { buttonSoundService.play('click'); progressSave.retry() }} className="mt-2 rounded-lg bg-amber-500 px-3 py-2 text-black">Retry Save</button>
+            )}
+          </div>
+        )}
+        {activeReminder && activeReminderMeta && (
+          <div className="fixed inset-x-4 bottom-24 z-[120] mx-auto w-full max-w-md rounded-2xl border border-amber-400/40 bg-slate-950/95 p-4 shadow-2xl backdrop-blur">
+            <p className="text-[11px] uppercase tracking-wide text-amber-300">
+              Reminder
+            </p>
+            <h3 className="mt-1 text-base font-semibold text-white">
+              {activeReminderMeta.title}
+            </h3>
+            <p className="mt-1 text-xs text-slate-300">
+              {activeReminderMeta.body}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={() => handleReminderStart(activeReminder)}
+                className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90"
+              >
+                Start Now
+              </button>
+              <button
+                onClick={() =>
+                  handleReminderSnooze(
+                    activeReminder,
+                    DEFAULT_REMINDER_SNOOZE_MINUTES,
+                  )
+                }
+                className="rounded-lg border border-slate-500 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-800"
+              >
+                Snooze {DEFAULT_REMINDER_SNOOZE_MINUTES}m
+              </button>
+              <button
+                onClick={() =>
+                  handleReminderSnooze(
+                    activeReminder,
+                    EXTENDED_REMINDER_SNOOZE_MINUTES,
+                  )
+                }
+                className="rounded-lg border border-slate-500 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-800"
+              >
+                Snooze {EXTENDED_REMINDER_SNOOZE_MINUTES}m
+              </button>
+              <button
+                onClick={() =>
+                  handleReminderSnooze(
+                    activeReminder,
+                    MAX_REMINDER_SNOOZE_MINUTES,
+                  )
+                }
+                className="rounded-lg border border-slate-500 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-800"
+              >
+                Snooze {MAX_REMINDER_SNOOZE_MINUTES}m
+              </button>
+              <button
+                onClick={() => setActiveReminder(null)}
+                className="rounded-lg border border-transparent px-2 py-1.5 text-xs text-slate-400 hover:text-slate-200"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
       </Layout>
-    </div>
-  );
+    </Suspense>
+  )
 }
 
-
-export default App;
+export default App

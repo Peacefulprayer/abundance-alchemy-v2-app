@@ -1,25 +1,36 @@
 <?php
 include_once 'config.php';
 
-$email = isset($_GET['email']) ? $_GET['email'] : '';
+aa_require_method('GET');
+$identity = aa_require_authenticated_session();
+$ownerBinding = aa_resolve_owner_binding($conn, 'user_affirmations', $identity['userId'], $identity['userEmail']);
 
-if ($email) {
-    // Join to get user ID first, or just join directly
-    $query = "SELECT ua.* FROM user_affirmations ua 
-              JOIN users u ON ua.user_id = u.id 
-              WHERE u.email = :email 
-              ORDER BY ua.created_at DESC";
-              
-    $stmt = $conn->prepare($query);
-    $stmt->bindParam(":email", $email);
-    $stmt->execute();
-    
-    $data = [];
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $data[] = $row;
-    }
-    echo json_encode($data);
-} else {
-    echo json_encode([]);
+if (!$ownerBinding) {
+    aa_error_response('Unauthorized', 401);
 }
-?>
+
+if (!aa_has_col($ownerBinding['columns'], 'text') || !aa_has_col($ownerBinding['columns'], 'type')) {
+    error_log('[api/get-user-affirmations.php] user_affirmations missing required text/type columns');
+    aa_json_response([]);
+}
+
+try {
+    $hasCategory = aa_has_col($ownerBinding['columns'], 'category');
+    $hasCreatedAt = aa_has_col($ownerBinding['columns'], 'created_at');
+    $categorySelect = $hasCategory ? 'category' : 'NULL AS category';
+    $createdAtSelect = $hasCreatedAt ? 'created_at' : 'NULL AS created_at';
+    $query = "
+        SELECT id, text, type, {$categorySelect}, {$createdAtSelect}
+        FROM user_affirmations
+        WHERE {$ownerBinding['column']} = :owner
+        ORDER BY " . ($hasCreatedAt ? 'created_at DESC' : 'id DESC');
+
+    $stmt = $conn->prepare($query);
+    $stmt->bindValue(':owner', $ownerBinding['value'], $ownerBinding['pdoType']);
+    $stmt->execute();
+
+    aa_json_response($stmt->fetchAll(PDO::FETCH_ASSOC));
+} catch (Throwable $e) {
+    error_log('[api/get-user-affirmations.php] Read failed: ' . $e->getMessage());
+    aa_json_response([], 500);
+}

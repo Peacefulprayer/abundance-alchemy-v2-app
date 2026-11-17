@@ -1,23 +1,10 @@
 <?php
-require_once '../config.php';
-require_once '../db.php';
-
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json; charset=UTF-8');
+include_once 'config.php';
+require_once __DIR__ . '/backgrounds-lib.php';
 
 try {
-    $stmt = $pdo->query("SELECT slot, image_url FROM backgrounds WHERE is_active = 1");
-    $result = [];
-
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $slot = $row['slot'];
-        $result[$slot] = [
-            'imageUrl' => $row['image_url'],
-        ];
-    }
-
-    echo json_encode($result);
-} catch (PDOException $e) {
+    echo json_encode(aa_background_api_payload(aa_fetch_backgrounds($conn)));
+} catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['message' => 'Error loading backgrounds']);
 }
