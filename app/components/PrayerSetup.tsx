@@ -371,16 +371,6 @@ export const PrayerSetup: React.FC<PrayerSetupProps> = ({
                 ? `Saved: ${selectedPath?.label || 'Prayer Path'} | ${profile.intent} | ${profile.language}`
                 : 'Your selected path and profile will carry forward into the guide and session.'}
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                buttonSoundService.play('back')
-                onBack()
-              }}
-              className={secondaryButton}
-            >
-              Return to Dashboard
-            </button>
           </div>
         </div>
       </div>
