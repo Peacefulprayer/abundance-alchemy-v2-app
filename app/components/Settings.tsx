@@ -266,6 +266,7 @@ export const Settings: React.FC<SettingsProps> = ({
                     min="0"
                     max="100"
                     value={settings.ambienceVolume}
+                      aria-label="Core audio volume"
                     onChange={(e) => updateVolume(Number(e.target.value))}
                     className="mt-3 w-full cursor-pointer appearance-none rounded-lg accent-amber-500"
                   />

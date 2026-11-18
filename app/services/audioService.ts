@@ -19,6 +19,55 @@ class AudioService {
   // Audio elements
   private ambience: HTMLAudioElement;
   private narration: HTMLAudioElement | null = null;
+  private ambienceGain: GainNode | null = null;
+  private ambienceSource: MediaElementAudioSourceNode | null = null;
+  private ambienceContext: AudioContext | null = null;
+
+  private musicVolume() { return this.ambienceGain?.gain.value ?? this.ambience.volume; }
+  private applyMusicVolume(volume: number) {
+    if (this.ambienceGain) this.ambienceGain.gain.value = volume;
+    else this.ambience.volume = volume;
+  }
+  private resumeMusicContext() {
+    if (this.ambienceContext && this.ambienceContext.state !== 'running') {
+      void this.ambienceContext.resume().catch(() => {});
+    }
+  }
+  private connectMusicVolume(url: string) {
+    // App tracks and authenticated uploads are same-origin. External recordings
+    // without CORS must retain native playback rather than becoming silent.
+    const parsed = new URL(url, window.location.href);
+    const canRoute = parsed.origin === window.location.origin || ['blob:', 'data:'].includes(parsed.protocol);
+    if (!canRoute && this.ambienceGain) {
+      this.ambience.pause();
+      this.ambienceSource?.disconnect();
+      this.ambienceGain.disconnect();
+      this.ambienceSource = null;
+      this.ambienceGain = null;
+      this.ambienceContext = null;
+      this.ambience = new Audio();
+      this.ambience.loop = true;
+      this.ambience.preload = 'auto';
+    }
+    if (canRoute && !this.ambienceGain) {
+      try {
+        const context = getAudioContext();
+        if (!context?.createMediaElementSource || !context?.createGain) return;
+        const gain = context.createGain();
+        gain.gain.value = this.ambience.volume;
+        gain.connect(context.destination);
+        const source = context.createMediaElementSource(this.ambience);
+        source.connect(gain);
+        this.ambienceContext = context;
+        this.ambienceGain = gain;
+        this.ambienceSource = source;
+        this.ambience.volume = 1;
+      } catch {
+        // Keep native volume/playback on browsers without a usable media graph.
+      }
+    }
+    this.resumeMusicContext();
+  }
 
   // State
   private currentSoundscapeId: string | null = null;
@@ -63,6 +112,7 @@ class AudioService {
 
     // Resume context on first interaction if needed (browser policy)
     const unlockAudio = () => {
+      this.resumeMusicContext();
       if (this.ambience.paused && this.isAmbiencePlaying) {
         this.ambience.play().catch(() => {});
       }
@@ -71,6 +121,9 @@ class AudioService {
     };
     document.addEventListener('click', unlockAudio);
     document.addEventListener('touchstart', unlockAudio);
+    // A later gesture can resume Web Audio after an iPhone interruption/return.
+    document.addEventListener('pointerdown', () => this.resumeMusicContext(), {passive: true});
+    document.addEventListener('keydown', () => this.resumeMusicContext());
   }
 
   public static getInstance(): AudioService {
@@ -104,6 +157,7 @@ class AudioService {
       this.currentSoundscapeUrl === soundscape.url &&
       this.loadedSoundscapeUrl === soundscape.url
     ) {
+      this.resumeMusicContext();
       this.isAmbiencePlaying = true;
       // Just ensure volume is correct (in case it was ducked)
       this.fadeVolume(this.baseVolume, SAME_TRACK_VOLUME_RAMP_MS);
@@ -122,9 +176,10 @@ class AudioService {
     }
     if (operation !== this.ambienceOperation) return;
 
+    this.connectMusicVolume(soundscape.url);
     this.ambience.src = soundscape.url;
     this.loadedSoundscapeUrl = soundscape.url;
-    this.ambience.volume = 0; // Start silent for fade-in
+    this.applyMusicVolume(0); // Start silent for fade-in, including on iPhone.
 
     try {
       await this.ambience.play();
@@ -261,7 +316,7 @@ class AudioService {
     masterVolume = Math.max(0, Math.min(1, volume));
     this.baseVolume = Math.max(0, Math.min(1, this.baseVolumeRaw)) * masterVolume;
     if (this.isAmbiencePlaying) {
-      this.ambience.volume = this.baseVolume;
+      this.applyMusicVolume(this.baseVolume);
     }
   }
 
@@ -280,14 +335,14 @@ class AudioService {
       };
       this.finishFade = finish;
 
-      const start = this.ambience.volume;
+      const start = this.musicVolume();
       const startTime = Date.now();
 
       // Clamp target
       const safeTarget = Math.max(0, Math.min(1, target));
 
       if (duration <= 0) {
-        this.ambience.volume = safeTarget;
+        this.applyMusicVolume(safeTarget);
         finish();
         return;
       }
@@ -297,7 +352,7 @@ class AudioService {
         const progress = Math.min(1, elapsed / duration);
 
         // Linear fade (simple but effective)
-        this.ambience.volume = start + (safeTarget - start) * progress;
+        this.applyMusicVolume(start + (safeTarget - start) * progress);
 
         if (progress >= 1) {
           finish();

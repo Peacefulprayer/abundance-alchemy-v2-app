@@ -16,15 +16,57 @@ class TestAudio extends EventTarget {
 }
 
 describe('audio transition cancellation', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.useFakeTimers()
     vi.resetModules()
+    const {getAudioContext}=await import('../../services/buttonTone')
+    vi.mocked(getAudioContext).mockReset()
     TestAudio.instances = []
     vi.stubGlobal('Audio', TestAudio)
   })
   afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); vi.unstubAllGlobals() })
 
   const track = (id: string) => ({ id, label: id, url: `/audio/${id}.mp3` })
+  it('changes music gain even when iPhone-style media volume writes are ignored', async () => {
+    const {getAudioContext}=await import('../../services/buttonTone')
+    const gain={gain:{value:1},connect:vi.fn(),disconnect:vi.fn()}
+    const context={state:'running',destination:{},createGain:vi.fn(()=>gain),createMediaElementSource:vi.fn(()=>({connect:vi.fn(),disconnect:vi.fn()})),resume:vi.fn().mockResolvedValue(undefined)}
+    vi.mocked(getAudioContext).mockReturnValue(context as any)
+    const {audioService}=await import('../../services/audioService')
+    const media=TestAudio.instances[0]
+    Object.defineProperty(media,'volume',{get:()=>1,set:()=>{}})
+    await audioService.playAmbience(track('a'),60)
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(gain.gain.value).toBeCloseTo(0.6)
+    media.currentTime=15
+    await audioService.playAmbience(track('a'),20)
+    await vi.advanceTimersByTimeAsync(500)
+    expect(gain.gain.value).toBeCloseTo(0.2)
+    expect(media.currentTime).toBe(15)
+    expect(media.play).toHaveBeenCalledTimes(1)
+    expect(context.createMediaElementSource).toHaveBeenCalledTimes(1)
+    await audioService.playAmbience(track('a'),0)
+    await vi.advanceTimersByTimeAsync(500)
+    expect(gain.gain.value).toBe(0)
+    expect(media.volume).toBe(1)
+  })
+  it('preserves native playback for external tracks without rerouting them through Web Audio', async () => {
+    const {getAudioContext}=await import('../../services/buttonTone')
+    const gain={gain:{value:1},connect:vi.fn(),disconnect:vi.fn()}
+    const source={connect:vi.fn(),disconnect:vi.fn()}
+    const context={state:'running',destination:{},createGain:vi.fn(()=>gain),createMediaElementSource:vi.fn(()=>source),resume:vi.fn().mockResolvedValue(undefined)}
+    vi.mocked(getAudioContext).mockReturnValue(context as any)
+    const {audioService}=await import('../../services/audioService')
+    await audioService.playAmbience(track('a'),50)
+    await vi.advanceTimersByTimeAsync(1000)
+    const next=audioService.playAmbience({id:'external',label:'External',url:'https://example.invalid/music.mp3'},30)
+    await vi.advanceTimersByTimeAsync(1500)
+    await next
+    expect(source.disconnect).toHaveBeenCalled()
+    expect(TestAudio.instances[0].paused).toBe(true)
+    expect(TestAudio.instances[1].paused).toBe(false)
+    expect(TestAudio.instances[1].volume).toBeCloseTo(0.3)
+  })
   it('honors Sound Effects Off for interaction bells', async () => {
     const {getAudioContext}=await import('../../services/buttonTone')
     const {setInteractionSoundsEnabled,playBell}=await import('../../services/audioService')
