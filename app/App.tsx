@@ -2179,7 +2179,7 @@ function App() {
         )
       case AppMode.PRAYER_SETUP:
         return (
-          <UniversalLayout showBottomMenu={false}>
+          <UniversalLayout showBottomMenu={true}>
             <PrayerSetup
               onBack={() => setCurrentMode(AppMode.DASHBOARD)}
               onContinue={handlePrayerPathContinue}
@@ -2191,6 +2191,7 @@ function App() {
               onChangePrayerVolume={handlePrayerVolumeChange}
               theme={theme}
             />
+            <BottomNav mode={currentMode} onNavigate={setCurrentMode} />
           </UniversalLayout>
         )
       case AppMode.PRAYER_GUIDE:

@@ -30,6 +30,7 @@ export const Layout: React.FC<LayoutProps> = ({ mode, practiceType, theme, child
   const useGlobalBackgroundLayer = isEntryFlowMode;
 
   const isBottomNavMode =
+    mode === AppMode.PRAYER_SETUP ||
     mode === AppMode.DASHBOARD ||
     mode === AppMode.LIBRARY ||
     mode === AppMode.PROFILE ||
